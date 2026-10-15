@@ -2,7 +2,8 @@
 
 A personal, local, single-user backend lab for running real Django/DRF code in
 Docker and exercising it from the browser. This repository implements Phase 1
-(PRD 01 — Foundation & Runner) and Phase 2 (PRD 02 — Examples Management).
+(PRD 01 — Foundation & Runner), Phase 2 (PRD 02 — Examples Management) and
+Phase 3 (PRD 03 — API Tester & SQLite Explorer).
 
 ## Requirements
 
@@ -25,9 +26,23 @@ http://localhost:3000
 1. The default **Scratch** workspace is created automatically.
 2. Open a Python file such as `demo/views.py`, edit it and press **Save**.
 3. Press **Run / Restart**; the real Django project runs with Python inside the `runner` container.
-4. Press **Test API** to really send a request (e.g. `GET /api/hello/`) and see the status and JSON response.
+4. Open the **API** tab next to the editor, press **Send** and see the real status, duration and JSON response.
 5. Introduce a syntax error and press Run to see the `error` state and the log; the panel does not crash.
 6. Press **Stop** to stop the Django process.
+
+## What you can do (Phase 3 — API Tester & Database Explorer)
+
+- **API tester**: choose `GET`/`POST`/`PUT`/`PATCH`/`DELETE`, type a relative path such as
+  `/api/items/?limit=10`, add headers and a JSON body, and see the status code, duration, response
+  headers and body. External URLs are rejected — requests only ever go to the active example's Django.
+- **Saved requests**: name the current request, reload it, rename it or delete it. They are stored per
+  example (independent between examples) and survive restarts. Body JSON is validated before sending.
+- **Database explorer** (read-only): browse the active example's SQLite tables, columns, types, primary
+  and foreign keys, and a paginated page of rows. Press **Refresh** to see the effect of your API calls.
+- **Apply DB Changes**: runs the real `python manage.py makemigrations demo` and
+  `python manage.py migrate --noinput`, shows the actual command output, stops Django first and restarts
+  it on success (a failed migration is reported, not hidden).
+- If Django is stopped, the API tab shows the state and a **Run** shortcut instead of a vague network error.
 
 ## What you can do (Phase 2 — Examples)
 
@@ -41,8 +56,8 @@ http://localhost:3000
 - Built-in examples can never be renamed, edited, deleted or activated directly.
 - Examples and their databases survive `docker compose restart`.
 
-Try the seeded examples end to end: open **Models & ORM** or **CRUD API**, press **Try & Run**, then
-**Test API** to hit `/api/books/` or `/api/items/` (the CRUD template supports `POST`, `PATCH` and `DELETE` too).
+Try the seeded examples end to end: open **Models & ORM** or **CRUD API**, press **Try & Run**, then use
+the **API** tab to hit `/api/books/` or `/api/items/` (the CRUD template supports `POST`, `PATCH` and `DELETE` too).
 
 ## Architecture
 
@@ -56,9 +71,14 @@ docker compose
 - User data lives in the Docker volume `playground_data` mounted at `/data`.
   - `/data/state.json` records the single active example id.
   - `/data/examples/<uuid>/metadata.json` holds each personal example's name and description.
+  - `/data/examples/<uuid>/requests.json` holds that example's saved API requests.
   - `/data/examples/<uuid>/project/` holds its Django source and `db.sqlite3`.
 - Built-in seed projects ship read-only in the image at `/app/seeds`; personal examples are copied from
   there on create (and copy the database when duplicating a personal example).
+- The Database Explorer opens `db.sqlite3` read-only (`mode=ro`); table names are validated against the
+  real schema and pagination values are bound parameters, so the viewer cannot run arbitrary SQL.
+- API requests are forwarded only to `127.0.0.1:8001`; hop-by-hop and `Host` headers are stripped, the
+  response body is capped at 1 MB and requests time out after 10 s.
 - The BFF forwards UI requests to `http://runner:8100` over the internal Docker
   network; that port is **not** published on the host.
 
@@ -95,8 +115,10 @@ docker compose run --rm web npm run typecheck
 
 ## Limitations (current)
 
-- Example management (Phase 2) is complete; the full API Tester and SQLite Explorer are in PRD 03.
-- Import/Export is in PRD 04.
+- Phases 1–3 are complete; Import/Export is in PRD 04.
+- Database Explorer is **read-only** — there is no SQL editor or row editing in the MVP, and only SQLite
+  is supported.
+- The migration action only targets the `demo` app.
 - The Django runtime is for **personal, local** use and is not a secure sandbox for untrusted code.
 - The runner has no access to the Docker socket and does not run privileged.
 

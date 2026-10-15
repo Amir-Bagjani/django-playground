@@ -37,3 +37,13 @@ MAX_FILE_BYTES = 512 * 1024
 MAX_LOG_LINES = 1000
 REQUEST_TIMEOUT_SECONDS = 10
 STARTUP_TIMEOUT_SECONDS = 12
+
+# API tester: cap how much of a Django response body we read and store.
+MAX_RESPONSE_BYTES = 1024 * 1024
+
+# Database explorer pagination bounds.
+DEFAULT_DB_PAGE_SIZE = 50
+MAX_DB_PAGE_SIZE = 100
+
+# Migration actions (makemigrations + migrate) may take a while to start up.
+MIGRATION_TIMEOUT_SECONDS = 120

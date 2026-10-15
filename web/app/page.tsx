@@ -51,15 +51,85 @@ interface HttpResult {
   headers: Record<string, string>;
   contentType: string;
   body: string;
+  truncated?: boolean;
 }
+
+interface HeaderRow {
+  key: string;
+  value: string;
+}
+
+interface SavedRequest {
+  id: string;
+  name: string;
+  method: string;
+  path: string;
+  headers: HeaderRow[];
+  body: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface TableInfo {
+  name: string;
+  rowCount: number;
+}
+
+interface ColumnInfo {
+  name: string;
+  type: string;
+  primaryKey: boolean;
+  notNull: boolean;
+  default: string | null;
+}
+
+interface ForeignKey {
+  column: string;
+  referencesTable: string;
+  referencesColumn: string;
+}
+
+interface TableDetail {
+  name: string;
+  rowCount: number;
+  columns: ColumnInfo[];
+  foreignKeys: ForeignKey[];
+}
+
+interface RowsPage {
+  name: string;
+  columns: string[];
+  rows: (string | number | null)[][];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+interface MigrationStep {
+  command: string;
+  returnCode: number;
+  output: string;
+  success: boolean;
+}
+
+interface MigrationResult {
+  success: boolean;
+  steps: MigrationStep[];
+  restarted: boolean;
+}
+
+type Tab = "api" | "database" | "log";
 
 type PendingAction =
   | { type: "openPersonal"; id: string }
   | { type: "openBuiltin"; id: string }
   | { type: "openFile"; path: string }
   | { type: "run" }
-  | { type: "test" }
   | null;
+
+const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const BODY_METHODS = new Set(["POST", "PUT", "PATCH"]);
+const DB_PAGE_SIZE = 50;
 
 const STATE_LABEL: Record<RuntimeState, string> = {
   stopped: "Stopped",
@@ -97,6 +167,34 @@ function jsonPost(body: unknown): RequestInit {
   };
 }
 
+function headersToObject(rows: HeaderRow[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const row of rows) {
+    const key = row.key.trim();
+    if (key) out[key] = row.value;
+  }
+  return out;
+}
+
+function prettyBody(body: string, contentType: string): string {
+  const looksJson =
+    contentType.includes("json") || body.trim().startsWith("{") || body.trim().startsWith("[");
+  if (!looksJson) return body;
+  try {
+    return JSON.stringify(JSON.parse(body), null, 2);
+  } catch {
+    return body;
+  }
+}
+
+function statusClass(status: number): string {
+  if (status >= 500) return "status-5xx";
+  if (status >= 400) return "status-4xx";
+  if (status >= 300) return "status-3xx";
+  if (status >= 200) return "status-2xx";
+  return "status-1xx";
+}
+
 export default function Page() {
   const [examples, setExamples] = useState<ExamplesResponse>({
     builtIn: [],
@@ -117,21 +215,44 @@ export default function Page() {
   const [content, setContent] = useState<string>("");
   const [savedContent, setSavedContent] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
-  const [result, setResult] = useState<HttpResult | null>(null);
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [booting, setBooting] = useState<boolean>(true);
   const [busy, setBusy] = useState<boolean>(false);
   const [runnerDown, setRunnerDown] = useState<boolean>(false);
   const [pending, setPending] = useState<PendingAction>(null);
-  const [showResultHeaders, setShowResultHeaders] = useState<boolean>(false);
+  const [tab, setTab] = useState<Tab>("api");
 
+  // API tester state
+  const [reqMethod, setReqMethod] = useState<string>("GET");
+  const [reqPath, setReqPath] = useState<string>("");
+  const [reqHeaders, setReqHeaders] = useState<HeaderRow[]>([]);
+  const [reqBody, setReqBody] = useState<string>("");
+  const [result, setResult] = useState<HttpResult | null>(null);
+  const [showResultHeaders, setShowResultHeaders] = useState<boolean>(false);
+  const [showRequestHeaders, setShowRequestHeaders] = useState<boolean>(false);
+  const [savedRequests, setSavedRequests] = useState<SavedRequest[]>([]);
+  const [loadedRequestId, setLoadedRequestId] = useState<string | null>(null);
+  const [saveOpen, setSaveOpen] = useState<boolean>(false);
+  const [saveName, setSaveName] = useState<string>("");
+  const [renameOpen, setRenameOpen] = useState<boolean>(false);
+  const [renameName, setRenameName] = useState<string>("");
+
+  // Database explorer state
+  const [dbAvailable, setDbAvailable] = useState<boolean>(false);
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [tableDetail, setTableDetail] = useState<TableDetail | null>(null);
+  const [rowsPage, setRowsPage] = useState<RowsPage | null>(null);
+  const [dbBusy, setDbBusy] = useState<boolean>(false);
+  const [migration, setMigration] = useState<MigrationResult | null>(null);
+
+  // Example management state
   const [newOpen, setNewOpen] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("");
   const [newDesc, setNewDesc] = useState<string>("");
   const [newTemplate, setNewTemplate] = useState<string>("scratch");
   const [renameTarget, setRenameTarget] = useState<ExampleMeta | null>(null);
-  const [renameName, setRenameName] = useState<string>("");
   const [renameDesc, setRenameDesc] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<ExampleMeta | null>(null);
 
@@ -142,6 +263,7 @@ export default function Page() {
   const previewExample = previewId
     ? examples.builtIn.find((item) => item.id === previewId) ?? null
     : null;
+  const loadedRequest = savedRequests.find((item) => item.id === loadedRequestId) ?? null;
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -168,6 +290,30 @@ export default function Page() {
     return data;
   }, []);
 
+  const loadSavedRequests = useCallback(async () => {
+    try {
+      const data = await api<{ requests: SavedRequest[] }>("/v1/requests");
+      setSavedRequests(data.requests);
+    } catch {
+      setSavedRequests([]);
+    }
+  }, []);
+
+  const resetApiAndDb = useCallback((ws: Workspace) => {
+    setReqMethod("GET");
+    setReqPath(ws.defaultRequestPath);
+    setReqHeaders([]);
+    setReqBody("");
+    setLoadedRequestId(null);
+    setResult(null);
+    setDbAvailable(false);
+    setTables([]);
+    setSelectedTable(null);
+    setTableDetail(null);
+    setRowsPage(null);
+    setMigration(null);
+  }, []);
+
   const openFile = useCallback(async (path: string, exampleId?: string | null) => {
     const suffix = exampleId ? `&exampleId=${encodeURIComponent(exampleId)}` : "";
     const data = await api<{ content: string; path: string }>(
@@ -182,6 +328,8 @@ export default function Page() {
     const ws = await api<Workspace>("/v1/workspace");
     setWorkspace(ws);
     setStatus(ws.runtime);
+    resetApiAndDb(ws);
+    await loadSavedRequests();
     const list = await api<{ files: FileEntry[] }>("/v1/files");
     setFiles(list.files);
     const target =
@@ -191,7 +339,7 @@ export default function Page() {
       await openFile(target);
     }
     await refreshLogs();
-  }, [openFile, refreshLogs]);
+  }, [loadSavedRequests, openFile, refreshLogs, resetApiAndDb]);
 
   const loadPreview = useCallback(
     async (id: string) => {
@@ -250,6 +398,7 @@ export default function Page() {
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
 
+  // -- file editor --------------------------------------------------------
   const save = useCallback(async (): Promise<boolean> => {
     if (!currentPath || previewId) return false;
     setBusy(true);
@@ -306,21 +455,207 @@ export default function Page() {
     }
   }, [refreshLogs]);
 
-  const testApi = useCallback(async () => {
-    const path = workspace?.defaultRequestPath ?? "/api/hello/";
+  // -- API tester ---------------------------------------------------------
+  const refreshTables = useCallback(async (): Promise<TableInfo[]> => {
+    try {
+      const data = await api<{ available: boolean; tables: TableInfo[] }>(
+        "/v1/database/tables",
+      );
+      setDbAvailable(data.available);
+      setTables(data.tables);
+      return data.tables;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return [];
+    }
+  }, []);
+
+  const sendRequest = useCallback(async () => {
+    if (!reqPath.trim()) {
+      setError("Enter a request path, for example /api/hello/.");
+      return;
+    }
+    if (BODY_METHODS.has(reqMethod) && reqBody.trim()) {
+      try {
+        JSON.parse(reqBody);
+      } catch {
+        setError("Request body is not valid JSON.");
+        return;
+      }
+    }
     setBusy(true);
     setError("");
+    setMessage("");
+    setResult(null);
     try {
-      const data = await api<HttpResult>("/v1/runtime/request", jsonPost({ method: "GET", path }));
+      const data = await api<HttpResult>(
+        "/v1/runtime/request",
+        jsonPost({
+          method: reqMethod,
+          path: reqPath.trim(),
+          headers: headersToObject(reqHeaders),
+          body: BODY_METHODS.has(reqMethod) && reqBody.trim() ? reqBody : undefined,
+        }),
+      );
       setResult(data);
+      if (tables.length > 0) void refreshTables();
     } catch (err) {
-      setResult(null);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
-  }, [workspace]);
+  }, [reqBody, reqHeaders, reqMethod, reqPath, refreshTables, tables.length]);
 
+  const loadSaved = useCallback((request: SavedRequest) => {
+    setReqMethod(request.method);
+    setReqPath(request.path);
+    setReqHeaders(request.headers.map((header) => ({ ...header })));
+    setReqBody(request.body ?? "");
+    setLoadedRequestId(request.id);
+    setTab("api");
+  }, []);
+
+  const createSaved = useCallback(async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api<SavedRequest>(
+        "/v1/requests",
+        jsonPost({
+          name: saveName,
+          method: reqMethod,
+          path: reqPath.trim(),
+          headers: reqHeaders,
+          body: reqBody,
+        }),
+      );
+      setSaveOpen(false);
+      setSaveName("");
+      await loadSavedRequests();
+      setLoadedRequestId(created.id);
+      setMessage(`Saved request "${created.name}".`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [loadSavedRequests, reqBody, reqHeaders, reqMethod, reqPath, saveName]);
+
+  const updateSaved = useCallback(async () => {
+    if (!loadedRequestId) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          method: reqMethod,
+          path: reqPath.trim(),
+          headers: reqHeaders,
+          body: reqBody,
+        }),
+      });
+      await loadSavedRequests();
+      setMessage("Saved request updated.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [loadSavedRequests, loadedRequestId, reqBody, reqHeaders, reqMethod, reqPath]);
+
+  const renameSaved = useCallback(async () => {
+    if (!loadedRequestId) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: renameName }),
+      });
+      setRenameOpen(false);
+      await loadSavedRequests();
+      setMessage("Saved request renamed.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [loadSavedRequests, loadedRequestId, renameName]);
+
+  const deleteSaved = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      setError("");
+      try {
+        await api(`/v1/requests/${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (loadedRequestId === id) setLoadedRequestId(null);
+        await loadSavedRequests();
+        setMessage("Saved request deleted.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [loadSavedRequests, loadedRequestId],
+  );
+
+  // -- database explorer --------------------------------------------------
+  const loadRows = useCallback(async (name: string, offset: number) => {
+    try {
+      const page = await api<RowsPage>(
+        `/v1/database/tables/${encodeURIComponent(name)}/rows?limit=${DB_PAGE_SIZE}&offset=${offset}`,
+      );
+      setRowsPage(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }, []);
+
+  const openTable = useCallback(
+    async (name: string) => {
+      setSelectedTable(name);
+      try {
+        const detail = await api<TableDetail>(`/v1/database/tables/${encodeURIComponent(name)}`);
+        setTableDetail(detail);
+        await loadRows(name, 0);
+      } catch (err) {
+        setTableDetail(null);
+        setRowsPage(null);
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    },
+    [loadRows],
+  );
+
+  const applyMigrations = useCallback(async () => {
+    setDbBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await api<MigrationResult>("/v1/database/migrate", { method: "POST" });
+      setMigration(data);
+      setMessage(data.success ? "Migrations applied." : "Migration failed — see the log.");
+      await refreshTables();
+      await refreshStatus();
+      if (selectedTable) {
+        try {
+          await openTable(selectedTable);
+        } catch {
+          /* table may no longer exist */
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDbBusy(false);
+    }
+  }, [openTable, refreshStatus, refreshTables, selectedTable]);
+
+  // -- example switching --------------------------------------------------
   async function perform(action: PendingAction) {
     setPending(null);
     if (!action) return;
@@ -328,18 +663,14 @@ export default function Page() {
       if (action.type === "openPersonal") {
         await api(`/v1/examples/${encodeURIComponent(action.id)}/activate`, { method: "POST" });
         setPreviewId(null);
-        setResult(null);
         await refreshExamples();
         await loadWorkspace();
       } else if (action.type === "openBuiltin") {
-        setResult(null);
         await loadPreview(action.id);
       } else if (action.type === "openFile") {
         await openFile(action.path, previewId);
       } else if (action.type === "run") {
         await run();
-      } else if (action.type === "test") {
-        await testApi();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -420,7 +751,7 @@ export default function Page() {
     }
   }
 
-  async function submitRename() {
+  async function submitExampleRename() {
     if (!renameTarget) return;
     setBusy(true);
     setError("");
@@ -481,7 +812,7 @@ export default function Page() {
       <aside className="sidebar">
         <h1>Django Playground</h1>
         <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-          Local lab — Phase 2
+          Local lab — Phase 3
         </p>
 
         <div className="section-head">
@@ -601,7 +932,12 @@ export default function Page() {
                 Try &amp; Run
               </button>
               <span className="spacer" />
-              <button disabled={busy} onClick={() => guard({ type: "openPersonal", id: examples.activeExampleId ?? "" })}>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  guard({ type: "openPersonal", id: examples.activeExampleId ?? "" })
+                }
+              >
                 Back to my example
               </button>
             </>
@@ -612,9 +948,6 @@ export default function Page() {
               </button>
               <button onClick={stop} disabled={busy || status.state === "stopped"}>
                 Stop
-              </button>
-              <button onClick={() => guard({ type: "test" })} disabled={busy}>
-                Test API
               </button>
               <span className="spacer" />
               {dirty && <span className="warn">Unsaved changes</span>}
@@ -662,36 +995,393 @@ export default function Page() {
               />
             </div>
 
-            <div className="stack" style={{ flex: 1, minWidth: 280 }}>
-              <div className="card">
-                <h2>API response</h2>
-                {result ? (
-                  <div className="stack">
-                    <div className="ltr">
-                      <strong>status:</strong> {result.status} — {result.durationMs} ms
-                    </div>
-                    <button onClick={() => setShowResultHeaders((v) => !v)}>
-                      {showResultHeaders ? "Hide headers" : "Show headers"}
-                    </button>
-                    {showResultHeaders && (
-                      <pre className="logs ltr">
-                        {Object.entries(result.headers)
-                          .map(([key, value]) => `${key}: ${value}`)
-                          .join("\n")}
-                      </pre>
-                    )}
-                    <pre className="logs ltr">{result.body}</pre>
-                  </div>
-                ) : (
-                  <p className="muted">
-                    No request sent yet. Activate an example, press Run, then Test API.
-                  </p>
-                )}
+            <div className="card" style={{ flex: 1, minWidth: 340 }}>
+              <div className="tabs">
+                <button
+                  className={`tab ${tab === "api" ? "active" : ""}`}
+                  onClick={() => setTab("api")}
+                >
+                  API
+                </button>
+                <button
+                  className={`tab ${tab === "database" ? "active" : ""}`}
+                  onClick={() => {
+                    setTab("database");
+                    if (tables.length === 0) void refreshTables();
+                  }}
+                >
+                  Database
+                </button>
+                <button
+                  className={`tab ${tab === "log" ? "active" : ""}`}
+                  onClick={() => setTab("log")}
+                >
+                  Log
+                </button>
               </div>
 
-              <div className="card" style={{ flex: 1 }}>
-                <h2>Server Log</h2>
-                <pre className="logs ltr">{logs.length ? logs.join("\n") : "—"}</pre>
+              <div style={{ paddingTop: 12 }}>
+                {tab === "api" && (
+                  <div className="stack">
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      Target: <strong>{workspace?.name}</strong>
+                      {previewExample ? " (active example; previewing a built-in)" : ""}
+                    </div>
+
+                    {status.state !== "running" && !previewExample && (
+                      <div className="banner">
+                        API server is {STATE_LABEL[status.state].toLowerCase()}.{" "}
+                        <button className="link-btn" onClick={() => guard({ type: "run" })}>
+                          Run it to send requests.
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="toolbar">
+                      <select
+                        className="method-select"
+                        value={reqMethod}
+                        onChange={(event) => setReqMethod(event.target.value)}
+                      >
+                        {METHODS.map((method) => (
+                          <option key={method} value={method}>
+                            {method}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="path-input"
+                        placeholder="/api/items/"
+                        value={reqPath}
+                        onChange={(event) => setReqPath(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") void sendRequest();
+                        }}
+                      />
+                      <button className="primary" disabled={busy} onClick={() => void sendRequest()}>
+                        Send
+                      </button>
+                    </div>
+
+                    <div>
+                      <button
+                        className="icon-btn"
+                        onClick={() => setShowRequestHeaders((value) => !value)}
+                      >
+                        {showRequestHeaders ? "Hide" : "Show"} headers ({reqHeaders.length})
+                      </button>
+                      {showRequestHeaders && (
+                        <div style={{ marginTop: 8 }}>
+                          {reqHeaders.map((header, index) => (
+                            <div className="kv-row" key={index}>
+                              <input
+                                placeholder="Header"
+                                value={header.key}
+                                onChange={(event) => {
+                                  const next = [...reqHeaders];
+                                  next[index] = { ...next[index], key: event.target.value };
+                                  setReqHeaders(next);
+                                }}
+                              />
+                              <input
+                                placeholder="Value"
+                                value={header.value}
+                                onChange={(event) => {
+                                  const next = [...reqHeaders];
+                                  next[index] = { ...next[index], value: event.target.value };
+                                  setReqHeaders(next);
+                                }}
+                              />
+                              <button
+                                className="icon-btn danger"
+                                onClick={() =>
+                                  setReqHeaders(reqHeaders.filter((_, i) => i !== index))
+                                }
+                              >
+                                x
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            className="icon-btn"
+                            onClick={() => setReqHeaders([...reqHeaders, { key: "", value: "" }])}
+                          >
+                            + Header
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="field" style={{ marginBottom: 0 }}>
+                      <label>JSON body (used for POST / PUT / PATCH)</label>
+                      <textarea
+                        className="body"
+                        spellCheck={false}
+                        placeholder={'{\n  "name": "New item"\n}'}
+                        value={reqBody}
+                        onChange={(event) => setReqBody(event.target.value)}
+                      />
+                    </div>
+
+                    <div className="row">
+                      {loadedRequest ? (
+                        <>
+                          <button className="primary" disabled={busy} onClick={() => void updateSaved()}>
+                            Update “{loadedRequest.name}”
+                          </button>
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              setRenameName(loadedRequest.name);
+                              setRenameOpen(true);
+                            }}
+                          >
+                            Rename
+                          </button>
+                          <button
+                            className="icon-btn"
+                            onClick={() => setLoadedRequestId(null)}
+                            title="Detach from the saved request"
+                          >
+                            New
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          disabled={busy}
+                          onClick={() => {
+                            setSaveName("");
+                            setSaveOpen(true);
+                          }}
+                        >
+                          Save request
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="stack">
+                      <h2>Saved requests</h2>
+                      {savedRequests.length === 0 && (
+                        <p className="muted" style={{ fontSize: 12 }}>
+                          No saved requests for this example yet.
+                        </p>
+                      )}
+                      {savedRequests.map((request) => (
+                        <div className="request-item" key={request.id}>
+                          <button
+                            className={`request-name ${request.id === loadedRequestId ? "active" : ""}`}
+                            onClick={() => loadSaved(request)}
+                            title={request.path}
+                          >
+                            {request.name}
+                          </button>
+                          <button
+                            className="icon-btn"
+                            disabled={busy}
+                            onClick={() => {
+                              loadSaved(request);
+                              void sendRequest();
+                            }}
+                          >
+                            Send
+                          </button>
+                          <button
+                            className="icon-btn danger"
+                            disabled={busy}
+                            onClick={() => void deleteSaved(request.id)}
+                          >
+                            Del
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="stack">
+                      <h2>Response</h2>
+                      {result ? (
+                        <div className="stack">
+                          <div className="ltr">
+                            <span className={`status-badge ${statusClass(result.status)}`}>
+                              {result.status}
+                            </span>{" "}
+                            <span className="muted">{result.durationMs} ms</span>
+                            {result.truncated && <span className="muted"> • truncated</span>}
+                          </div>
+                          <button onClick={() => setShowResultHeaders((value) => !value)}>
+                            {showResultHeaders ? "Hide headers" : "Show headers"}
+                          </button>
+                          {showResultHeaders && (
+                            <pre className="logs ltr">
+                              {Object.entries(result.headers)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join("\n")}
+                            </pre>
+                          )}
+                          <pre className="logs ltr">
+                            {prettyBody(result.body, result.contentType) || "(empty body)"}
+                          </pre>
+                        </div>
+                      ) : (
+                        <p className="muted">
+                          No response yet. Activate an example, press Run, then Send.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tab === "database" && (
+                  <div className="stack">
+                    <div className="row" style={{ justifyContent: "space-between" }}>
+                      <div className="row" style={{ gap: 8 }}>
+                        <button disabled={dbBusy} onClick={() => void refreshTables()}>
+                          Refresh
+                        </button>
+                        <button
+                          className="primary"
+                          disabled={dbBusy}
+                          onClick={() => void applyMigrations()}
+                        >
+                          {dbBusy ? "Working..." : "Apply DB Changes"}
+                        </button>
+                      </div>
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        {tables.length} tables
+                      </span>
+                    </div>
+
+                    {migration && (
+                      <div className="stack">
+                        {migration.steps.map((step, index) => (
+                          <pre className="logs ltr" key={index}>
+                            {`$ ${step.command}\n${step.output || "(no output)"}`}
+                          </pre>
+                        ))}
+                        <span className={migration.success ? "success" : "error-text"}>
+                          {migration.success
+                            ? `Migrations applied.${migration.restarted ? " Django restarted." : ""}`
+                            : "Migration failed."}
+                        </span>
+                      </div>
+                    )}
+
+                    {!dbAvailable && (
+                      <p className="muted">
+                        No database yet. Press “Apply DB Changes” to create one.
+                      </p>
+                    )}
+
+                    {dbAvailable && (
+                      <div className="row" style={{ alignItems: "flex-start" }}>
+                        <div className="stack" style={{ minWidth: 150 }}>
+                          {tables.map((table) => (
+                            <button
+                              key={table.name}
+                              className={`file-item ${selectedTable === table.name ? "active" : ""}`}
+                              onClick={() => void openTable(table.name)}
+                            >
+                              {table.name}{" "}
+                              <span className="muted">({table.rowCount})</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="stack" style={{ flex: 1, minWidth: 0 }}>
+                          {tableDetail && rowsPage ? (
+                            <>
+                              <div className="muted" style={{ fontSize: 12 }}>
+                                {tableDetail.name} — {tableDetail.columns.length} columns,{" "}
+                                {tableDetail.rowCount} rows
+                              </div>
+                              <div className="muted ltr" style={{ fontSize: 12 }}>
+                                {tableDetail.columns
+                                  .map(
+                                    (column) =>
+                                      `${column.name}${column.primaryKey ? " PK" : ""}${
+                                        column.type ? ` (${column.type})` : ""
+                                      }`,
+                                  )
+                                  .join("  •  ")}
+                              </div>
+                              {tableDetail.foreignKeys.length > 0 && (
+                                <div className="muted ltr" style={{ fontSize: 12 }}>
+                                  FK:{" "}
+                                  {tableDetail.foreignKeys
+                                    .map(
+                                      (fk) =>
+                                        `${fk.column} → ${fk.referencesTable}.${fk.referencesColumn}`,
+                                    )
+                                    .join("  •  ")}
+                                </div>
+                              )}
+                              <div className="table-scroll">
+                                <table className="data-table">
+                                  <thead>
+                                    <tr>
+                                      {rowsPage.columns.map((column) => (
+                                        <th key={column}>{column}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {rowsPage.rows.map((row, rowIndex) => (
+                                      <tr key={rowIndex}>
+                                        {row.map((cell, cellIndex) => (
+                                          <td key={cellIndex}>
+                                            {cell === null ? "NULL" : String(cell)}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              {rowsPage.total > 0 && (
+                                <div className="pager">
+                                  <button
+                                    className="icon-btn"
+                                    disabled={rowsPage.offset <= 0}
+                                    onClick={() =>
+                                      void loadRows(
+                                        tableDetail.name,
+                                        Math.max(0, rowsPage.offset - rowsPage.limit),
+                                      )
+                                    }
+                                  >
+                                    Prev
+                                  </button>
+                                  <span className="muted">
+                                    {rowsPage.offset + 1}–
+                                    {Math.min(rowsPage.offset + rowsPage.rows.length, rowsPage.total)}{" "}
+                                    of {rowsPage.total}
+                                  </span>
+                                  <button
+                                    className="icon-btn"
+                                    disabled={rowsPage.offset + rowsPage.limit >= rowsPage.total}
+                                    onClick={() =>
+                                      void loadRows(
+                                        tableDetail.name,
+                                        rowsPage.offset + rowsPage.limit,
+                                      )
+                                    }
+                                  >
+                                    Next
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <p className="muted">Select a table to view its rows.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {tab === "log" && (
+                  <pre className="logs ltr">{logs.length ? logs.join("\n") : "—"}</pre>
+                )}
               </div>
             </div>
           </div>
@@ -711,6 +1401,59 @@ export default function Page() {
                 Continue without saving
               </button>
               <button onClick={() => void resolvePending("cancel")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {saveOpen && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Save request</h2>
+            <div className="field">
+              <label>Name</label>
+              <input
+                value={saveName}
+                autoFocus
+                placeholder="List items"
+                onChange={(event) => setSaveName(event.target.value)}
+              />
+            </div>
+            <div className="row">
+              <button
+                className="primary"
+                disabled={busy || !saveName.trim()}
+                onClick={() => void createSaved()}
+              >
+                Save
+              </button>
+              <button onClick={() => setSaveOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameOpen && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Rename request</h2>
+            <div className="field">
+              <label>Name</label>
+              <input
+                value={renameName}
+                autoFocus
+                onChange={(event) => setRenameName(event.target.value)}
+              />
+            </div>
+            <div className="row">
+              <button
+                className="primary"
+                disabled={busy || !renameName.trim()}
+                onClick={() => void renameSaved()}
+              >
+                Save
+              </button>
+              <button onClick={() => setRenameOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -780,7 +1523,7 @@ export default function Page() {
               <button
                 className="primary"
                 disabled={busy || !renameName.trim()}
-                onClick={() => void submitRename()}
+                onClick={() => void submitExampleRename()}
               >
                 Save
               </button>

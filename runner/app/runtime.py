@@ -23,6 +23,7 @@ from .config import (
     DJANGO_HOST,
     DJANGO_PORT,
     MAX_LOG_LINES,
+    MAX_RESPONSE_BYTES,
     REQUEST_TIMEOUT_SECONDS,
     STARTUP_TIMEOUT_SECONDS,
 )
@@ -35,6 +36,31 @@ STATE_ERROR = "error"
 # Liveness probe path. Any HTTP response (including 404) means Django is up, so
 # this path does not need to exist in every example.
 HEALTH_PATH = "/"
+
+# Hop-by-hop headers must not be forwarded, and the client must not be able to
+# spoof the Host or break framing on our internal localhost request.
+HOP_BY_HOP_HEADERS = {
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "trailers",
+    "transfer-encoding",
+    "upgrade",
+}
+FORBIDDEN_REQUEST_HEADERS = HOP_BY_HOP_HEADERS | {"host", "content-length"}
+
+
+def _filter_request_headers(headers: dict[str, str] | None) -> dict[str, str]:
+    if not headers:
+        return {}
+    return {
+        key: value
+        for key, value in headers.items()
+        if isinstance(key, str) and key.lower() not in FORBIDDEN_REQUEST_HEADERS
+    }
 
 
 class RuntimeError_(Exception):
@@ -232,21 +258,47 @@ class RuntimeManager:
 
         url = f"http://{DJANGO_HOST}:{DJANGO_PORT}{path}"
         started = time.time()
+        safe_headers = _filter_request_headers(headers)
         try:
             with httpx.Client(timeout=REQUEST_TIMEOUT_SECONDS, follow_redirects=False) as client:
-                response = client.request(method, url, headers=headers or None, content=body)
+                with client.stream(
+                    method, url, headers=safe_headers or None, content=body
+                ) as response:
+                    chunks: list[bytes] = []
+                    received = 0
+                    truncated = False
+                    for chunk in response.iter_bytes():
+                        received += len(chunk)
+                        if received > MAX_RESPONSE_BYTES:
+                            keep = len(chunk) - (received - MAX_RESPONSE_BYTES)
+                            chunks.append(chunk[:keep])
+                            truncated = True
+                            break
+                        chunks.append(chunk)
+                    raw = b"".join(chunks)
+                    status_code = response.status_code
+                    response_headers = {k: v for k, v in response.headers.items()}
+                    content_type = response.headers.get("content-type", "")
+                    encoding = response.encoding or "utf-8"
         except httpx.TimeoutException as exc:
-            raise RuntimeError_("The request timed out.") from exc
+            raise RuntimeError_(
+                f"The request timed out after {REQUEST_TIMEOUT_SECONDS}s. Press Send to retry."
+            ) from exc
         except httpx.HTTPError as exc:
             raise RuntimeError_(f"Could not reach the Django server: {exc}") from exc
 
         duration_ms = int((time.time() - started) * 1000)
+        try:
+            text = raw.decode(encoding, errors="replace")
+        except LookupError:  # pragma: no cover - unknown encoding label
+            text = raw.decode("utf-8", errors="replace")
         return {
-            "status": response.status_code,
+            "status": status_code,
             "durationMs": duration_ms,
-            "headers": {k: v for k, v in response.headers.items()},
-            "contentType": response.headers.get("content-type", ""),
-            "body": response.text,
+            "headers": response_headers,
+            "contentType": content_type,
+            "body": text,
+            "truncated": truncated,
         }
 
 

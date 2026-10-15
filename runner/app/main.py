@@ -12,9 +12,10 @@ from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import examples
+from . import database, examples, migrations, requests_store
 from . import files as files_module
 from . import runtime, storage
+from .database import DatabaseError, DatabaseUnavailable, TableNotFound
 from .examples import (
     ExampleError,
     ExampleNotFound,
@@ -22,6 +23,7 @@ from .examples import (
     ExampleValidation,
 )
 from .files import PathError
+from .requests_store import RequestNotFound, RequestValidation
 from .runtime import RuntimeError_
 
 DEFAULT_OPEN_FILE = "demo/views.py"
@@ -34,7 +36,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     runtime.manager.stop()
 
 
-app = FastAPI(title="Django Playground Runner", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Django Playground Runner", version="0.3.0", lifespan=lifespan)
 
 
 # -- helpers --------------------------------------------------------------
@@ -58,6 +60,22 @@ class HttpRequestModel(BaseModel):
     method: str = "GET"
     path: str
     headers: dict[str, str] | None = None
+    body: str | None = None
+
+
+class SavedRequestCreate(BaseModel):
+    name: str
+    method: str = "GET"
+    path: str
+    headers: list[dict[str, str]] | None = None
+    body: str | None = None
+
+
+class SavedRequestUpdate(BaseModel):
+    name: str | None = None
+    method: str | None = None
+    path: str | None = None
+    headers: list[dict[str, str]] | None = None
     body: str | None = None
 
 
@@ -244,3 +262,94 @@ def runtime_request(payload: HttpRequestModel) -> JSONResponse:
     except RuntimeError_ as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return JSONResponse(result)
+
+
+# -- saved requests -------------------------------------------------------
+def _active_id() -> str:
+    return _active_example()["id"]
+
+
+@app.get("/v1/requests")
+def list_saved_requests() -> dict:
+    return {"requests": requests_store.list_requests(_active_id())}
+
+
+@app.post("/v1/requests", status_code=status.HTTP_201_CREATED)
+def create_saved_request(payload: SavedRequestCreate) -> dict:
+    try:
+        return requests_store.create_request(
+            _active_id(),
+            payload.name,
+            payload.method,
+            payload.path,
+            payload.headers,
+            payload.body,
+        )
+    except RequestValidation as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.patch("/v1/requests/{request_id}")
+def update_saved_request(request_id: str, payload: SavedRequestUpdate) -> dict:
+    try:
+        return requests_store.update_request(
+            _active_id(),
+            request_id,
+            name=payload.name,
+            method=payload.method,
+            path=payload.path,
+            headers=payload.headers,
+            body=payload.body,
+        )
+    except RequestValidation as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RequestNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.delete("/v1/requests/{request_id}")
+def delete_saved_request(request_id: str) -> dict:
+    try:
+        requests_store.delete_request(_active_id(), request_id)
+    except RequestNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"deleted": True}
+
+
+# -- database explorer (read-only) ----------------------------------------
+@app.get("/v1/database/tables")
+def database_tables() -> dict:
+    return database.list_tables(storage.project_dir(_active_id()))
+
+
+@app.get("/v1/database/tables/{name}")
+def database_table(name: str) -> dict:
+    try:
+        return database.table_detail(storage.project_dir(_active_id()), name)
+    except TableNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DatabaseUnavailable as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except DatabaseError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/v1/database/tables/{name}/rows")
+def database_rows(
+    name: str,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    try:
+        return database.table_rows(storage.project_dir(_active_id()), name, limit, offset)
+    except TableNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DatabaseUnavailable as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except DatabaseError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/v1/database/migrate")
+def database_migrate() -> dict:
+    return migrations.run_migrations(storage.project_dir(_active_id()))

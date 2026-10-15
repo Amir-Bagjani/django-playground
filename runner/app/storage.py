@@ -69,6 +69,19 @@ def write_state(state: dict[str, Any]) -> None:
     _atomic_write(STATE_FILE, json.dumps(state, ensure_ascii=False, indent=2) + "\n")
 
 
+def read_json(path: Path, default: Any = None) -> Any:
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text("utf-8"))
+    except (ValueError, OSError):
+        return default
+
+
+def write_json(path: Path, data: Any) -> None:
+    _atomic_write(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+
 def load_metadata(example_id: str) -> dict[str, Any] | None:
     path = metadata_path(example_id)
     if not path.exists():
