@@ -18,9 +18,12 @@ COPY seeds/ ./seeds/
 COPY tests/ ./tests/
 COPY pytest.ini ./
 
-# Generate the demo app migration once at build time so the seed ships with a
-# valid, deterministic migration. No database is created here.
-RUN python /app/seeds/scratch/manage.py makemigrations demo
+# Fail the build if any seed's migrations drift from its models. No database is
+# created here; example databases are built at runtime by running migrations.
+RUN for seed in scratch hello orm crud; do \
+      echo "checking migrations for $seed"; \
+      python /app/seeds/$seed/manage.py makemigrations demo --check --dry-run; \
+    done && find /app/seeds -name '*.sqlite3' -delete
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

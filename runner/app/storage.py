@@ -1,8 +1,8 @@
-"""Example storage: metadata, state and initialization from seed templates.
+"""Low-level example storage: paths, metadata, state and safe file copying.
 
-Phase 1 only manages the single default ``Scratch`` workspace, but the on-disk
-layout already matches the multi-example layout described in the product brief
-so later phases can extend it without migrating data.
+This module knows nothing about built-in templates or runtime; it only manages
+what lives on disk under ``/data``. Higher-level example operations live in
+``app.examples``.
 """
 from __future__ import annotations
 
@@ -15,11 +15,15 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .config import EXAMPLES_DIR, SCRATCH_SEED, STATE_FILE
+from .config import EXAMPLES_DIR, STATE_FILE
 
 
 class StorageError(Exception):
     """Raised for controlled storage failures."""
+
+
+def new_id() -> str:
+    return str(uuid.uuid4())
 
 
 def now() -> str:
@@ -82,49 +86,32 @@ def save_metadata(meta: dict[str, Any]) -> None:
     )
 
 
-def _copy_project(src: Path, dst: Path) -> None:
+def list_personal_ids() -> list[str]:
+    if not EXAMPLES_DIR.is_dir():
+        return []
+    ids: list[str] = []
+    for entry in sorted(EXAMPLES_DIR.iterdir()):
+        if entry.is_dir() and (entry / "metadata.json").is_file():
+            ids.append(entry.name)
+    return ids
+
+
+def copy_project(src: Path, dst: Path) -> None:
+    """Copy project files, skipping caches, temp files and OS junk."""
     def _ignore(_directory: str, names: list[str]) -> set[str]:
-        return {n for n in names if n in {"__pycache__", ".DS_Store"} or n.endswith(".pyc")}
+        return {
+            n
+            for n in names
+            if n in {"__pycache__", ".DS_Store", ".pytest_cache"} or n.endswith(".pyc")
+        }
 
     shutil.copytree(src, dst, ignore=_ignore)
 
 
-def active_example() -> dict[str, Any] | None:
-    state = read_state()
-    example_id = state.get("activeExampleId")
-    if not example_id:
-        return None
-    meta = load_metadata(example_id)
-    if meta is None or not project_dir(example_id).is_dir():
-        return None
-    return meta
-
-
-def ensure_scratch() -> dict[str, Any]:
-    """Return the active example, creating the Scratch workspace if needed."""
-    EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
-
-    existing = active_example()
-    if existing is not None:
-        return existing
-
-    example_id = str(uuid.uuid4())
-    target = project_dir(example_id)
-    target.parent.mkdir(parents=True, exist_ok=True)
-
-    if not SCRATCH_SEED.is_dir():
-        raise StorageError(f"seed template not found: {SCRATCH_SEED}")
-    _copy_project(SCRATCH_SEED, target)
-
-    meta = {
-        "id": example_id,
-        "name": "Scratch",
-        "description": "Default workspace for phase 1",
-        "createdAt": now(),
-        "updatedAt": now(),
-        "sourceTemplateId": "scratch",
-        "readOnly": False,
-    }
-    save_metadata(meta)
-    write_state({"activeExampleId": example_id})
-    return meta
+def delete_example_dir(example_id: str) -> None:
+    target = example_dir(example_id)
+    if not target.exists():
+        return
+    if target.parent != EXAMPLES_DIR:
+        raise StorageError("Refusing to delete path outside the examples directory.")
+    shutil.rmtree(target)

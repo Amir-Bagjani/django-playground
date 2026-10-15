@@ -12,6 +12,11 @@ from app.main import app
 @pytest.fixture(scope="module")
 def client():
     with TestClient(app) as test_client:
+        created = test_client.post(
+            "/v1/examples",
+            json={"name": "Runtime Tests", "fromTemplateId": "scratch"},
+        ).json()
+        test_client.post(f"/v1/examples/{created['id']}/activate")
         yield test_client
 
 
@@ -21,8 +26,9 @@ def _get_content(client: TestClient, path: str) -> str:
 
 def test_workspace_defaults(client: TestClient) -> None:
     data = client.get("/v1/workspace").json()
-    assert data["name"] == "Scratch"
+    assert data["name"] == "Runtime Tests"
     assert data["defaultOpenFile"] == "demo/views.py"
+    assert data["defaultRequestPath"] == "/api/hello/"
     assert data["readOnly"] is False
     paths = [entry["path"] for entry in client.get("/v1/files").json()["files"]]
     assert "demo/views.py" in paths
@@ -82,7 +88,6 @@ def test_syntax_error_surfaces_without_crashing_control_api(client: TestClient) 
         logs = client.get("/v1/runtime/logs").json()["lines"]
         assert any("Error" in line for line in logs)
 
-        # Control API must still be alive and healthy.
         assert client.get("/health").json()["status"] == "ok"
 
         client.put("/v1/files/content", json={"path": "demo/views.py", "content": original})

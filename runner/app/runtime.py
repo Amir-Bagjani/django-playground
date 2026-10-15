@@ -32,7 +32,9 @@ STATE_STARTING = "starting"
 STATE_RUNNING = "running"
 STATE_ERROR = "error"
 
-HEALTH_PATH = "/api/hello/"
+# Liveness probe path. Any HTTP response (including 404) means Django is up, so
+# this path does not need to exist in every example.
+HEALTH_PATH = "/"
 
 
 class RuntimeError_(Exception):
@@ -108,8 +110,10 @@ class RuntimeManager:
                 return False
             try:
                 with urllib.request.urlopen(url, timeout=1) as response:
-                    if response.status == 200:
-                        return True
+                    return response.status < 600
+            except urllib.error.HTTPError:
+                # The server answered (e.g. 404): it is up and serving.
+                return True
             except (urllib.error.URLError, OSError, ValueError):
                 pass
             time.sleep(0.25)
@@ -207,27 +211,6 @@ class RuntimeManager:
         self._state = STATE_STOPPED
         self._error = None
 
-    # -- migrations --------------------------------------------------------
-    def ensure_database(self, project_root: Path) -> None:
-        db_path = project_root / "db.sqlite3"
-        if db_path.exists():
-            return
-        env = os.environ.copy()
-        env["PYTHONUNBUFFERED"] = "1"
-        env["PLAYGROUND_DB_PATH"] = str(db_path)
-        try:
-            subprocess.run(
-                [self._python, "manage.py", "migrate", "--noinput"],
-                cwd=str(project_root),
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=60,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            pass
-
     # -- request forwarding ------------------------------------------------
     def forward_request(
         self,
@@ -265,3 +248,39 @@ class RuntimeManager:
             "contentType": response.headers.get("content-type", ""),
             "body": response.text,
         }
+
+
+def ensure_database(project_root: Path, python_executable: str | None = None) -> None:
+    """Create the example SQLite database once, by running Django migrations.
+
+    For seeds that ship data migrations (e.g. the ORM and CRUD examples) this
+    also inserts the sample rows. If the database already exists it is left
+    untouched, so a personal example's data is never overwritten.
+    """
+    db_path = project_root / "db.sqlite3"
+    if db_path.exists() and db_path.stat().st_size > 0:
+        return
+    if db_path.exists():
+        # An empty file (e.g. a stray one copied from a template) has no
+        # tables, so migrate would be skipped and every query would fail.
+        db_path.unlink()
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PLAYGROUND_DB_PATH"] = str(db_path)
+    try:
+        subprocess.run(
+            [python_executable or sys.executable, "manage.py", "migrate", "--noinput"],
+            cwd=str(project_root),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+# Single shared runtime manager for the whole runner process.
+manager = RuntimeManager()
+

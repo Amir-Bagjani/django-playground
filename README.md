@@ -2,7 +2,7 @@
 
 A personal, local, single-user backend lab for running real Django/DRF code in
 Docker and exercising it from the browser. This repository implements Phase 1
-(PRD 01 — Foundation & Runner).
+(PRD 01 — Foundation & Runner) and Phase 2 (PRD 02 — Examples Management).
 
 ## Requirements
 
@@ -25,9 +25,24 @@ http://localhost:3000
 1. The default **Scratch** workspace is created automatically.
 2. Open a Python file such as `demo/views.py`, edit it and press **Save**.
 3. Press **Run / Restart**; the real Django project runs with Python inside the `runner` container.
-4. Press **Test Hello API** to really send `GET /api/hello/` and see the status and JSON response.
+4. Press **Test API** to really send a request (e.g. `GET /api/hello/`) and see the status and JSON response.
 5. Introduce a syntax error and press Run to see the `error` state and the log; the panel does not crash.
 6. Press **Stop** to stop the Django process.
+
+## What you can do (Phase 2 — Examples)
+
+- **Built-in examples** (read-only, always available): **Hello World API**, **Models & ORM** and **CRUD API**.
+  Open one to read its code; use **Create a copy** or **Try & Run** to get an editable personal copy.
+- **My Examples**: create one with **+ New** (blank, or seeded from any built-in template), then
+  activate, rename, duplicate or delete them from the sidebar.
+- Each example has its **own source files and its own SQLite database**; duplicating copies both, so the
+  copy keeps its data while staying independent from the original.
+- Exactly **one example is active** at a time. Switching examples stops the running Django process.
+- Built-in examples can never be renamed, edited, deleted or activated directly.
+- Examples and their databases survive `docker compose restart`.
+
+Try the seeded examples end to end: open **Models & ORM** or **CRUD API**, press **Try & Run**, then
+**Test API** to hit `/api/books/` or `/api/items/` (the CRUD template supports `POST`, `PATCH` and `DELETE` too).
 
 ## Architecture
 
@@ -39,8 +54,11 @@ docker compose
 ```
 
 - User data lives in the Docker volume `playground_data` mounted at `/data`.
-- The seed project ships read-only in the image at `/app/seeds` and is copied to
-  `/data/examples/<id>/project` on first run.
+  - `/data/state.json` records the single active example id.
+  - `/data/examples/<uuid>/metadata.json` holds each personal example's name and description.
+  - `/data/examples/<uuid>/project/` holds its Django source and `db.sqlite3`.
+- Built-in seed projects ship read-only in the image at `/app/seeds`; personal examples are copied from
+  there on create (and copy the database when duplicating a personal example).
 - The BFF forwards UI requests to `http://runner:8100` over the internal Docker
   network; that port is **not** published on the host.
 
@@ -75,10 +93,9 @@ Type-check the web app:
 docker compose run --rm web npm run typecheck
 ```
 
-## Limitations (Phase 1)
+## Limitations (current)
 
-- Only one active workspace; example CRUD is in PRD 02.
-- The full API Tester and SQLite Explorer are in PRD 03.
+- Example management (Phase 2) is complete; the full API Tester and SQLite Explorer are in PRD 03.
 - Import/Export is in PRD 04.
 - The Django runtime is for **personal, local** use and is not a secure sandbox for untrusted code.
 - The runner has no access to the Docker socket and does not run privileged.
