@@ -1,0 +1,41 @@
+services:
+  runner:
+    build:
+      context: ./runner
+    environment:
+      PLAYGROUND_DATA_DIR: /data
+      PLAYGROUND_SEEDS_DIR: /app/seeds
+      PLAYGROUND_DJANGO_PORT: "8001"
+      PLAYGROUND_CONTROL_PORT: "8100"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - playground_data:/data
+    expose:
+      - "8100"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+    environment:
+      RUNNER_URL: http://runner:8100
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      runner:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  playground_data:
