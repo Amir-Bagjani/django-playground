@@ -538,6 +538,30 @@ textarea.body {
   text-decoration: underline;
 }
 
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.notice {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: rgba(210, 153, 34, 0.1);
+  border: 1px solid rgba(210, 153, 34, 0.35);
+  color: #f0d07a;
+}
+
 @media (max-width: 860px) {
   .layout {
     grid-template-columns: 1fr;

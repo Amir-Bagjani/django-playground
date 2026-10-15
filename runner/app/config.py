@@ -47,3 +47,8 @@ MAX_DB_PAGE_SIZE = 100
 
 # Migration actions (makemigrations + migrate) may take a while to start up.
 MIGRATION_TIMEOUT_SECONDS = 120
+
+# Import / export limits.
+MAX_IMPORT_BYTES = 5 * 1024 * 1024
+MAX_DATASET_RECORDS = 20000
+DATA_COMMAND_TIMEOUT_SECONDS = 120

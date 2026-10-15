@@ -5,17 +5,20 @@ reaches it over the internal Docker network.
 """
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import database, examples, migrations, requests_store
+from . import database, datasets, examples, migrations, requests_store, transfer
 from . import files as files_module
 from . import runtime, storage
+from .config import MAX_IMPORT_BYTES
 from .database import DatabaseError, DatabaseUnavailable, TableNotFound
+from .datasets import DatasetReadOnly
 from .examples import (
     ExampleError,
     ExampleNotFound,
@@ -36,7 +39,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     runtime.manager.stop()
 
 
-app = FastAPI(title="Django Playground Runner", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Django Playground Runner", version="0.4.0", lifespan=lifespan)
 
 
 # -- helpers --------------------------------------------------------------
@@ -353,3 +356,77 @@ def database_rows(
 @app.post("/v1/database/migrate")
 def database_migrate() -> dict:
     return migrations.run_migrations(storage.project_dir(_active_id()))
+
+
+# -- import / export ------------------------------------------------------
+async def _read_json_body(request: Request) -> Any:
+    raw = await request.body()
+    if len(raw) > MAX_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"The file is larger than the {MAX_IMPORT_BYTES // (1024 * 1024)} MB import limit.",
+        )
+    if not raw:
+        raise HTTPException(status_code=400, detail="The request body is empty.")
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="This is not valid JSON.") from exc
+
+
+@app.get("/v1/examples/{example_id}/export")
+def export_example(example_id: str, includeDataset: bool = Query(default=False)) -> JSONResponse:
+    try:
+        payload = transfer.export_example(example_id, include_dataset=includeDataset)
+    except ExampleNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return JSONResponse(payload)
+
+
+@app.post("/v1/examples/import", status_code=status.HTTP_201_CREATED)
+async def import_example(request: Request) -> dict:
+    payload = await _read_json_body(request)
+    try:
+        meta = transfer.import_example(payload)
+    except transfer.TransferValidation as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return examples.decorate(meta)
+
+
+@app.get("/v1/examples/{example_id}/dataset/export")
+def export_dataset(example_id: str) -> JSONResponse:
+    try:
+        payload = datasets.export_dataset(example_id)
+    except DatasetReadOnly as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ExampleNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except datasets.DatasetError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(payload)
+
+
+@app.post("/v1/examples/{example_id}/dataset/preview")
+async def preview_dataset(example_id: str, request: Request) -> dict:
+    payload = await _read_json_body(request)
+    try:
+        return datasets.preview_dataset(example_id, payload)
+    except DatasetReadOnly as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ExampleNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except datasets.DatasetError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/v1/examples/{example_id}/dataset/replace")
+async def replace_dataset(example_id: str, request: Request) -> dict:
+    payload = await _read_json_body(request)
+    try:
+        return datasets.replace_dataset(example_id, payload)
+    except DatasetReadOnly as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ExampleNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except datasets.DatasetError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

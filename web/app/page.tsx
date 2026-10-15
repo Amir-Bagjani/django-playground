@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 
 type RuntimeState = "stopped" | "starting" | "running" | "error";
 
@@ -118,6 +118,23 @@ interface MigrationResult {
   restarted: boolean;
 }
 
+interface ImportPreview {
+  format?: string;
+  version?: number;
+  metadata?: { name?: string; description?: string };
+  files?: Record<string, string>;
+  requests?: unknown[];
+  dataset?: { records?: unknown[] } | null;
+}
+
+interface DatasetPreview {
+  recordCount: number;
+  records: { model: string; count: number }[];
+  databaseReady: boolean;
+  compatible: boolean;
+  missingModels: string[];
+}
+
 type Tab = "api" | "database" | "log";
 
 type PendingAction =
@@ -125,6 +142,7 @@ type PendingAction =
   | { type: "openBuiltin"; id: string }
   | { type: "openFile"; path: string }
   | { type: "run" }
+  | { type: "importFile" }
   | null;
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
@@ -165,6 +183,38 @@ function jsonPost(body: unknown): RequestInit {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   };
+}
+
+async function apiText(path: string): Promise<string> {
+  const response = await fetch(`/api/runner${path}`, { cache: "no-store" });
+  const text = await response.text();
+  if (!response.ok) {
+    let detail = "Unknown error";
+    try {
+      const data = JSON.parse(text) as { detail?: unknown };
+      if (data && data.detail) detail = String(data.detail);
+    } catch {
+      if (text) detail = text;
+    }
+    throw new Error(detail);
+  }
+  return text;
+}
+
+function safeFileName(name: string): string {
+  const cleaned = name.trim().replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/^-+|-+$/g, "");
+  return cleaned || "example";
+}
+
+function downloadText(filename: string, text: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function headersToObject(rows: HeaderRow[]): Record<string, string> {
@@ -255,6 +305,17 @@ export default function Page() {
   const [renameTarget, setRenameTarget] = useState<ExampleMeta | null>(null);
   const [renameDesc, setRenameDesc] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<ExampleMeta | null>(null);
+
+  // Import / export state
+  const [exportOpen, setExportOpen] = useState<boolean>(false);
+  const [exportIncludeDataset, setExportIncludeDataset] = useState<boolean>(false);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [datasetPayload, setDatasetPayload] = useState<unknown>(null);
+  const [datasetPreview, setDatasetPreview] = useState<DatasetPreview | null>(null);
+  const [datasetBusy, setDatasetBusy] = useState<boolean>(false);
+  const [datasetResult, setDatasetResult] = useState<string>("");
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const datasetInputRef = useRef<HTMLInputElement>(null);
 
   const dirty = content !== savedContent;
   const dirtyRef = useRef(dirty);
@@ -671,6 +732,8 @@ export default function Page() {
         await openFile(action.path, previewId);
       } else if (action.type === "run") {
         await run();
+      } else if (action.type === "importFile") {
+        importInputRef.current?.click();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -790,6 +853,151 @@ export default function Page() {
     }
   }
 
+  // -- import / export ----------------------------------------------------
+  async function downloadExample(id: string, includeDataset: boolean, label: string) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const text = await apiText(
+        `/v1/examples/${encodeURIComponent(id)}/export?includeDataset=${includeDataset}`,
+      );
+      const parsed = JSON.parse(text) as {
+        files?: Record<string, string>;
+        requests?: unknown[];
+        dataset?: unknown;
+        redactedSensitiveHeaders?: boolean;
+      };
+      downloadText(`${safeFileName(label)}.example.json`, text);
+      const parts = [
+        `${Object.keys(parsed.files ?? {}).length} files`,
+        `${(parsed.requests ?? []).length} saved requests`,
+        parsed.dataset ? "with dataset" : "without dataset",
+      ];
+      setMessage(
+        `Exported ${parts.join(", ")}.${
+          parsed.redactedSensitiveHeaders ? " Sensitive request headers were removed." : ""
+        }`,
+      );
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError("");
+    setMessage("");
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text) as ImportPreview;
+      if (payload.format !== "django-playground.example") {
+        setError("This is not a Django Playground example file.");
+        return;
+      }
+      setImportPreview(payload);
+    } catch {
+      setError("This is not valid JSON.");
+    }
+  }
+
+  async function performImport() {
+    if (!importPreview) return;
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api<ExampleMeta>("/v1/examples/import", jsonPost(importPreview));
+      await api(`/v1/examples/${encodeURIComponent(created.id)}/activate`, { method: "POST" });
+      setImportPreview(null);
+      setPreviewId(null);
+      await refreshExamples();
+      await loadWorkspace();
+      setMessage(`Imported "${created.name}".`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportActiveDataset() {
+    if (!workspace) return;
+    setDatasetBusy(true);
+    setError("");
+    setMessage("");
+    setDatasetResult("");
+    try {
+      const text = await apiText(`/v1/examples/${encodeURIComponent(workspace.id)}/dataset/export`);
+      const parsed = JSON.parse(text) as { records?: unknown[] };
+      downloadText(`${safeFileName(workspace.name)}.dataset.json`, text);
+      setMessage(`Exported ${(parsed.records ?? []).length} records.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDatasetBusy(false);
+    }
+  }
+
+  async function handleDatasetFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !workspace) return;
+    setError("");
+    setMessage("");
+    setDatasetResult("");
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text) as unknown;
+      const preview = await api<DatasetPreview>(
+        `/v1/examples/${encodeURIComponent(workspace.id)}/dataset/preview`,
+        jsonPost(payload),
+      );
+      setDatasetPayload(payload);
+      setDatasetPreview(preview);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function confirmDatasetReplace() {
+    if (!workspace || datasetPayload === null) return;
+    setDatasetBusy(true);
+    setError("");
+    try {
+      const result = await api<{ success: boolean; loaded: number; restarted: boolean }>(
+        `/v1/examples/${encodeURIComponent(workspace.id)}/dataset/replace`,
+        jsonPost(datasetPayload),
+      );
+      setDatasetPreview(null);
+      setDatasetPayload(null);
+      setDatasetResult(
+        `Loaded ${result.loaded} records into ${workspace.name}.${
+          result.restarted ? " Django restarted." : ""
+        }`,
+      );
+      setMessage("Dataset replaced.");
+      await refreshTables();
+      await refreshStatus();
+      if (selectedTable) {
+        try {
+          await openTable(selectedTable);
+        } catch {
+          /* table may no longer exist */
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDatasetBusy(false);
+    }
+  }
+
   const stateClass = `state-${status.state}`;
 
   if (booting) {
@@ -812,7 +1020,7 @@ export default function Page() {
       <aside className="sidebar">
         <h1>Django Playground</h1>
         <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-          Local lab — Phase 3
+          Local lab — Phase 4
         </p>
 
         <div className="section-head">
@@ -931,6 +1139,12 @@ export default function Page() {
               >
                 Try &amp; Run
               </button>
+              <button
+                disabled={busy}
+                onClick={() => void downloadExample(previewExample.id, false, previewExample.name)}
+              >
+                Export
+              </button>
               <span className="spacer" />
               <button
                 disabled={busy}
@@ -948,6 +1162,23 @@ export default function Page() {
               </button>
               <button onClick={stop} disabled={busy || status.state === "stopped"}>
                 Stop
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setExportIncludeDataset(false);
+                  setExportOpen(true);
+                }}
+                title="Download this example as a JSON file"
+              >
+                Export
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => guard({ type: "importFile" })}
+                title="Import an example from a JSON file"
+              >
+                Import
               </button>
               <span className="spacer" />
               {dirty && <span className="warn">Unsaved changes</span>}
@@ -1244,11 +1475,27 @@ export default function Page() {
                         >
                           {dbBusy ? "Working..." : "Apply DB Changes"}
                         </button>
+                        <button
+                          disabled={datasetBusy || dbBusy}
+                          onClick={() => void exportActiveDataset()}
+                          title="Download the demo data as a JSON fixture"
+                        >
+                          Export Dataset
+                        </button>
+                        <button
+                          disabled={datasetBusy || dbBusy}
+                          onClick={() => datasetInputRef.current?.click()}
+                          title="Replace the demo data from a JSON fixture"
+                        >
+                          Import Dataset
+                        </button>
                       </div>
                       <span className="muted" style={{ fontSize: 12 }}>
                         {tables.length} tables
                       </span>
                     </div>
+
+                    {datasetResult && <div className="success">{datasetResult}</div>}
 
                     {migration && (
                       <div className="stack">
@@ -1550,6 +1797,146 @@ export default function Page() {
           </div>
         </div>
       )}
+
+      {exportOpen && workspace && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Export example</h2>
+            <p className="muted">
+              Download <strong>{workspace.name}</strong> as a single JSON file.
+            </p>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={exportIncludeDataset}
+                onChange={(event) => setExportIncludeDataset(event.target.checked)}
+              />
+              Include the current dataset (database rows)
+            </label>
+            <div className="notice" style={{ marginTop: 10 }}>
+              Saved requests are exported without sensitive headers (Authorization, Cookie, …).
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={() =>
+                  void downloadExample(
+                    workspace.id,
+                    exportIncludeDataset,
+                    workspace.name,
+                  ).then((ok) => {
+                    if (ok) setExportOpen(false);
+                  })
+                }
+              >
+                Download
+              </button>
+              <button onClick={() => setExportOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {importPreview && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Import example</h2>
+            <div className="stack">
+              <div>
+                <strong>{importPreview.metadata?.name || "(unnamed example)"}</strong>
+                {importPreview.metadata?.description ? (
+                  <span className="muted"> — {importPreview.metadata.description}</span>
+                ) : null}
+              </div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                {Object.keys(importPreview.files ?? {}).length} files •{" "}
+                {(importPreview.requests ?? []).length} saved requests •{" "}
+                {importPreview.dataset
+                  ? `dataset with ${importPreview.dataset.records?.length ?? 0} records`
+                  : "no dataset"}
+              </div>
+              <div className="notice">
+                Importing always creates a new example. Your existing examples are never overwritten.
+              </div>
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button className="primary" disabled={busy} onClick={() => void performImport()}>
+                Import
+              </button>
+              <button onClick={() => setImportPreview(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {datasetPreview && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Import dataset</h2>
+            <div className="stack">
+              <p className="muted" style={{ margin: 0 }}>
+                This replaces <strong>all</strong> data in{" "}
+                <strong>{workspace?.name ?? "this example"}</strong>. The current rows are deleted
+                first, then the file is loaded.
+              </p>
+              <div className="muted" style={{ fontSize: 12 }}>
+                {datasetPreview.recordCount} records
+                {datasetPreview.records.length > 0
+                  ? `: ${datasetPreview.records
+                      .map((entry) => `${entry.model} × ${entry.count}`)
+                      .join(", ")}`
+                  : ""}
+              </div>
+              {!datasetPreview.databaseReady && (
+                <div className="notice">
+                  No database yet. It will be prepared before the data is loaded.
+                </div>
+              )}
+              {datasetPreview.databaseReady && !datasetPreview.compatible && (
+                <div className="error-text">
+                  Incompatible: unknown models {datasetPreview.missingModels.join(", ")}. Apply DB
+                  Changes first.
+                </div>
+              )}
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button
+                className="danger"
+                disabled={
+                  datasetBusy || (datasetPreview.databaseReady && !datasetPreview.compatible)
+                }
+                onClick={() => void confirmDatasetReplace()}
+              >
+                {datasetBusy ? "Working..." : "Replace dataset"}
+              </button>
+              <button
+                onClick={() => {
+                  setDatasetPreview(null);
+                  setDatasetPayload(null);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: "none" }}
+        onChange={(event) => void handleImportFile(event)}
+      />
+      <input
+        ref={datasetInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: "none" }}
+        onChange={(event) => void handleDatasetFile(event)}
+      />
     </div>
   );
 }

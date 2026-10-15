@@ -2,8 +2,9 @@
 
 A personal, local, single-user backend lab for running real Django/DRF code in
 Docker and exercising it from the browser. This repository implements Phase 1
-(PRD 01 — Foundation & Runner), Phase 2 (PRD 02 — Examples Management) and
-Phase 3 (PRD 03 — API Tester & SQLite Explorer).
+(PRD 01 — Foundation & Runner), Phase 2 (PRD 02 — Examples Management),
+Phase 3 (PRD 03 — API Tester & SQLite Explorer) and Phase 4 (PRD 04 — Import &
+Export).
 
 ## Requirements
 
@@ -59,6 +60,32 @@ http://localhost:3000
 Try the seeded examples end to end: open **Models & ORM** or **CRUD API**, press **Try & Run**, then use
 the **API** tab to hit `/api/books/` or `/api/items/` (the CRUD template supports `POST`, `PATCH` and `DELETE` too).
 
+## What you can do (Phase 4 — Import & Export)
+
+Everything is a single versioned JSON file; nothing leaves your machine.
+
+- **Export an example**: press **Export** in the top bar. The download always includes the example's
+  source files and its saved requests, and you can tick **Include the current dataset** to also bring the
+  `demo` database rows along (off by default). Built-in examples can be exported too (files only).
+- **Sensitive headers are stripped**: `Authorization`, `Cookie`, `Proxy-Authorization`, `Set-Cookie`,
+  `X-Api-Key` and `X-Auth-Token` are removed from exported saved requests, and the UI tells you when that
+  happened. Exported files never contain `db.sqlite3`, `__pycache__` or other generated files.
+- **Import an example**: press **Import**, pick a `.json` file, review the summary (name, file count, saved
+  requests, dataset) and confirm. Import **always creates a new example** with a new id — your existing
+  examples are never modified or overwritten. A Python error inside an imported example is fine: it is
+  saved and only fails when you press **Run**. If the example carries a dataset and that dataset cannot be
+  loaded, the whole import is rolled back and nothing is left behind.
+- **Export / Import Dataset** (in the **Database** tab) move just the `demo` app data as a Django fixture.
+  Import is **replace-only**: it previews the incoming records (counts per model and missing models),
+  warns that the current rows will be deleted, then loads the file. The database is backed up first, so a
+  failed load (unknown model, bad fixture) leaves your **previous data untouched**.
+- Malformed files, wrong format/version, disallowed file types, path traversal and oversized imports
+  (over 5 MB) are all rejected by the backend with a clear message.
+
+Round-trip example: open **CRUD API**, **Try & Run**, hit `POST /api/items/`, then **Export** with
+**Include the current dataset** ticked, **Import** it back, and run the new example — it comes back with the
+source, the saved requests and the rows you added.
+
 ## Architecture
 
 ```text
@@ -79,6 +106,8 @@ docker compose
   real schema and pagination values are bound parameters, so the viewer cannot run arbitrary SQL.
 - API requests are forwarded only to `127.0.0.1:8001`; hop-by-hop and `Host` headers are stripped, the
   response body is capped at 1 MB and requests time out after 10 s.
+- Import/Export reads and writes only within an example's own directory; import paths are validated
+  (relative, allowed extensions, no `__pycache__`/`db.sqlite3`) before a single file is written.
 - The BFF forwards UI requests to `http://runner:8100` over the internal Docker
   network; that port is **not** published on the host.
 
@@ -115,9 +144,10 @@ docker compose run --rm web npm run typecheck
 
 ## Limitations (current)
 
-- Phases 1–3 are complete; Import/Export is in PRD 04.
+- Phases 1–4 are complete. Not included (by design): Postman Collections, ZIP export and a Scenario Manager.
 - Database Explorer is **read-only** — there is no SQL editor or row editing in the MVP, and only SQLite
   is supported.
+- Dataset import is **replace-only** (no merge), and only covers the `demo` app.
 - The migration action only targets the `demo` app.
 - The Django runtime is for **personal, local** use and is not a secure sandbox for untrusted code.
 - The runner has no access to the Docker socket and does not run privileged.

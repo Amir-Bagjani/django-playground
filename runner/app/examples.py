@@ -75,6 +75,9 @@ def _template_meta(template_id: str, read_only: bool) -> dict[str, Any]:
 
 
 def default_request_path(meta: dict[str, Any]) -> str:
+    explicit = meta.get("defaultRequestPath")
+    if isinstance(explicit, str) and explicit.startswith("/"):
+        return explicit
     template_id = meta.get("sourceTemplateId") or BLANK_TEMPLATE_ID
     template = TEMPLATES.get(template_id)
     if template is not None:
