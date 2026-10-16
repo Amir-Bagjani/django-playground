@@ -20,3 +20,6 @@ venv/
 # Local databases
 *.sqlite3
 db.sqlite3
+
+# Handoff notes
+Handoff/

@@ -1,6 +1,78 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+
+import dynamic from "next/dynamic";
+
+import {
+  Group,
+  Panel,
+  Separator,
+  useDefaultLayout,
+  usePanelRef,
+  type LayoutStorage,
+} from "react-resizable-panels";
+
+import { FileTree, type FileEntry } from "./components/file-tree";
+import { KebabMenu } from "./components/kebab-menu";
+import {
+  ChevronIcon,
+  CloseIcon,
+  CollapseIcon,
+  CopyIcon,
+  ExpandIcon,
+  FileIcon,
+  PlayIcon,
+  PlusIcon,
+  RefreshIcon,
+  RestartIcon,
+  SpinnerIcon,
+  StopIcon,
+} from "./components/icons";
+import { languageForPath } from "./components/language";
+
+const CodeEditor = dynamic(() => import("./components/code-editor").then((mod) => mod.CodeEditor), {
+  ssr: false,
+  loading: () => <div className="editor-loading">Loading editor…</div>,
+});
+
+const COMPACT_QUERY = "(max-width: 900px)";
+
+const layoutStorage: LayoutStorage = {
+  getItem(key) {
+    if (typeof window === "undefined") return null;
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key, value) {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      /* ignore storage failures */
+    }
+  },
+};
+
+function useCompactLayout() {
+  const [compact, setCompact] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(COMPACT_QUERY).matches;
+  });
+
+  useEffect(() => {
+    const media = window.matchMedia(COMPACT_QUERY);
+    const update = () => setCompact(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return compact;
+}
 
 type RuntimeState = "stopped" | "starting" | "running" | "error";
 
@@ -38,11 +110,6 @@ interface Workspace {
   defaultOpenFile: string;
   defaultRequestPath: string;
   runtime: RuntimeStatus;
-}
-
-interface FileEntry {
-  path: string;
-  editable: boolean;
 }
 
 interface HttpResult {
@@ -137,17 +204,42 @@ interface DatasetPreview {
 
 type Tab = "api" | "database" | "log";
 
+interface OpenTab {
+  key: string;
+  exampleId: string;
+  path: string;
+  name: string;
+}
+
 type PendingAction =
   | { type: "openPersonal"; id: string }
   | { type: "openBuiltin"; id: string }
-  | { type: "openFile"; path: string }
   | { type: "run" }
   | { type: "importFile" }
   | null;
 
+interface CloseRequest {
+  keys: string[];
+  message: string;
+}
+
+interface Toast {
+  id: number;
+  kind: "success" | "error" | "info";
+  text: string;
+}
+
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH"]);
 const DB_PAGE_SIZE = 50;
+
+function tabKey(exampleId: string, path: string): string {
+  return `file:///${exampleId}/${path}`;
+}
+
+function tabName(path: string): string {
+  return path.split("/").pop() || path;
+}
 
 const STATE_LABEL: Record<RuntimeState, string> = {
   stopped: "Stopped",
@@ -261,17 +353,23 @@ export default function Page() {
     pid: null,
   });
   const [files, setFiles] = useState<FileEntry[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>("");
-  const [content, setContent] = useState<string>("");
-  const [savedContent, setSavedContent] = useState<string>("");
+  const [tabs, setTabs] = useState<OpenTab[]>([]);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [dirtyKeys, setDirtyKeys] = useState<string[]>([]);
+  const [wordWrap, setWordWrap] = useState<boolean>(false);
+  const [closeRequest, setCloseRequest] = useState<CloseRequest | null>(null);
+  const [quickOpen, setQuickOpen] = useState<boolean>(false);
+  const [quickQuery, setQuickQuery] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
-  const [message, setMessage] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [booting, setBooting] = useState<boolean>(true);
   const [busy, setBusy] = useState<boolean>(false);
   const [runnerDown, setRunnerDown] = useState<boolean>(false);
   const [pending, setPending] = useState<PendingAction>(null);
   const [tab, setTab] = useState<Tab>("api");
+  const [builtinOpen, setBuiltinOpen] = useState<boolean>(true);
+  const [personalOpen, setPersonalOpen] = useState<boolean>(true);
+  const [filesOpen, setFilesOpen] = useState<boolean>(true);
 
   // API tester state
   const [reqMethod, setReqMethod] = useState<string>("GET");
@@ -313,18 +411,146 @@ export default function Page() {
   const [datasetPayload, setDatasetPayload] = useState<unknown>(null);
   const [datasetPreview, setDatasetPreview] = useState<DatasetPreview | null>(null);
   const [datasetBusy, setDatasetBusy] = useState<boolean>(false);
-  const [datasetResult, setDatasetResult] = useState<string>("");
   const importInputRef = useRef<HTMLInputElement>(null);
   const datasetInputRef = useRef<HTMLInputElement>(null);
 
-  const dirty = content !== savedContent;
-  const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
+  const tabsRef = useRef<OpenTab[]>([]);
+  const activeKeyRef = useRef<string | null>(null);
+  const documentsRef = useRef<Record<string, string>>({});
+  const savedDocsRef = useRef<Record<string, string>>({});
+  const dirtyKeysRef = useRef<Set<string>>(new Set());
+  tabsRef.current = tabs;
+  activeKeyRef.current = activeKey;
 
   const previewExample = previewId
     ? examples.builtIn.find((item) => item.id === previewId) ?? null
     : null;
   const loadedRequest = savedRequests.find((item) => item.id === loadedRequestId) ?? null;
+
+  const activeTab = tabs.find((item) => item.key === activeKey) ?? null;
+  const activeValue = activeKey ? documentsRef.current[activeKey] ?? "" : "";
+  const openPaths = useMemo(() => tabs.map((item) => item.key), [tabs]);
+  const contextId = previewId ?? workspace?.id ?? "";
+  const editableFiles = files.filter((item) => item.editable);
+  const anyDirty = dirtyKeys.length > 0;
+  const anyDirtyRef = useRef(anyDirty);
+  anyDirtyRef.current = anyDirty;
+
+  const toastKeysRef = useRef<Set<string>>(new Set());
+  const toastTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const toastIdRef = useRef(0);
+
+  const dismissToast = useCallback((id: number) => {
+    const timer = toastTimersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      toastTimersRef.current.delete(id);
+    }
+    setToasts((previous) => {
+      const target = previous.find((item) => item.id === id);
+      if (target) toastKeysRef.current.delete(`${target.kind}:${target.text}`);
+      return previous.filter((item) => item.id !== id);
+    });
+  }, []);
+
+  const pushToast = useCallback((kind: Toast["kind"], text: string) => {
+    const message = (text ?? "").trim();
+    if (!message) return;
+    const dedupeKey = `${kind}:${message}`;
+    if (toastKeysRef.current.has(dedupeKey)) return;
+    toastKeysRef.current.add(dedupeKey);
+    const id = toastIdRef.current + 1;
+    toastIdRef.current = id;
+    setToasts((previous) => [...previous, { id, kind, text: message }]);
+    const ttl = kind === "error" ? 9000 : 4200;
+    const timer = setTimeout(() => {
+      toastTimersRef.current.delete(id);
+      toastKeysRef.current.delete(dedupeKey);
+      setToasts((previous) => previous.filter((item) => item.id !== id));
+    }, ttl);
+    toastTimersRef.current.set(id, timer);
+  }, []);
+
+  const notifySuccess = useCallback((text: string) => pushToast("success", text), [pushToast]);
+  const notifyError = useCallback((text: string) => pushToast("error", text), [pushToast]);
+
+  useEffect(
+    () => () => {
+      toastTimersRef.current.forEach((timer) => clearTimeout(timer));
+      toastTimersRef.current.clear();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("playground.sidebar");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        builtin?: boolean;
+        personal?: boolean;
+        files?: boolean;
+      };
+      if (typeof parsed.builtin === "boolean") setBuiltinOpen(parsed.builtin);
+      if (typeof parsed.personal === "boolean") setPersonalOpen(parsed.personal);
+      if (typeof parsed.files === "boolean") setFilesOpen(parsed.files);
+    } catch {
+      /* ignore malformed storage */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "playground.sidebar",
+        JSON.stringify({ builtin: builtinOpen, personal: personalOpen, files: filesOpen }),
+      );
+    } catch {
+      /* ignore storage failures */
+    }
+  }, [builtinOpen, personalOpen, filesOpen]);
+
+  const compact = useCompactLayout();
+
+  const sidebarPanelRef = usePanelRef();
+  const rightPanelRef = usePanelRef();
+  const focusSavedRef = useRef<{ sidebar: number; right: number } | null>(null);
+  const [focusMode, setFocusMode] = useState<boolean>(false);
+
+  const outerLayout = useDefaultLayout({
+    id: "playground.layout.outer",
+    panelIds: ["sidebar", "main"],
+    onlySaveAfterUserInteractions: true,
+    storage: layoutStorage,
+  });
+  const innerLayout = useDefaultLayout({
+    id: "playground.layout.inner",
+    panelIds: ["editor", "right"],
+    onlySaveAfterUserInteractions: true,
+    storage: layoutStorage,
+  });
+
+  const toggleFocus = useCallback(() => {
+    const sidebar = sidebarPanelRef.current;
+    const right = rightPanelRef.current;
+    if (!focusMode) {
+      focusSavedRef.current = {
+        sidebar: sidebar?.getSize().asPercentage ?? 20,
+        right: right?.getSize().asPercentage ?? 32,
+      };
+      sidebar?.collapse();
+      right?.resize(compact ? "64" : "58");
+      setFocusMode(true);
+    } else {
+      const saved = focusSavedRef.current;
+      sidebar?.expand();
+      if (saved) {
+        right?.resize(String(saved.right));
+        sidebar?.resize(String(saved.sidebar));
+      }
+      setFocusMode(false);
+    }
+  }, [compact, focusMode, sidebarPanelRef, rightPanelRef]);
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -375,14 +601,23 @@ export default function Page() {
     setMigration(null);
   }, []);
 
-  const openFile = useCallback(async (path: string, exampleId?: string | null) => {
-    const suffix = exampleId ? `&exampleId=${encodeURIComponent(exampleId)}` : "";
-    const data = await api<{ content: string; path: string }>(
-      `/v1/files/content?path=${encodeURIComponent(path)}${suffix}`,
-    );
-    setCurrentPath(data.path);
-    setContent(data.content);
-    setSavedContent(data.content);
+  const openFile = useCallback(async (path: string, exampleId: string) => {
+    const key = tabKey(exampleId, path);
+    if (!(key in documentsRef.current)) {
+      const data = await api<{ content: string; path: string }>(
+        `/v1/files/content?path=${encodeURIComponent(path)}&exampleId=${encodeURIComponent(
+          exampleId,
+        )}`,
+      );
+      documentsRef.current[key] = data.content;
+      savedDocsRef.current[key] = data.content;
+      setTabs((previous) =>
+        previous.some((item) => item.key === key)
+          ? previous
+          : [...previous, { key, exampleId, path: data.path, name: tabName(data.path) }],
+      );
+    }
+    setActiveKey(key);
   }, []);
 
   const loadWorkspace = useCallback(async () => {
@@ -397,7 +632,7 @@ export default function Page() {
       list.files.find((f) => f.path === ws.defaultOpenFile && f.editable)?.path ??
       list.files.find((f) => f.editable)?.path;
     if (target) {
-      await openFile(target);
+      await openFile(target, ws.id);
     }
     await refreshLogs();
   }, [loadSavedRequests, openFile, refreshLogs, resetApiAndDb]);
@@ -422,14 +657,13 @@ export default function Page() {
 
   const bootstrap = useCallback(async () => {
     setBooting(true);
-    setError("");
     try {
       await refreshExamples();
       await loadWorkspace();
       setPreviewId(null);
       setRunnerDown(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
       setRunnerDown(true);
     } finally {
       setBooting(false);
@@ -450,7 +684,7 @@ export default function Page() {
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if (dirtyRef.current) {
+      if (anyDirtyRef.current) {
         event.preventDefault();
         event.returnValue = "";
       }
@@ -460,42 +694,133 @@ export default function Page() {
   }, []);
 
   // -- file editor --------------------------------------------------------
-  const save = useCallback(async (): Promise<boolean> => {
-    if (!currentPath || previewId) return false;
+  const closeAllTabs = useCallback(() => {
+    for (const tab of tabsRef.current) {
+      delete documentsRef.current[tab.key];
+      delete savedDocsRef.current[tab.key];
+    }
+    dirtyKeysRef.current = new Set();
+    setDirtyKeys([]);
+    setTabs([]);
+    setActiveKey(null);
+    setCloseRequest(null);
+  }, []);
+
+  const updateActiveValue = useCallback((value: string) => {
+    const key = activeKeyRef.current;
+    if (!key) return;
+    documentsRef.current[key] = value;
+    const isDirty = value !== savedDocsRef.current[key];
+    const wasDirty = dirtyKeysRef.current.has(key);
+    if (isDirty === wasDirty) return;
+    if (isDirty) dirtyKeysRef.current.add(key);
+    else dirtyKeysRef.current.delete(key);
+    setDirtyKeys(Array.from(dirtyKeysRef.current));
+  }, []);
+
+  const saveTab = useCallback(
+    async (key: string): Promise<boolean> => {
+      if (previewId || !dirtyKeysRef.current.has(key)) return !previewId;
+      const tab = tabsRef.current.find((item) => item.key === key);
+      if (!tab) return false;
+      try {
+        await api("/v1/files/content", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ path: tab.path, content: documentsRef.current[key] ?? "" }),
+        });
+        savedDocsRef.current[key] = documentsRef.current[key] ?? "";
+        dirtyKeysRef.current.delete(key);
+        setDirtyKeys(Array.from(dirtyKeysRef.current));
+        return true;
+      } catch (err) {
+        notifyError(err instanceof Error ? err.message : String(err));
+        return false;
+      }
+    },
+    [previewId],
+  );
+
+  const saveAllDirty = useCallback(async (): Promise<boolean> => {
+    if (previewId || dirtyKeysRef.current.size === 0) return true;
     setBusy(true);
-    setError("");
     try {
-      await api("/v1/files/content", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ path: currentPath, content }),
-      });
-      setSavedContent(content);
-      setMessage("Saved.");
+      for (const key of Array.from(dirtyKeysRef.current)) {
+        const ok = await saveTab(key);
+        if (!ok) return false;
+      }
+      notifySuccess("Saved.");
       return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      return false;
     } finally {
       setBusy(false);
     }
-  }, [content, currentPath, previewId]);
+  }, [previewId, saveTab]);
+
+  const saveAllDirtyRef = useRef(saveAllDirty);
+  saveAllDirtyRef.current = saveAllDirty;
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey)) return;
+      const key = event.key.toLowerCase();
+      if (key === "s") {
+        event.preventDefault();
+        void saveAllDirtyRef.current();
+      } else if (key === "p") {
+        event.preventDefault();
+        setQuickQuery("");
+        setQuickOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const activateTab = useCallback((key: string) => {
+    setActiveKey(key);
+  }, []);
+
+  const doCloseTab = useCallback((key: string) => {
+    const list = tabsRef.current;
+    const index = list.findIndex((item) => item.key === key);
+    if (index < 0) return;
+    const next = list.filter((item) => item.key !== key);
+    delete documentsRef.current[key];
+    delete savedDocsRef.current[key];
+    dirtyKeysRef.current.delete(key);
+    setDirtyKeys(Array.from(dirtyKeysRef.current));
+    setTabs(next);
+    if (activeKeyRef.current === key) {
+      const fallback = next[index] ?? next[index - 1] ?? null;
+      setActiveKey(fallback ? fallback.key : null);
+    }
+  }, []);
+
+  const requestCloseTab = useCallback(
+    (key: string) => {
+      const tab = tabsRef.current.find((item) => item.key === key);
+      if (tab && dirtyKeysRef.current.has(key)) {
+        setCloseRequest({ keys: [key], message: `"${tab.name}" has unsaved changes.` });
+        return;
+      }
+      doCloseTab(key);
+    },
+    [doCloseTab],
+  );
 
   const run = useCallback(async () => {
     setBusy(true);
-    setError("");
-    setMessage("");
     try {
       const next = await api<RuntimeStatus>("/v1/runtime/start", { method: "POST" });
       setStatus(next);
       await refreshLogs();
       if (next.state === "error") {
-        setError(next.error ?? "Django failed to start.");
+        notifyError(next.error ?? "Django failed to start.");
       } else if (next.state === "running") {
-        setMessage("Django is running.");
+        notifySuccess("Django is running.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -503,14 +828,13 @@ export default function Page() {
 
   const stop = useCallback(async () => {
     setBusy(true);
-    setError("");
     try {
       const next = await api<RuntimeStatus>("/v1/runtime/stop", { method: "POST" });
       setStatus(next);
       await refreshLogs();
-      setMessage("Django stopped.");
+      notifySuccess("Django stopped.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -526,27 +850,25 @@ export default function Page() {
       setTables(data.tables);
       return data.tables;
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
       return [];
     }
   }, []);
 
   const sendRequest = useCallback(async () => {
     if (!reqPath.trim()) {
-      setError("Enter a request path, for example /api/hello/.");
+      notifyError("Enter a request path, for example /api/hello/.");
       return;
     }
     if (BODY_METHODS.has(reqMethod) && reqBody.trim()) {
       try {
         JSON.parse(reqBody);
       } catch {
-        setError("Request body is not valid JSON.");
+        notifyError("Request body is not valid JSON.");
         return;
       }
     }
     setBusy(true);
-    setError("");
-    setMessage("");
     setResult(null);
     try {
       const data = await api<HttpResult>(
@@ -561,7 +883,7 @@ export default function Page() {
       setResult(data);
       if (tables.length > 0) void refreshTables();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -578,7 +900,6 @@ export default function Page() {
 
   const createSaved = useCallback(async () => {
     setBusy(true);
-    setError("");
     try {
       const created = await api<SavedRequest>(
         "/v1/requests",
@@ -594,9 +915,9 @@ export default function Page() {
       setSaveName("");
       await loadSavedRequests();
       setLoadedRequestId(created.id);
-      setMessage(`Saved request "${created.name}".`);
+      notifySuccess(`Saved request "${created.name}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -605,7 +926,6 @@ export default function Page() {
   const updateSaved = useCallback(async () => {
     if (!loadedRequestId) return;
     setBusy(true);
-    setError("");
     try {
       await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
         method: "PATCH",
@@ -618,9 +938,9 @@ export default function Page() {
         }),
       });
       await loadSavedRequests();
-      setMessage("Saved request updated.");
+      notifySuccess("Saved request updated.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -629,7 +949,6 @@ export default function Page() {
   const renameSaved = useCallback(async () => {
     if (!loadedRequestId) return;
     setBusy(true);
-    setError("");
     try {
       await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
         method: "PATCH",
@@ -638,9 +957,9 @@ export default function Page() {
       });
       setRenameOpen(false);
       await loadSavedRequests();
-      setMessage("Saved request renamed.");
+      notifySuccess("Saved request renamed.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -649,14 +968,13 @@ export default function Page() {
   const deleteSaved = useCallback(
     async (id: string) => {
       setBusy(true);
-      setError("");
       try {
         await api(`/v1/requests/${encodeURIComponent(id)}`, { method: "DELETE" });
         if (loadedRequestId === id) setLoadedRequestId(null);
         await loadSavedRequests();
-        setMessage("Saved request deleted.");
+        notifySuccess("Saved request deleted.");
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        notifyError(err instanceof Error ? err.message : String(err));
       } finally {
         setBusy(false);
       }
@@ -672,7 +990,7 @@ export default function Page() {
       );
       setRowsPage(page);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     }
   }, []);
 
@@ -686,7 +1004,7 @@ export default function Page() {
       } catch (err) {
         setTableDetail(null);
         setRowsPage(null);
-        setError(err instanceof Error ? err.message : String(err));
+        notifyError(err instanceof Error ? err.message : String(err));
       }
     },
     [loadRows],
@@ -694,12 +1012,11 @@ export default function Page() {
 
   const applyMigrations = useCallback(async () => {
     setDbBusy(true);
-    setError("");
-    setMessage("");
     try {
       const data = await api<MigrationResult>("/v1/database/migrate", { method: "POST" });
       setMigration(data);
-      setMessage(data.success ? "Migrations applied." : "Migration failed — see the log.");
+      if (data.success) notifySuccess("Migrations applied.");
+      else notifyError("Migration failed — see the log.");
       await refreshTables();
       await refreshStatus();
       if (selectedTable) {
@@ -710,7 +1027,7 @@ export default function Page() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setDbBusy(false);
     }
@@ -722,34 +1039,34 @@ export default function Page() {
     if (!action) return;
     try {
       if (action.type === "openPersonal") {
+        closeAllTabs();
         await api(`/v1/examples/${encodeURIComponent(action.id)}/activate`, { method: "POST" });
         setPreviewId(null);
         await refreshExamples();
         await loadWorkspace();
       } else if (action.type === "openBuiltin") {
+        closeAllTabs();
         await loadPreview(action.id);
-      } else if (action.type === "openFile") {
-        await openFile(action.path, previewId);
       } else if (action.type === "run") {
         await run();
       } else if (action.type === "importFile") {
         importInputRef.current?.click();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     }
   }
 
   const guard = useCallback(
     (action: PendingAction) => {
-      if (dirty && !previewId) {
+      if (anyDirtyRef.current && !previewId) {
         setPending(action);
         return;
       }
       void perform(action);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dirty, previewId, perform],
+    [previewId, perform],
   );
 
   async function resolvePending(kind: "save" | "discard" | "cancel") {
@@ -759,15 +1076,30 @@ export default function Page() {
       return;
     }
     if (kind === "save") {
-      const ok = await save();
+      const ok = await saveAllDirty();
       if (!ok) return;
     }
     await perform(action);
   }
 
+  async function resolveClose(kind: "save" | "discard" | "cancel") {
+    const request = closeRequest;
+    if (!request || kind === "cancel") {
+      setCloseRequest(null);
+      return;
+    }
+    setCloseRequest(null);
+    if (kind === "save") {
+      for (const key of request.keys) {
+        const ok = await saveTab(key);
+        if (!ok) return;
+      }
+    }
+    for (const key of request.keys) doCloseTab(key);
+  }
+
   async function submitNewExample() {
     setBusy(true);
-    setError("");
     try {
       const created = await api<ExampleMeta>(
         "/v1/examples",
@@ -779,11 +1111,12 @@ export default function Page() {
       setNewDesc("");
       setNewTemplate("scratch");
       setPreviewId(null);
+      closeAllTabs();
       await refreshExamples();
       await loadWorkspace();
-      setMessage(`Created "${created.name}".`);
+      notifySuccess(`Created "${created.name}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -791,7 +1124,6 @@ export default function Page() {
 
   async function duplicateExample(id: string, activate: boolean, thenRun: boolean) {
     setBusy(true);
-    setError("");
     try {
       const created = await api<ExampleMeta>(
         `/v1/examples/${encodeURIComponent(id)}/duplicate`,
@@ -800,15 +1132,16 @@ export default function Page() {
       if (activate) {
         await api(`/v1/examples/${encodeURIComponent(created.id)}/activate`, { method: "POST" });
         setPreviewId(null);
+        closeAllTabs();
         await refreshExamples();
         await loadWorkspace();
         if (thenRun) await run();
       } else {
         await refreshExamples();
       }
-      setMessage(`Created "${created.name}".`);
+      notifySuccess(`Created "${created.name}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -817,7 +1150,6 @@ export default function Page() {
   async function submitExampleRename() {
     if (!renameTarget) return;
     setBusy(true);
-    setError("");
     try {
       await api(`/v1/examples/${encodeURIComponent(renameTarget.id)}`, {
         method: "PATCH",
@@ -827,9 +1159,9 @@ export default function Page() {
       setRenameTarget(null);
       await refreshExamples();
       if (workspace?.id === renameTarget.id) await loadWorkspace();
-      setMessage("Example updated.");
+      notifySuccess("Example updated.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -838,16 +1170,16 @@ export default function Page() {
   async function confirmDelete() {
     if (!deleteTarget) return;
     setBusy(true);
-    setError("");
     try {
       await api(`/v1/examples/${encodeURIComponent(deleteTarget.id)}`, { method: "DELETE" });
       setDeleteTarget(null);
       setPreviewId(null);
+      closeAllTabs();
       await refreshExamples();
       await loadWorkspace();
-      setMessage("Example deleted.");
+      notifySuccess("Example deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -856,8 +1188,6 @@ export default function Page() {
   // -- import / export ----------------------------------------------------
   async function downloadExample(id: string, includeDataset: boolean, label: string) {
     setBusy(true);
-    setError("");
-    setMessage("");
     try {
       const text = await apiText(
         `/v1/examples/${encodeURIComponent(id)}/export?includeDataset=${includeDataset}`,
@@ -874,14 +1204,14 @@ export default function Page() {
         `${(parsed.requests ?? []).length} saved requests`,
         parsed.dataset ? "with dataset" : "without dataset",
       ];
-      setMessage(
+      notifySuccess(
         `Exported ${parts.join(", ")}.${
           parsed.redactedSensitiveHeaders ? " Sensitive request headers were removed." : ""
         }`,
       );
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
       setBusy(false);
@@ -892,35 +1222,33 @@ export default function Page() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    setError("");
-    setMessage("");
     try {
       const text = await file.text();
       const payload = JSON.parse(text) as ImportPreview;
       if (payload.format !== "django-playground.example") {
-        setError("This is not a Django Playground example file.");
+        notifyError("This is not a Django Playground example file.");
         return;
       }
       setImportPreview(payload);
     } catch {
-      setError("This is not valid JSON.");
+      notifyError("This is not valid JSON.");
     }
   }
 
   async function performImport() {
     if (!importPreview) return;
     setBusy(true);
-    setError("");
     try {
       const created = await api<ExampleMeta>("/v1/examples/import", jsonPost(importPreview));
       await api(`/v1/examples/${encodeURIComponent(created.id)}/activate`, { method: "POST" });
       setImportPreview(null);
       setPreviewId(null);
+      closeAllTabs();
       await refreshExamples();
       await loadWorkspace();
-      setMessage(`Imported "${created.name}".`);
+      notifySuccess(`Imported "${created.name}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -929,16 +1257,13 @@ export default function Page() {
   async function exportActiveDataset() {
     if (!workspace) return;
     setDatasetBusy(true);
-    setError("");
-    setMessage("");
-    setDatasetResult("");
     try {
       const text = await apiText(`/v1/examples/${encodeURIComponent(workspace.id)}/dataset/export`);
       const parsed = JSON.parse(text) as { records?: unknown[] };
       downloadText(`${safeFileName(workspace.name)}.dataset.json`, text);
-      setMessage(`Exported ${(parsed.records ?? []).length} records.`);
+      notifySuccess(`Exported ${(parsed.records ?? []).length} records.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setDatasetBusy(false);
     }
@@ -948,9 +1273,6 @@ export default function Page() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !workspace) return;
-    setError("");
-    setMessage("");
-    setDatasetResult("");
     try {
       const text = await file.text();
       const payload = JSON.parse(text) as unknown;
@@ -961,14 +1283,13 @@ export default function Page() {
       setDatasetPayload(payload);
       setDatasetPreview(preview);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     }
   }
 
   async function confirmDatasetReplace() {
     if (!workspace || datasetPayload === null) return;
     setDatasetBusy(true);
-    setError("");
     try {
       const result = await api<{ success: boolean; loaded: number; restarted: boolean }>(
         `/v1/examples/${encodeURIComponent(workspace.id)}/dataset/replace`,
@@ -976,12 +1297,11 @@ export default function Page() {
       );
       setDatasetPreview(null);
       setDatasetPayload(null);
-      setDatasetResult(
+      notifySuccess(
         `Loaded ${result.loaded} records into ${workspace.name}.${
           result.restarted ? " Django restarted." : ""
         }`,
       );
-      setMessage("Dataset replaced.");
       await refreshTables();
       await refreshStatus();
       if (selectedTable) {
@@ -992,137 +1312,211 @@ export default function Page() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setDatasetBusy(false);
     }
   }
 
-  const stateClass = `state-${status.state}`;
+  const runtimeLoading = busy || status.state === "starting";
 
   if (booting) {
     return (
-      <div className="layout">
-        <aside className="sidebar">
-          <h1>Django Playground</h1>
-        </aside>
-        <main className="main">
-          <div className="panel">
-            <p className="muted">Preparing runner...</p>
+      <div className="app app-booting">
+        <div className="boot-panel">
+          <div className="brand">
+            <span className="mark">D</span>
+            <h1>Django Playground</h1>
           </div>
-        </main>
+          <div className="alert info">Connecting to the runner…</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h1>Django Playground</h1>
-        <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-          Local lab — Phase 4
-        </p>
+    <div className="app">
+      <Group
+        orientation={compact ? "vertical" : "horizontal"}
+        className={`layout-group ${compact ? "layout-vertical" : "layout-horizontal"}`}
+        defaultLayout={outerLayout.defaultLayout}
+        onLayoutChanged={outerLayout.onLayoutChanged}
+      >
+        <Panel
+          id="sidebar"
+          className="pane pane-sidebar"
+          style={{ overflow: "hidden" }}
+          collapsible
+          collapsedSize={0}
+          defaultSize={compact ? 160 : 280}
+          minSize={compact ? 110 : 200}
+          maxSize={compact ? "50" : 460}
+          groupResizeBehavior="preserve-pixel-size"
+          panelRef={sidebarPanelRef}
+        >
+          <aside className="sidebar">
+            <div className="brand">
+              <span className="mark">D</span>
+              <h1>Django Playground</h1>
+            </div>
 
-        <div className="section-head">
-          <h2>Built-in Examples</h2>
+        <div className="side-scroll">
+          <section className="side-section">
+            <button
+              type="button"
+              className="side-head"
+              aria-expanded={builtinOpen}
+              onClick={() => setBuiltinOpen((value) => !value)}
+            >
+              <ChevronIcon className={`chev ${builtinOpen ? "open" : ""}`} />
+              <span>Built-in Examples</span>
+              <span className="count">{examples.builtIn.length}</span>
+            </button>
+            {builtinOpen && (
+              <div className="side-list">
+                {examples.builtIn.map((item) => (
+                  <div
+                    className={`example-item builtin ${previewId === item.id ? "active" : ""}`}
+                    key={item.id}
+                  >
+                    <button
+                      className="example-name"
+                      onClick={() => guard({ type: "openBuiltin", id: item.id })}
+                      title={item.description}
+                    >
+                      {item.name}
+                    </button>
+                    <button
+                      className="icon-btn example-copy"
+                      disabled={busy}
+                      onClick={() => void duplicateExample(item.id, true, false)}
+                      title="Create an editable copy and open it"
+                      aria-label={`Copy ${item.name}`}
+                    >
+                      <CopyIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="side-section">
+            <div className="side-head static">
+              <button
+                type="button"
+                className="side-toggle"
+                aria-expanded={personalOpen}
+                onClick={() => setPersonalOpen((value) => !value)}
+              >
+                <ChevronIcon className={`chev ${personalOpen ? "open" : ""}`} />
+                <span>My Examples</span>
+                <span className="count">{examples.personal.length}</span>
+              </button>
+              <button
+                className="icon-btn head-action"
+                disabled={busy}
+                onClick={() => setNewOpen(true)}
+                title="New example"
+              >
+                <PlusIcon /> New
+              </button>
+            </div>
+            {personalOpen && (
+              <div className="side-list">
+                {examples.personal.length === 0 && (
+                  <p className="side-empty">No personal examples yet.</p>
+                )}
+                {examples.personal.map((item) => (
+                  <div
+                    className={`example-item ${
+                      item.id === examples.activeExampleId && !previewId ? "active" : ""
+                    }`}
+                    key={item.id}
+                  >
+                    <button
+                      className="example-name"
+                      onClick={() => guard({ type: "openPersonal", id: item.id })}
+                      title={item.description}
+                    >
+                      {item.name}
+                    </button>
+                    <KebabMenu
+                      label={`Actions for ${item.name}`}
+                      items={[
+                        {
+                          label: "Rename",
+                          onSelect: () => {
+                            setRenameTarget(item);
+                            setRenameName(item.name);
+                            setRenameDesc(item.description ?? "");
+                          },
+                        },
+                        {
+                          label: "Duplicate",
+                          onSelect: () => void duplicateExample(item.id, false, false),
+                        },
+                        {
+                          label: "Delete",
+                          onSelect: () => setDeleteTarget(item),
+                          danger: true,
+                        },
+                      ]}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="side-section">
+            <button
+              type="button"
+              className="side-head"
+              aria-expanded={filesOpen}
+              onClick={() => setFilesOpen((value) => !value)}
+            >
+              <ChevronIcon className={`chev ${filesOpen ? "open" : ""}`} />
+              <span>Files</span>
+            </button>
+            {filesOpen && (
+              <FileTree
+                files={files}
+                currentPath={activeTab?.path ?? ""}
+                onOpen={(path) => {
+                  if (contextId) void openFile(path, contextId);
+                }}
+                disabled={busy}
+              />
+            )}
+          </section>
         </div>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
-          Read-only. Copy one to edit and run it.
-        </p>
-        {examples.builtIn.map((item) => (
-          <div className="example-row" key={item.id}>
-            <button
-              className={`example-name builtin ${previewId === item.id ? "active" : ""}`}
-              onClick={() => guard({ type: "openBuiltin", id: item.id })}
-              title={item.description}
-            >
-              {item.name}
-            </button>
-            <button
-              className="icon-btn"
-              disabled={busy}
-              onClick={() => void duplicateExample(item.id, true, false)}
-              title="Create an editable copy and open it"
-            >
-              Copy
-            </button>
-          </div>
-        ))}
+          </aside>
+        </Panel>
 
-        <div className="section-head">
-          <h2>My Examples</h2>
-          <button className="icon-btn primary" disabled={busy} onClick={() => setNewOpen(true)}>
-            + New
-          </button>
-        </div>
-        {examples.personal.length === 0 && (
-          <p className="muted" style={{ fontSize: 12 }}>
-            No personal examples yet.
-          </p>
-        )}
-        {examples.personal.map((item) => (
-          <div className="example-row" key={item.id}>
-            <button
-              className={`example-name ${item.id === examples.activeExampleId && !previewId ? "active" : ""}`}
-              onClick={() => guard({ type: "openPersonal", id: item.id })}
-              title={item.description}
-            >
-              {item.name}
-            </button>
-            <button
-              className="icon-btn"
-              disabled={busy}
-              onClick={() => {
-                setRenameTarget(item);
-                setRenameName(item.name);
-                setRenameDesc(item.description ?? "");
-              }}
-              title="Rename"
-            >
-              Rename
-            </button>
-            <button
-              className="icon-btn"
-              disabled={busy}
-              onClick={() => void duplicateExample(item.id, false, false)}
-              title="Duplicate"
-            >
-              Dup
-            </button>
-            <button
-              className="icon-btn danger"
-              disabled={busy}
-              onClick={() => setDeleteTarget(item)}
-              title="Delete"
-            >
-              Del
-            </button>
-          </div>
-        ))}
+        <Separator className="resize-handle" id="handle-sidebar" />
 
-        <div className="section-head">
-          <h2>Files</h2>
-        </div>
-        {files.map((file) => (
-          <button
-            key={file.path}
-            className={`file-item ${file.path === currentPath ? "active" : ""}`}
-            disabled={!file.editable}
-            onClick={() => guard({ type: "openFile", path: file.path })}
-            title={file.editable ? file.path : "not editable"}
-          >
-            {file.path}
-            {!file.editable ? " (locked)" : ""}
-          </button>
-        ))}
-      </aside>
-
-      <main className="main">
+        <Panel
+          id="main"
+          className="pane pane-main"
+          style={{ overflow: "hidden" }}
+          minSize={compact ? 160 : 360}
+        >
+          <main className="main">
         <div className="topbar">
-          <span className={`badge ${stateClass}`}>
-            <span className="dot" />
-            {STATE_LABEL[status.state]}
+          <span
+            className={`runtime-status state-${status.state}`}
+            role="status"
+            aria-live="polite"
+            title={`Runtime: ${STATE_LABEL[status.state]}`}
+          >
+            {status.state === "starting" ? <SpinnerIcon className="spin" /> : <span className="dot" />}
+            <span className="runtime-text">{STATE_LABEL[status.state]}</span>
           </span>
+          <span className="topbar-title">
+            {previewExample ? `Previewing: ${previewExample.name}` : workspace?.name}
+          </span>
+          <span className="spacer" />
 
           {previewExample ? (
             <>
@@ -1145,113 +1539,237 @@ export default function Page() {
               >
                 Export
               </button>
-              <span className="spacer" />
+              <span className="divider" />
               <button
                 disabled={busy}
-                onClick={() =>
-                  guard({ type: "openPersonal", id: examples.activeExampleId ?? "" })
-                }
+                onClick={() => guard({ type: "openPersonal", id: examples.activeExampleId ?? "" })}
               >
                 Back to my example
               </button>
             </>
           ) : (
             <>
-              <button className="primary" onClick={() => guard({ type: "run" })} disabled={busy}>
-                Run / Restart
-              </button>
-              <button onClick={stop} disabled={busy || status.state === "stopped"}>
-                Stop
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => {
-                  setExportIncludeDataset(false);
-                  setExportOpen(true);
-                }}
-                title="Download this example as a JSON file"
-              >
-                Export
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => guard({ type: "importFile" })}
-                title="Import an example from a JSON file"
-              >
-                Import
-              </button>
-              <span className="spacer" />
-              {dirty && <span className="warn">Unsaved changes</span>}
-              <button className="primary" onClick={save} disabled={busy || !dirty}>
-                Save
-              </button>
-              <button onClick={() => void bootstrap()} disabled={busy}>
+              <div className="runtime-controls">
+                <button
+                  type="button"
+                  className="runtime-btn"
+                  aria-label="Run"
+                  title="Run"
+                  disabled={runtimeLoading || status.state === "running"}
+                  onClick={() => guard({ type: "run" })}
+                >
+                  <PlayIcon />
+                </button>
+                <button
+                  type="button"
+                  className="runtime-btn"
+                  aria-label="Restart"
+                  title="Restart"
+                  disabled={runtimeLoading || status.state !== "running"}
+                  onClick={() => guard({ type: "run" })}
+                >
+                  <RestartIcon />
+                </button>
+                <button
+                  type="button"
+                  className="runtime-btn"
+                  aria-label="Stop"
+                  title="Stop"
+                  disabled={runtimeLoading || status.state === "stopped"}
+                  onClick={stop}
+                >
+                  <StopIcon />
+                </button>
+              </div>
+              <span className="divider" />
+              <div className="topbar-group">
+                <button
+                  className="primary"
+                  onClick={() => void saveAllDirty()}
+                  disabled={busy || !anyDirty}
+                  title="Save all changes (Ctrl/Cmd+S)"
+                >
+                  Save
+                </button>
+                {anyDirty && <span className="warn">Unsaved changes</span>}
+              </div>
+              <span className="divider" />
+              <div className="topbar-group">
+                <button
+                  disabled={busy}
+                  onClick={() => {
+                    setExportIncludeDataset(false);
+                    setExportOpen(true);
+                  }}
+                  title="Download this example as a JSON file"
+                >
+                  Export
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => guard({ type: "importFile" })}
+                  title="Import an example from a JSON file"
+                >
+                  Import
+                </button>
+              </div>
+              <span className="divider" />
+              <button onClick={() => void bootstrap()} disabled={busy} title="Reload from the runner">
                 Retry
               </button>
             </>
           )}
         </div>
 
-        <div className="panel">
-          {runnerDown && (
-            <div className="error-text">Runner is unreachable. Use Retry to try again.</div>
-          )}
-          {error && <div className="error-text">{error}</div>}
-          {message && <div className="success">{message}</div>}
-          {!previewExample && status.error && (
-            <div className="error-text">Run error: {status.error}</div>
-          )}
-
-          {previewExample && (
-            <div className="banner">
-              Read-only built-in: <strong>{previewExample.name}</strong> — {previewExample.description}
-            </div>
-          )}
-
-          <div className="row" style={{ alignItems: "stretch" }}>
-            <div className="card" style={{ flex: 2 }}>
-              <h2 className="ltr">
-                {currentPath || "—"}
-                {previewExample ? " (read-only)" : ""}
-              </h2>
-              <textarea
-                className="editor"
-                spellCheck={false}
-                readOnly={Boolean(previewExample)}
-                value={content}
-                onChange={(event) => {
-                  setContent(event.target.value);
-                  setMessage("");
-                }}
-              />
-            </div>
-
-            <div className="card" style={{ flex: 1, minWidth: 340 }}>
-              <div className="tabs">
-                <button
-                  className={`tab ${tab === "api" ? "active" : ""}`}
-                  onClick={() => setTab("api")}
-                >
-                  API
-                </button>
-                <button
-                  className={`tab ${tab === "database" ? "active" : ""}`}
-                  onClick={() => {
-                    setTab("database");
-                    if (tables.length === 0) void refreshTables();
-                  }}
-                >
-                  Database
-                </button>
-                <button
-                  className={`tab ${tab === "log" ? "active" : ""}`}
-                  onClick={() => setTab("log")}
-                >
-                  Log
-                </button>
+        {(runnerDown || previewExample || (!previewExample && status.error)) && (
+          <div className="alerts">
+            {runnerDown && (
+              <div className="alert error">Runner is unreachable. Use Retry to try again.</div>
+            )}
+            {!previewExample && status.error && (
+              <div className="alert error">Run error: {status.error}</div>
+            )}
+            {previewExample && (
+              <div className="alert info">
+                Read-only built-in: <strong>{previewExample.name}</strong> — {previewExample.description}
               </div>
+            )}
+          </div>
+        )}
 
-              <div style={{ paddingTop: 12 }}>
+        <div className="workarea">
+          <Group
+            orientation={compact ? "vertical" : "horizontal"}
+            className={`layout-group ${compact ? "layout-vertical" : "layout-horizontal"}`}
+            defaultLayout={innerLayout.defaultLayout}
+            onLayoutChanged={innerLayout.onLayoutChanged}
+          >
+            <Panel
+              id="editor"
+              className="pane pane-editor"
+              style={{ overflow: "hidden" }}
+              minSize={compact ? 160 : 320}
+            >
+              <section className="editor-pane">
+            <div className="tabbar" role="tablist">
+              {tabs.map((item) => {
+                const isActive = item.key === activeKey;
+                const isDirty = dirtyKeys.includes(item.key);
+                return (
+                  <div
+                    key={item.key}
+                    role="tab"
+                    aria-selected={isActive}
+                    tabIndex={0}
+                    className={`file-tab ${isActive ? "active" : ""}`}
+                    title={item.path}
+                    onClick={() => activateTab(item.key)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        activateTab(item.key);
+                      }
+                    }}
+                  >
+                    <FileIcon className="tab-icon" />
+                    <span className="tab-name">{item.name}</span>
+                    {isDirty && <span className="tab-dot" title="Unsaved changes" />}
+                    <button
+                      type="button"
+                      className="tab-close"
+                      title="Close"
+                      aria-label={`Close ${item.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        requestCloseTab(item.key);
+                      }}
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                );
+              })}
+              <span className="tabbar-spacer" />
+              {previewExample && <span className="tab-note">read-only</span>}
+              <button
+                type="button"
+                className="tabbar-action"
+                onClick={() => {
+                  setQuickQuery("");
+                  setQuickOpen(true);
+                }}
+                title="Quick open (Ctrl/Cmd+P)"
+              >
+                Quick open
+              </button>
+            </div>
+            <CodeEditor
+              path={activeKey}
+              paths={openPaths}
+              displayPath={activeTab?.path ?? ""}
+              defaultValue={activeValue}
+              language={activeTab ? languageForPath(activeTab.path) : "plaintext"}
+              readOnly={Boolean(previewExample)}
+              wordWrap={wordWrap}
+              dirty={activeKey ? dirtyKeys.includes(activeKey) : false}
+              onValueChange={updateActiveValue}
+              onSave={() => void saveAllDirty()}
+              onToggleWordWrap={() => setWordWrap((value) => !value)}
+            />
+          </section>
+            </Panel>
+
+            <Separator className="resize-handle" id="handle-right" />
+
+            <Panel
+              id="right"
+              className="pane pane-right"
+              style={{ overflow: "hidden" }}
+              collapsible
+              collapsedSize={0}
+              defaultSize={compact ? 220 : 440}
+              minSize={compact ? 140 : 300}
+              maxSize={compact ? "70" : "75"}
+              groupResizeBehavior="preserve-pixel-size"
+              panelRef={rightPanelRef}
+            >
+          <aside className="side-panel">
+            <div className="panel-tabs">
+              <button
+                className={`panel-tab ${tab === "api" ? "active" : ""}`}
+                onClick={() => setTab("api")}
+              >
+                API
+              </button>
+              <button
+                className={`panel-tab ${tab === "database" ? "active" : ""}`}
+                onClick={() => {
+                  setTab("database");
+                  if (tables.length === 0) void refreshTables();
+                }}
+              >
+                Database
+              </button>
+              <button
+                className={`panel-tab ${tab === "log" ? "active" : ""}`}
+                onClick={() => setTab("log")}
+              >
+                Log
+              </button>
+              <span className="panel-tabs-spacer" />
+              <button
+                type="button"
+                className={`panel-expand ${focusMode ? "active" : ""}`}
+                aria-pressed={focusMode}
+                title={focusMode ? "Exit focus mode" : "Focus panel"}
+                aria-label={focusMode ? "Exit focus mode" : "Focus panel"}
+                onClick={toggleFocus}
+              >
+                {focusMode ? <CollapseIcon /> : <ExpandIcon />}
+              </button>
+            </div>
+
+            <div className="panel-body">
                 {tab === "api" && (
                   <div className="stack">
                     <div className="muted" style={{ fontSize: 12 }}>
@@ -1260,7 +1778,7 @@ export default function Page() {
                     </div>
 
                     {status.state !== "running" && !previewExample && (
-                      <div className="banner">
+                      <div className="alert info">
                         API server is {STATE_LABEL[status.state].toLowerCase()}.{" "}
                         <button className="link-btn" onClick={() => guard({ type: "run" })}>
                           Run it to send requests.
@@ -1462,43 +1980,46 @@ export default function Page() {
                 )}
 
                 {tab === "database" && (
-                  <div className="stack">
-                    <div className="row" style={{ justifyContent: "space-between" }}>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button disabled={dbBusy} onClick={() => void refreshTables()}>
-                          Refresh
-                        </button>
-                        <button
-                          className="primary"
-                          disabled={dbBusy}
-                          onClick={() => void applyMigrations()}
-                        >
-                          {dbBusy ? "Working..." : "Apply DB Changes"}
-                        </button>
-                        <button
-                          disabled={datasetBusy || dbBusy}
-                          onClick={() => void exportActiveDataset()}
-                          title="Download the demo data as a JSON fixture"
-                        >
-                          Export Dataset
-                        </button>
-                        <button
-                          disabled={datasetBusy || dbBusy}
-                          onClick={() => datasetInputRef.current?.click()}
-                          title="Replace the demo data from a JSON fixture"
-                        >
-                          Import Dataset
-                        </button>
-                      </div>
-                      <span className="muted" style={{ fontSize: 12 }}>
-                        {tables.length} tables
-                      </span>
+                  <div className="db">
+                    <div className="db-toolbar">
+                      <button
+                        className="icon-btn db-toolbar-icon"
+                        disabled={dbBusy}
+                        onClick={() => void refreshTables()}
+                        title="Refresh tables"
+                        aria-label="Refresh tables"
+                      >
+                        <RefreshIcon />
+                      </button>
+                      <button
+                        className="primary"
+                        disabled={dbBusy}
+                        onClick={() => void applyMigrations()}
+                        title="Create or update the SQLite schema"
+                      >
+                        {dbBusy ? "Working…" : "Apply DB Changes"}
+                      </button>
+                      <span className="db-toolbar-spacer" />
+                      <button
+                        className="db-toolbar-btn"
+                        disabled={datasetBusy || dbBusy}
+                        onClick={() => void exportActiveDataset()}
+                        title="Download the demo data as a JSON fixture"
+                      >
+                        Export Dataset
+                      </button>
+                      <button
+                        className="db-toolbar-btn"
+                        disabled={datasetBusy || dbBusy}
+                        onClick={() => datasetInputRef.current?.click()}
+                        title="Replace the demo data from a JSON fixture"
+                      >
+                        Import Dataset
+                      </button>
                     </div>
 
-                    {datasetResult && <div className="success">{datasetResult}</div>}
-
                     {migration && (
-                      <div className="stack">
+                      <div className="migration-block">
                         {migration.steps.map((step, index) => (
                           <pre className="logs ltr" key={index}>
                             {`$ ${step.command}\n${step.output || "(no output)"}`}
@@ -1514,75 +2035,161 @@ export default function Page() {
 
                     {!dbAvailable && (
                       <p className="muted">
-                        No database yet. Press “Apply DB Changes” to create one.
+                        No database yet. Run the example or press “Apply DB Changes” to create one.
                       </p>
                     )}
 
                     {dbAvailable && (
-                      <div className="row" style={{ alignItems: "flex-start" }}>
-                        <div className="stack" style={{ minWidth: 150 }}>
-                          {tables.map((table) => (
-                            <button
-                              key={table.name}
-                              className={`file-item ${selectedTable === table.name ? "active" : ""}`}
-                              onClick={() => void openTable(table.name)}
-                            >
-                              {table.name}{" "}
-                              <span className="muted">({table.rowCount})</span>
-                            </button>
-                          ))}
+                      <div className="db-layout">
+                        <div className="db-tables">
+                          <div className="db-section-label">
+                            <span>Tables</span>
+                            <span className="count">{tables.length}</span>
+                          </div>
+                          <div className="db-table-list">
+                            {tables.length === 0 && <p className="side-empty">No tables found.</p>}
+                            {tables.map((table) => (
+                              <button
+                                key={table.name}
+                                className={`db-table ${selectedTable === table.name ? "active" : ""}`}
+                                onClick={() => void openTable(table.name)}
+                                title={table.name}
+                              >
+                                <span className="db-table-name truncate ltr">{table.name}</span>
+                                <span className="db-count">{table.rowCount}</span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
-                        <div className="stack" style={{ flex: 1, minWidth: 0 }}>
+                        <div className="db-detail">
                           {tableDetail && rowsPage ? (
                             <>
-                              <div className="muted" style={{ fontSize: 12 }}>
-                                {tableDetail.name} — {tableDetail.columns.length} columns,{" "}
-                                {tableDetail.rowCount} rows
-                              </div>
-                              <div className="muted ltr" style={{ fontSize: 12 }}>
-                                {tableDetail.columns
-                                  .map(
-                                    (column) =>
-                                      `${column.name}${column.primaryKey ? " PK" : ""}${
-                                        column.type ? ` (${column.type})` : ""
-                                      }`,
-                                  )
-                                  .join("  •  ")}
-                              </div>
-                              {tableDetail.foreignKeys.length > 0 && (
-                                <div className="muted ltr" style={{ fontSize: 12 }}>
-                                  FK:{" "}
-                                  {tableDetail.foreignKeys
-                                    .map(
-                                      (fk) =>
-                                        `${fk.column} → ${fk.referencesTable}.${fk.referencesColumn}`,
-                                    )
-                                    .join("  •  ")}
+                              <div className="db-detail-head">
+                                <span className="db-detail-name truncate ltr" title={tableDetail.name}>
+                                  {tableDetail.name}
+                                </span>
+                                <div className="db-stats">
+                                  <span className="db-stat">
+                                    <strong>{tableDetail.rowCount}</strong> rows
+                                  </span>
+                                  <span className="db-stat">
+                                    <strong>{tableDetail.columns.length}</strong> columns
+                                  </span>
+                                  <span className="db-stat">
+                                    <strong>
+                                      {
+                                        tableDetail.columns.filter((column) => column.primaryKey)
+                                          .length
+                                      }
+                                    </strong>{" "}
+                                    pk
+                                  </span>
+                                  <span className="db-stat">
+                                    <strong>{tableDetail.foreignKeys.length}</strong> fk
+                                  </span>
                                 </div>
-                              )}
-                              <div className="table-scroll">
-                                <table className="data-table">
-                                  <thead>
-                                    <tr>
-                                      {rowsPage.columns.map((column) => (
-                                        <th key={column}>{column}</th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {rowsPage.rows.map((row, rowIndex) => (
-                                      <tr key={rowIndex}>
-                                        {row.map((cell, cellIndex) => (
-                                          <td key={cellIndex}>
-                                            {cell === null ? "NULL" : String(cell)}
-                                          </td>
-                                        ))}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
                               </div>
+
+                              <details className="db-section" open>
+                                <summary className="db-section-head">
+                                  <span>Schema</span>
+                                  <span className="db-section-hint">
+                                    {tableDetail.columns.length} columns
+                                    {tableDetail.foreignKeys.length > 0
+                                      ? ` · ${tableDetail.foreignKeys.length} foreign keys`
+                                      : ""}
+                                  </span>
+                                </summary>
+                                <div className="db-section-body">
+                                  <div className="schema-scroll">
+                                    <table className="schema-table">
+                                      <thead>
+                                        <tr>
+                                          <th>column</th>
+                                          <th>type</th>
+                                          <th>key</th>
+                                          <th>null</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {tableDetail.columns.map((column) => (
+                                          <tr key={column.name}>
+                                            <td className="ltr" title={column.name}>
+                                              {column.name}
+                                            </td>
+                                            <td className="ltr" title={column.type || ""}>
+                                              {column.type || "—"}
+                                            </td>
+                                            <td>
+                                              {column.primaryKey ? (
+                                                <span className="badge-tag pk">PK</span>
+                                              ) : (
+                                                ""
+                                              )}
+                                            </td>
+                                            <td>{column.notNull ? "no" : "yes"}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+
+                                  {tableDetail.foreignKeys.length > 0 && (
+                                    <div className="db-fk">
+                                      <div className="db-fk-title">Foreign keys</div>
+                                      <ul className="fk-list">
+                                        {tableDetail.foreignKeys.map((fk, index) => (
+                                          <li key={index} className="ltr">
+                                            <span className="badge-tag fk">{fk.column}</span>{" "}
+                                            → {fk.referencesTable}.{fk.referencesColumn}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              </details>
+
+                              <div className="db-section">
+                                <div className="db-section-head static">
+                                  <span>Records</span>
+                                  <span className="db-section-hint">{rowsPage.total} rows</span>
+                                </div>
+                                {rowsPage.rows.length === 0 ? (
+                                  <p className="muted db-empty">This table has no rows yet.</p>
+                                ) : (
+                                  <div className="table-scroll">
+                                    <table className="data-table">
+                                      <thead>
+                                        <tr>
+                                          {rowsPage.columns.map((column) => (
+                                            <th key={column} scope="col">
+                                              {column}
+                                            </th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {rowsPage.rows.map((row, rowIndex) => (
+                                          <tr key={rowIndex}>
+                                            {row.map((cell, cellIndex) => (
+                                              <td
+                                                key={cellIndex}
+                                                className={cell === null ? "cell-null" : ""}
+                                                title={cell === null ? "NULL" : String(cell)}
+                                              >
+                                                {cell === null ? "NULL" : String(cell)}
+                                              </td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+
                               {rowsPage.total > 0 && (
                                 <div className="pager">
                                   <button
@@ -1597,7 +2204,7 @@ export default function Page() {
                                   >
                                     Prev
                                   </button>
-                                  <span className="muted">
+                                  <span>
                                     {rowsPage.offset + 1}–
                                     {Math.min(rowsPage.offset + rowsPage.rows.length, rowsPage.total)}{" "}
                                     of {rowsPage.total}
@@ -1618,7 +2225,7 @@ export default function Page() {
                               )}
                             </>
                           ) : (
-                            <p className="muted">Select a table to view its rows.</p>
+                            <p className="muted">Select a table to view its schema and rows.</p>
                           )}
                         </div>
                       </div>
@@ -1627,19 +2234,29 @@ export default function Page() {
                 )}
 
                 {tab === "log" && (
-                  <pre className="logs ltr">{logs.length ? logs.join("\n") : "—"}</pre>
+                  <div className="log-view">
+                    <pre className="logs ltr">{logs.length ? logs.join("\n") : "No logs yet."}</pre>
+                  </div>
                 )}
-              </div>
             </div>
-          </div>
+          </aside>
+            </Panel>
+          </Group>
         </div>
-      </main>
+          </main>
+        </Panel>
+      </Group>
 
       {pending && (
         <div className="overlay">
           <div className="modal">
             <h2>Unsaved changes</h2>
-            <p className="muted">The current file has unsaved changes. Do you want to save them?</p>
+            <p className="muted">
+              {dirtyKeys.length === 1
+                ? "One file has unsaved changes."
+                : `${dirtyKeys.length} files have unsaved changes.`}{" "}
+              Do you want to save them before continuing?
+            </p>
             <div className="row">
               <button className="primary" onClick={() => void resolvePending("save")}>
                 Save and continue
@@ -1648,6 +2265,71 @@ export default function Page() {
                 Continue without saving
               </button>
               <button onClick={() => void resolvePending("cancel")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {closeRequest && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Unsaved changes</h2>
+            <p className="muted">{closeRequest.message} Do you want to save before closing?</p>
+            <div className="row">
+              <button className="primary" onClick={() => void resolveClose("save")}>
+                Save and close
+              </button>
+              <button className="danger" onClick={() => void resolveClose("discard")}>
+                Close without saving
+              </button>
+              <button onClick={() => void resolveClose("cancel")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {quickOpen && (
+        <div className="overlay" onMouseDown={() => setQuickOpen(false)}>
+          <div className="modal quick-open" onMouseDown={(event) => event.stopPropagation()}>
+            <input
+              className="quick-input"
+              autoFocus
+              placeholder="Search files by name…"
+              value={quickQuery}
+              onChange={(event) => setQuickQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setQuickOpen(false);
+                if (event.key === "Enter") {
+                  const query = quickQuery.trim().toLowerCase();
+                  const first = editableFiles.find((file) =>
+                    file.path.toLowerCase().includes(query),
+                  );
+                  if (first && contextId) {
+                    setQuickOpen(false);
+                    void openFile(first.path, contextId);
+                  }
+                }
+              }}
+            />
+            <div className="quick-list">
+              {editableFiles
+                .filter((file) => file.path.toLowerCase().includes(quickQuery.trim().toLowerCase()))
+                .map((file) => (
+                  <button
+                    key={file.path}
+                    type="button"
+                    className="quick-item ltr"
+                    onClick={() => {
+                      setQuickOpen(false);
+                      if (contextId) void openFile(file.path, contextId);
+                    }}
+                  >
+                    {file.path}
+                  </button>
+                ))}
+              {editableFiles.filter((file) =>
+                file.path.toLowerCase().includes(quickQuery.trim().toLowerCase()),
+              ).length === 0 && <p className="muted">No matching files.</p>}
             </div>
           </div>
         </div>
@@ -1937,6 +2619,23 @@ export default function Page() {
         style={{ display: "none" }}
         onChange={(event) => void handleDatasetFile(event)}
       />
+
+      <div className="toast-stack" role="region" aria-label="Notifications">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast toast-${toast.kind}`} role="status">
+            <span className="toast-text">{toast.text}</span>
+            <button
+              type="button"
+              className="toast-close"
+              aria-label="Dismiss notification"
+              title="Dismiss"
+              onClick={() => dismissToast(toast.id)}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

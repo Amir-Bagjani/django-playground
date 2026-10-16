@@ -12,6 +12,16 @@ Export).
 
 ## Run
 
+The quickest way is the bundled helper, which builds (if needed), streams the
+service logs, prints the URL once the app is ready, and stops everything cleanly
+on `Ctrl+C`:
+
+```bash
+./start.sh
+```
+
+Or use Docker Compose directly:
+
 ```bash
 docker compose up --build -d
 ```
@@ -22,11 +32,17 @@ Then open:
 http://localhost:3000
 ```
 
+`./start.sh` never runs `docker compose down -v`, so the `playground_data`
+volume (examples, source files and SQLite databases) is always preserved. If the
+stack is already running, the script attaches to the logs without taking it over.
+
 ## What you can do (Phase 1)
 
 1. The default **Scratch** workspace is created automatically.
-2. Open a Python file such as `demo/views.py`, edit it and press **Save**.
-3. Press **Run / Restart**; the real Django project runs with Python inside the `runner` container.
+2. Open a Python file such as `demo/views.py` from the **Files** tree, edit it and press **Save**
+   (or `Ctrl/Cmd+S`). Multiple files open as tabs, each with its own unsaved state.
+3. Use the toolbar run controls — **Run** (play), **Restart** (rotate) and **Stop** (square) — to
+   control the real Django process; the status indicator shows running/stopped/starting/error.
 4. Open the **API** tab next to the editor, press **Send** and see the real status, duration and JSON response.
 5. Introduce a syntax error and press Run to see the `error` state and the log; the panel does not crash.
 6. Press **Stop** to stop the Django process.

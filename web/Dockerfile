@@ -7,6 +7,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
+RUN mkdir -p public/monaco && cp -r node_modules/monaco-editor/min/vs public/monaco/vs
 RUN npm run build
 
 EXPOSE 3000
