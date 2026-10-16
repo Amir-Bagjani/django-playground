@@ -218,6 +218,12 @@ type PendingAction =
   | { type: "importFile" }
   | null;
 
+type ReqAction =
+  | { type: "select"; request: SavedRequest }
+  | { type: "new" }
+  | { type: "proceed"; action: PendingAction }
+  | { type: "callback"; run: () => void };
+
 interface CloseRequest {
   keys: string[];
   message: string;
@@ -318,6 +324,27 @@ function headersToObject(rows: HeaderRow[]): Record<string, string> {
   return out;
 }
 
+function signatureOfRequest(
+  method: string,
+  path: string,
+  headers: HeaderRow[],
+  body: string,
+): string {
+  return JSON.stringify({
+    method,
+    path,
+    headers: headers
+      .filter((row) => row.key.trim() !== "" || row.value.trim() !== "")
+      .map((row) => ({ key: row.key, value: row.value })),
+    body,
+  });
+}
+
+function suggestedRequestName(method: string, path: string): string {
+  const trimmed = path.trim();
+  return `${method || "GET"} ${trimmed || "/"}`.slice(0, 80);
+}
+
 function prettyBody(body: string, contentType: string): string {
   const looksJson =
     contentType.includes("json") || body.trim().startsWith("{") || body.trim().startsWith("[");
@@ -376,14 +403,21 @@ export default function Page() {
   const [reqPath, setReqPath] = useState<string>("");
   const [reqHeaders, setReqHeaders] = useState<HeaderRow[]>([]);
   const [reqBody, setReqBody] = useState<string>("");
+  const [requestTab, setRequestTab] = useState<"headers" | "body">("headers");
   const [result, setResult] = useState<HttpResult | null>(null);
-  const [showResultHeaders, setShowResultHeaders] = useState<boolean>(false);
-  const [showRequestHeaders, setShowRequestHeaders] = useState<boolean>(false);
+  const [sending, setSending] = useState<boolean>(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [savedRequests, setSavedRequests] = useState<SavedRequest[]>([]);
   const [loadedRequestId, setLoadedRequestId] = useState<string | null>(null);
+  const [loadedSignature, setLoadedSignature] = useState<string>("");
+  const [savedOpen, setSavedOpen] = useState<boolean>(false);
+  const [reqSearch, setReqSearch] = useState<string>("");
+  const [reqPending, setReqPending] = useState<ReqAction | null>(null);
   const [saveOpen, setSaveOpen] = useState<boolean>(false);
+  const [saveAs, setSaveAs] = useState<boolean>(false);
   const [saveName, setSaveName] = useState<string>("");
   const [renameOpen, setRenameOpen] = useState<boolean>(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState<string>("");
 
   // Database explorer state
@@ -426,6 +460,25 @@ export default function Page() {
     ? examples.builtIn.find((item) => item.id === previewId) ?? null
     : null;
   const loadedRequest = savedRequests.find((item) => item.id === loadedRequestId) ?? null;
+
+  const requestSignature = useMemo(
+    () => signatureOfRequest(reqMethod, reqPath, reqHeaders, reqBody),
+    [reqBody, reqHeaders, reqMethod, reqPath],
+  );
+  const reqDirty = loadedSignature !== requestSignature;
+  const reqDirtyRef = useRef(reqDirty);
+  reqDirtyRef.current = reqDirty;
+  const signatureRef = useRef(requestSignature);
+  signatureRef.current = requestSignature;
+  const pendingReqActionRef = useRef<ReqAction | null>(null);
+  const visibleSavedRequests = useMemo(() => {
+    const query = reqSearch.trim().toLowerCase();
+    if (!query) return savedRequests;
+    return savedRequests.filter(
+      (item) =>
+        item.name.toLowerCase().includes(query) || item.path.toLowerCase().includes(query),
+    );
+  }, [reqSearch, savedRequests]);
 
   const activeTab = tabs.find((item) => item.key === activeKey) ?? null;
   const activeValue = activeKey ? documentsRef.current[activeKey] ?? "" : "";
@@ -591,8 +644,15 @@ export default function Page() {
     setReqPath(ws.defaultRequestPath);
     setReqHeaders([]);
     setReqBody("");
+    setRequestTab("headers");
+    setLoadedSignature(signatureOfRequest("GET", ws.defaultRequestPath, [], ""));
     setLoadedRequestId(null);
+    setReqSearch("");
+    setSaveOpen(false);
+    setRenameOpen(false);
+    setReqPending(null);
     setResult(null);
+    setSendError(null);
     setDbAvailable(false);
     setTables([]);
     setSelectedTable(null);
@@ -857,19 +917,19 @@ export default function Page() {
 
   const sendRequest = useCallback(async () => {
     if (!reqPath.trim()) {
-      notifyError("Enter a request path, for example /api/hello/.");
+      setSendError("Enter a request path, for example /api/hello/.");
       return;
     }
     if (BODY_METHODS.has(reqMethod) && reqBody.trim()) {
       try {
         JSON.parse(reqBody);
       } catch {
-        notifyError("Request body is not valid JSON.");
+        setSendError("Request body is not valid JSON.");
         return;
       }
     }
-    setBusy(true);
-    setResult(null);
+    setSending(true);
+    setSendError(null);
     try {
       const data = await api<HttpResult>(
         "/v1/runtime/request",
@@ -883,22 +943,84 @@ export default function Page() {
       setResult(data);
       if (tables.length > 0) void refreshTables();
     } catch (err) {
-      notifyError(err instanceof Error ? err.message : String(err));
+      setSendError(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   }, [reqBody, reqHeaders, reqMethod, reqPath, refreshTables, tables.length]);
 
-  const loadSaved = useCallback((request: SavedRequest) => {
+  const loadRequestFields = useCallback((request: SavedRequest) => {
+    const headers = request.headers.map((header) => ({ ...header }));
     setReqMethod(request.method);
     setReqPath(request.path);
-    setReqHeaders(request.headers.map((header) => ({ ...header })));
+    setReqHeaders(headers);
     setReqBody(request.body ?? "");
     setLoadedRequestId(request.id);
+    setLoadedSignature(
+      signatureOfRequest(request.method, request.path, headers, request.body ?? ""),
+    );
+    setSendError(null);
     setTab("api");
   }, []);
 
-  const createSaved = useCallback(async () => {
+  const blankRequest = useCallback(() => {
+    setReqMethod("GET");
+    setReqPath("");
+    setReqHeaders([]);
+    setReqBody("");
+    setRequestTab("headers");
+    setLoadedRequestId(null);
+    setLoadedSignature(signatureOfRequest("GET", "", [], ""));
+    setSendError(null);
+    setTab("api");
+  }, []);
+
+  function applyReqAction(action: ReqAction) {
+    if (action.type === "select") {
+      loadRequestFields(action.request);
+    } else if (action.type === "new") {
+      blankRequest();
+    } else if (action.type === "proceed") {
+      setLoadedSignature(signatureRef.current);
+      guard(action.action);
+    } else if (action.type === "callback") {
+      setLoadedSignature(signatureRef.current);
+      action.run();
+    }
+  }
+
+  function guardRequest(action: ReqAction) {
+    if (reqDirty) {
+      setReqPending(action);
+      return;
+    }
+    applyReqAction(action);
+  }
+
+  function guardExample(action: PendingAction) {
+    guardRequest({ type: "proceed", action });
+  }
+
+  function guardCallback(run: () => void) {
+    guardRequest({ type: "callback", run });
+  }
+
+  function openSaveModal(asNew: boolean) {
+    const base =
+      asNew && loadedRequest
+        ? `${loadedRequest.name} copy`
+        : suggestedRequestName(reqMethod, reqPath);
+    setSaveAs(asNew);
+    setSaveName(base);
+    setSaveOpen(true);
+  }
+
+  function closeSaveModal() {
+    pendingReqActionRef.current = null;
+    setSaveOpen(false);
+  }
+
+  async function createSaved(): Promise<boolean> {
     setBusy(true);
     try {
       const created = await api<SavedRequest>(
@@ -912,19 +1034,24 @@ export default function Page() {
         }),
       );
       setSaveOpen(false);
-      setSaveName("");
       await loadSavedRequests();
       setLoadedRequestId(created.id);
+      setLoadedSignature(signatureRef.current);
       notifySuccess(`Saved request "${created.name}".`);
+      const pendingAction = pendingReqActionRef.current;
+      pendingReqActionRef.current = null;
+      if (pendingAction) applyReqAction(pendingAction);
+      return true;
     } catch (err) {
       notifyError(err instanceof Error ? err.message : String(err));
+      return false;
     } finally {
       setBusy(false);
     }
-  }, [loadSavedRequests, reqBody, reqHeaders, reqMethod, reqPath, saveName]);
+  }
 
-  const updateSaved = useCallback(async () => {
-    if (!loadedRequestId) return;
+  async function updateRequestInPlace(): Promise<boolean> {
+    if (!loadedRequestId) return false;
     setBusy(true);
     try {
       await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
@@ -938,49 +1065,106 @@ export default function Page() {
         }),
       });
       await loadSavedRequests();
+      setLoadedSignature(signatureRef.current);
       notifySuccess("Saved request updated.");
+      return true;
+    } catch (err) {
+      notifyError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleSaveRequest() {
+    if (loadedRequestId) {
+      void updateRequestInPlace();
+      return;
+    }
+    openSaveModal(false);
+  }
+
+  async function resolveReqPending(kind: "save" | "discard" | "cancel") {
+    const action = reqPending;
+    if (!action || kind === "cancel") {
+      setReqPending(null);
+      return;
+    }
+    if (kind === "save") {
+      if (loadedRequestId) {
+        const ok = await updateRequestInPlace();
+        if (!ok) return;
+        setReqPending(null);
+        applyReqAction(action);
+        return;
+      }
+      pendingReqActionRef.current = action;
+      openSaveModal(false);
+      setReqPending(null);
+      return;
+    }
+    setReqPending(null);
+    applyReqAction(action);
+  }
+
+  async function duplicateSaved(request: SavedRequest) {
+    setBusy(true);
+    try {
+      const created = await api<SavedRequest>(
+        "/v1/requests",
+        jsonPost({
+          name: `${request.name} copy`,
+          method: request.method,
+          path: request.path,
+          headers: request.headers,
+          body: request.body ?? "",
+        }),
+      );
+      await loadSavedRequests();
+      loadRequestFields({ ...created });
+      notifySuccess(`Saved request "${created.name}".`);
     } catch (err) {
       notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
-  }, [loadSavedRequests, loadedRequestId, reqBody, reqHeaders, reqMethod, reqPath]);
+  }
 
-  const renameSaved = useCallback(async () => {
-    if (!loadedRequestId) return;
+  async function renameSaved(): Promise<boolean> {
+    if (!renameTargetId) return false;
     setBusy(true);
     try {
-      await api(`/v1/requests/${encodeURIComponent(loadedRequestId)}`, {
+      await api(`/v1/requests/${encodeURIComponent(renameTargetId)}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: renameName }),
       });
       setRenameOpen(false);
+      setRenameTargetId(null);
       await loadSavedRequests();
       notifySuccess("Saved request renamed.");
+      return true;
+    } catch (err) {
+      notifyError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteSaved(id: string) {
+    setBusy(true);
+    try {
+      await api(`/v1/requests/${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (loadedRequestId === id) blankRequest();
+      await loadSavedRequests();
+      notifySuccess("Saved request deleted.");
     } catch (err) {
       notifyError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
-  }, [loadSavedRequests, loadedRequestId, renameName]);
-
-  const deleteSaved = useCallback(
-    async (id: string) => {
-      setBusy(true);
-      try {
-        await api(`/v1/requests/${encodeURIComponent(id)}`, { method: "DELETE" });
-        if (loadedRequestId === id) setLoadedRequestId(null);
-        await loadSavedRequests();
-        notifySuccess("Saved request deleted.");
-      } catch (err) {
-        notifyError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [loadSavedRequests, loadedRequestId],
-  );
+  }
 
   // -- database explorer --------------------------------------------------
   const loadRows = useCallback(async (name: string, offset: number) => {
@@ -1381,7 +1565,7 @@ export default function Page() {
                   >
                     <button
                       className="example-name"
-                      onClick={() => guard({ type: "openBuiltin", id: item.id })}
+                      onClick={() => guardExample({ type: "openBuiltin", id: item.id })}
                       title={item.description}
                     >
                       {item.name}
@@ -1389,7 +1573,7 @@ export default function Page() {
                     <button
                       className="icon-btn example-copy"
                       disabled={busy}
-                      onClick={() => void duplicateExample(item.id, true, false)}
+                      onClick={() => guardCallback(() => void duplicateExample(item.id, true, false))}
                       title="Create an editable copy and open it"
                       aria-label={`Copy ${item.name}`}
                     >
@@ -1436,7 +1620,7 @@ export default function Page() {
                   >
                     <button
                       className="example-name"
-                      onClick={() => guard({ type: "openPersonal", id: item.id })}
+                      onClick={() => guardExample({ type: "openPersonal", id: item.id })}
                       title={item.description}
                     >
                       {item.name}
@@ -1523,13 +1707,13 @@ export default function Page() {
               <button
                 className="primary"
                 disabled={busy}
-                onClick={() => void duplicateExample(previewExample.id, true, false)}
+                onClick={() => guardCallback(() => void duplicateExample(previewExample.id, true, false))}
               >
                 Create a copy
               </button>
               <button
                 disabled={busy}
-                onClick={() => void duplicateExample(previewExample.id, true, true)}
+                onClick={() => guardCallback(() => void duplicateExample(previewExample.id, true, true))}
               >
                 Try &amp; Run
               </button>
@@ -1542,7 +1726,7 @@ export default function Page() {
               <span className="divider" />
               <button
                 disabled={busy}
-                onClick={() => guard({ type: "openPersonal", id: examples.activeExampleId ?? "" })}
+                onClick={() => guardExample({ type: "openPersonal", id: examples.activeExampleId ?? "" })}
               >
                 Back to my example
               </button>
@@ -1771,14 +1955,14 @@ export default function Page() {
 
             <div className="panel-body">
                 {tab === "api" && (
-                  <div className="stack">
-                    <div className="muted" style={{ fontSize: 12 }}>
+                  <div className="api-grid">
+                    <div className="muted api-context api-span">
                       Target: <strong>{workspace?.name}</strong>
                       {previewExample ? " (active example; previewing a built-in)" : ""}
                     </div>
 
                     {status.state !== "running" && !previewExample && (
-                      <div className="alert info">
+                      <div className="alert info api-span">
                         API server is {STATE_LABEL[status.state].toLowerCase()}.{" "}
                         <button className="link-btn" onClick={() => guard({ type: "run" })}>
                           Run it to send requests.
@@ -1786,196 +1970,323 @@ export default function Page() {
                       </div>
                     )}
 
-                    <div className="toolbar">
-                      <select
-                        className="method-select"
-                        value={reqMethod}
-                        onChange={(event) => setReqMethod(event.target.value)}
-                      >
-                        {METHODS.map((method) => (
-                          <option key={method} value={method}>
-                            {method}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        className="path-input"
-                        placeholder="/api/items/"
-                        value={reqPath}
-                        onChange={(event) => setReqPath(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") void sendRequest();
-                        }}
-                      />
-                      <button className="primary" disabled={busy} onClick={() => void sendRequest()}>
-                        Send
-                      </button>
-                    </div>
-
-                    <div>
+                    <section className="saved api-span">
                       <button
-                        className="icon-btn"
-                        onClick={() => setShowRequestHeaders((value) => !value)}
+                        type="button"
+                        className="saved-head"
+                        aria-expanded={savedOpen}
+                        onClick={() => setSavedOpen((value) => !value)}
                       >
-                        {showRequestHeaders ? "Hide" : "Show"} headers ({reqHeaders.length})
+                        <ChevronIcon className={`chev ${savedOpen ? "open" : ""}`} />
+                        <span>Saved requests</span>
+                        <span className="count">{savedRequests.length}</span>
+                        <span className="saved-head-spacer" />
+                        {reqDirty && <span className="dirty-chip">Unsaved</span>}
                       </button>
-                      {showRequestHeaders && (
-                        <div style={{ marginTop: 8 }}>
-                          {reqHeaders.map((header, index) => (
-                            <div className="kv-row" key={index}>
-                              <input
-                                placeholder="Header"
-                                value={header.key}
-                                onChange={(event) => {
-                                  const next = [...reqHeaders];
-                                  next[index] = { ...next[index], key: event.target.value };
-                                  setReqHeaders(next);
-                                }}
-                              />
-                              <input
-                                placeholder="Value"
-                                value={header.value}
-                                onChange={(event) => {
-                                  const next = [...reqHeaders];
-                                  next[index] = { ...next[index], value: event.target.value };
-                                  setReqHeaders(next);
-                                }}
-                              />
-                              <button
-                                className="icon-btn danger"
-                                onClick={() =>
-                                  setReqHeaders(reqHeaders.filter((_, i) => i !== index))
-                                }
-                              >
-                                x
-                              </button>
+                      {savedOpen && (
+                        <div className="saved-body">
+                          {savedRequests.length > 0 && (
+                            <input
+                              className="saved-search"
+                              type="search"
+                              placeholder="Search requests…"
+                              value={reqSearch}
+                              onChange={(event) => setReqSearch(event.target.value)}
+                            />
+                          )}
+                          {savedRequests.length === 0 ? (
+                            <p className="side-empty">No saved requests for this example yet.</p>
+                          ) : visibleSavedRequests.length === 0 ? (
+                            <p className="side-empty">No requests match “{reqSearch.trim()}”.</p>
+                          ) : (
+                            <div className="saved-list">
+                              {visibleSavedRequests.map((request) => {
+                                const active = request.id === loadedRequestId;
+                                return (
+                                  <div
+                                    className={`saved-item ${active ? "active" : ""}`}
+                                    key={request.id}
+                                  >
+                                    <button
+                                      type="button"
+                                      className="saved-item-main"
+                                      onClick={() => guardRequest({ type: "select", request })}
+                                      title={request.path}
+                                    >
+                                      <span
+                                        className={`method-pill method-${request.method.toLowerCase()}`}
+                                      >
+                                        {request.method}
+                                      </span>
+                                      <span className="saved-item-name truncate">
+                                        {request.name}
+                                      </span>
+                                      {active && reqDirty && (
+                                        <span className="dirty-dot" title="Unsaved changes" />
+                                      )}
+                                    </button>
+                                    <KebabMenu
+                                      label={`Actions for ${request.name}`}
+                                      items={[
+                                        {
+                                          label: "Rename",
+                                          onSelect: () => {
+                                            setRenameTargetId(request.id);
+                                            setRenameName(request.name);
+                                            setRenameOpen(true);
+                                          },
+                                        },
+                                        {
+                                          label: "Duplicate",
+                                          onSelect: () => void duplicateSaved(request),
+                                        },
+                                        {
+                                          label: "Delete",
+                                          onSelect: () => void deleteSaved(request.id),
+                                          danger: true,
+                                        },
+                                      ]}
+                                    />
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
-                          <button
-                            className="icon-btn"
-                            onClick={() => setReqHeaders([...reqHeaders, { key: "", value: "" }])}
-                          >
-                            + Header
-                          </button>
+                          )}
                         </div>
                       )}
-                    </div>
+                    </section>
 
-                    <div className="field" style={{ marginBottom: 0 }}>
-                      <label>JSON body (used for POST / PUT / PATCH)</label>
-                      <textarea
-                        className="body"
-                        spellCheck={false}
-                        placeholder={'{\n  "name": "New item"\n}'}
-                        value={reqBody}
-                        onChange={(event) => setReqBody(event.target.value)}
-                      />
-                    </div>
+                    <section className="api-request">
+                      <div className="api-request-head">
+                        <span className="api-request-title truncate" title={loadedRequest?.name}>
+                          {loadedRequest ? loadedRequest.name : "New request"}
+                        </span>
+                        {reqDirty && <span className="dirty-chip">Unsaved</span>}
+                      </div>
 
-                    <div className="row">
-                      {loadedRequest ? (
-                        <>
-                          <button className="primary" disabled={busy} onClick={() => void updateSaved()}>
-                            Update “{loadedRequest.name}”
-                          </button>
-                          <button
-                            disabled={busy}
-                            onClick={() => {
-                              setRenameName(loadedRequest.name);
-                              setRenameOpen(true);
-                            }}
-                          >
-                            Rename
-                          </button>
-                          <button
-                            className="icon-btn"
-                            onClick={() => setLoadedRequestId(null)}
-                            title="Detach from the saved request"
-                          >
-                            New
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          disabled={busy}
-                          onClick={() => {
-                            setSaveName("");
-                            setSaveOpen(true);
-                          }}
+                      <div className="api-send-row">
+                        <select
+                          className={`method-select method-select-${reqMethod.toLowerCase()}`}
+                          value={reqMethod}
+                          onChange={(event) => setReqMethod(event.target.value)}
                         >
-                          Save request
+                          {METHODS.map((method) => (
+                            <option key={method} value={method}>
+                              {method}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="path-input"
+                          placeholder="/api/items/"
+                          value={reqPath}
+                          onChange={(event) => setReqPath(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") void sendRequest();
+                          }}
+                        />
+                        <button
+                          className="primary send-btn"
+                          disabled={sending}
+                          onClick={() => void sendRequest()}
+                        >
+                          {sending ? <SpinnerIcon className="spin" /> : null}
+                          Send
                         </button>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="stack">
-                      <h2>Saved requests</h2>
-                      {savedRequests.length === 0 && (
-                        <p className="muted" style={{ fontSize: 12 }}>
-                          No saved requests for this example yet.
-                        </p>
-                      )}
-                      {savedRequests.map((request) => (
-                        <div className="request-item" key={request.id}>
+                      <div className="api-editor">
+                        <div className="api-mini-tabs" role="tablist">
                           <button
-                            className={`request-name ${request.id === loadedRequestId ? "active" : ""}`}
-                            onClick={() => loadSaved(request)}
-                            title={request.path}
+                            type="button"
+                            role="tab"
+                            aria-selected={requestTab === "headers"}
+                            className={`api-mini-tab ${requestTab === "headers" ? "active" : ""}`}
+                            onClick={() => setRequestTab("headers")}
                           >
-                            {request.name}
+                            Headers
+                            {reqHeaders.filter((row) => row.key.trim()).length > 0 && (
+                              <span className="api-badge">
+                                {reqHeaders.filter((row) => row.key.trim()).length}
+                              </span>
+                            )}
                           </button>
                           <button
-                            className="icon-btn"
-                            disabled={busy}
-                            onClick={() => {
-                              loadSaved(request);
-                              void sendRequest();
-                            }}
+                            type="button"
+                            role="tab"
+                            aria-selected={requestTab === "body"}
+                            className={`api-mini-tab ${requestTab === "body" ? "active" : ""}`}
+                            onClick={() => setRequestTab("body")}
                           >
-                            Send
-                          </button>
-                          <button
-                            className="icon-btn danger"
-                            disabled={busy}
-                            onClick={() => void deleteSaved(request.id)}
-                          >
-                            Del
+                            Body
+                            {reqBody.trim() !== "" && <span className="api-dot" />}
                           </button>
                         </div>
-                      ))}
-                    </div>
 
-                    <div className="stack">
-                      <h2>Response</h2>
-                      {result ? (
-                        <div className="stack">
-                          <div className="ltr">
+                        {requestTab === "headers" ? (
+                          <div className="api-tab-panel">
+                            {reqHeaders.length === 0 && (
+                              <p className="side-empty">No headers. Add one below.</p>
+                            )}
+                            {reqHeaders.map((header, index) => (
+                              <div className="kv-row" key={index}>
+                                <input
+                                  placeholder="Header"
+                                  value={header.key}
+                                  onChange={(event) => {
+                                    const next = [...reqHeaders];
+                                    next[index] = { ...next[index], key: event.target.value };
+                                    setReqHeaders(next);
+                                  }}
+                                />
+                                <input
+                                  placeholder="Value"
+                                  value={header.value}
+                                  onChange={(event) => {
+                                    const next = [...reqHeaders];
+                                    next[index] = { ...next[index], value: event.target.value };
+                                    setReqHeaders(next);
+                                  }}
+                                />
+                                <button
+                                  className="icon-btn danger"
+                                  title="Remove header"
+                                  aria-label="Remove header"
+                                  onClick={() =>
+                                    setReqHeaders(reqHeaders.filter((_, i) => i !== index))
+                                  }
+                                >
+                                  <CloseIcon />
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              className="icon-btn"
+                              onClick={() => setReqHeaders([...reqHeaders, { key: "", value: "" }])}
+                            >
+                              <PlusIcon /> Header
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="api-tab-panel">
+                            <textarea
+                              className="body"
+                              spellCheck={false}
+                              placeholder={'{\n  "name": "New item"\n}'}
+                              value={reqBody}
+                              onChange={(event) => setReqBody(event.target.value)}
+                            />
+                            {!BODY_METHODS.has(reqMethod) && (
+                              <p className="api-hint">
+                                Bodies are only sent for POST, PUT and PATCH requests.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="api-actions">
+                        <button
+                          className="icon-btn"
+                          disabled={busy}
+                          onClick={() => guardRequest({ type: "new" })}
+                        >
+                          <PlusIcon /> New request
+                        </button>
+                        <button
+                          className="primary"
+                          disabled={busy || !reqPath.trim()}
+                          onClick={handleSaveRequest}
+                        >
+                          Save
+                        </button>
+                        <KebabMenu
+                          label="Request actions"
+                          items={[
+                            { label: "Save as new…", onSelect: () => openSaveModal(true) },
+                            ...(loadedRequest
+                              ? [
+                                  {
+                                    label: "Rename…",
+                                    onSelect: () => {
+                                      setRenameTargetId(loadedRequest.id);
+                                      setRenameName(loadedRequest.name);
+                                      setRenameOpen(true);
+                                    },
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    </section>
+
+                    <section className="api-response">
+                      <div className="api-response-head">
+                        <span className="api-section-label">Response</span>
+                        {result && (
+                          <div className="api-response-meta">
                             <span className={`status-badge ${statusClass(result.status)}`}>
                               {result.status}
-                            </span>{" "}
-                            <span className="muted">{result.durationMs} ms</span>
-                            {result.truncated && <span className="muted"> • truncated</span>}
+                            </span>
+                            <span className="api-chip">{result.durationMs} ms</span>
+                            {result.truncated && <span className="api-chip">truncated</span>}
                           </div>
-                          <button onClick={() => setShowResultHeaders((value) => !value)}>
-                            {showResultHeaders ? "Hide headers" : "Show headers"}
+                        )}
+                        <span className="api-response-spacer" />
+                        {sending && <SpinnerIcon className="spin" />}
+                        {result && (
+                          <button
+                            className="icon-btn"
+                            title="Copy response body"
+                            aria-label="Copy response body"
+                            onClick={() => {
+                              void navigator.clipboard?.writeText(result.body);
+                              notifySuccess("Response copied.");
+                            }}
+                          >
+                            <CopyIcon />
                           </button>
-                          {showResultHeaders && (
-                            <pre className="logs ltr">
-                              {Object.entries(result.headers)
-                                .map(([key, value]) => `${key}: ${value}`)
-                                .join("\n")}
-                            </pre>
+                        )}
+                      </div>
+
+                      {sendError ? (
+                        <div className="alert error">{sendError}</div>
+                      ) : result ? (
+                        <div className="api-response-body">
+                          {result.contentType && (
+                            <div
+                              className="api-content-type truncate ltr"
+                              title={result.contentType}
+                            >
+                              {result.contentType}
+                            </div>
                           )}
-                          <pre className="logs ltr">
+                          <pre className="api-body ltr">
                             {prettyBody(result.body, result.contentType) || "(empty body)"}
                           </pre>
+                          {Object.keys(result.headers).length > 0 && (
+                            <details className="api-details">
+                              <summary>
+                                Response headers ({Object.keys(result.headers).length})
+                              </summary>
+                              <pre className="api-headers ltr">
+                                {Object.entries(result.headers)
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join("\n")}
+                              </pre>
+                            </details>
+                          )}
                         </div>
+                      ) : sending ? (
+                        <p className="side-empty">Sending request…</p>
                       ) : (
-                        <p className="muted">
-                          No response yet. Activate an example, press Run, then Send.
+                        <p className="side-empty">
+                          No response yet.{" "}
+                          {status.state !== "running" ? "Run the example, then " : ""}press Send.
                         </p>
                       )}
-                    </div>
+                    </section>
                   </div>
                 )}
 
@@ -2335,17 +2646,50 @@ export default function Page() {
         </div>
       )}
 
+      {reqPending && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Unsaved request</h2>
+            <p className="muted">
+              {loadedRequest
+                ? `"${loadedRequest.name}" has unsaved changes.`
+                : "This request has unsaved changes."}{" "}
+              Do you want to save before continuing?
+            </p>
+            <div className="row">
+              <button className="primary" disabled={busy} onClick={() => void resolveReqPending("save")}>
+                Save and continue
+              </button>
+              <button className="danger" disabled={busy} onClick={() => void resolveReqPending("discard")}>
+                Discard
+              </button>
+              <button disabled={busy} onClick={() => void resolveReqPending("cancel")}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {saveOpen && (
         <div className="overlay">
           <div className="modal">
-            <h2>Save request</h2>
+            <h2>{saveAs ? "Save as new request" : "Save request"}</h2>
+            <p className="muted">
+              {saveAs
+                ? "The original request stays untouched and the copy becomes the active request."
+                : "Give this request a name so you can find and reuse it later."}
+            </p>
             <div className="field">
               <label>Name</label>
               <input
                 value={saveName}
                 autoFocus
-                placeholder="List items"
+                placeholder="GET /api/items/"
                 onChange={(event) => setSaveName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && saveName.trim() && !busy) void createSaved();
+                }}
               />
             </div>
             <div className="row">
@@ -2354,9 +2698,11 @@ export default function Page() {
                 disabled={busy || !saveName.trim()}
                 onClick={() => void createSaved()}
               >
-                Save
+                {saveAs ? "Save as new" : "Save"}
               </button>
-              <button onClick={() => setSaveOpen(false)}>Cancel</button>
+              <button disabled={busy} onClick={closeSaveModal}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -2372,6 +2718,9 @@ export default function Page() {
                 value={renameName}
                 autoFocus
                 onChange={(event) => setRenameName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && renameName.trim() && !busy) void renameSaved();
+                }}
               />
             </div>
             <div className="row">
@@ -2382,7 +2731,9 @@ export default function Page() {
               >
                 Save
               </button>
-              <button onClick={() => setRenameOpen(false)}>Cancel</button>
+              <button disabled={busy} onClick={() => setRenameOpen(false)}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>
