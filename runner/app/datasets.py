@@ -43,10 +43,10 @@ def _personal_root(example_id: str) -> Path:
     return root
 
 
-def _run(project_root: Path, args: list[str]) -> tuple[int, str, str]:
+def _run(project_root: Path, args: list[str], db_path: Path | None = None) -> tuple[int, str, str]:
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
-    env["PLAYGROUND_DB_PATH"] = str(project_root / DB_FILENAME)
+    env["PLAYGROUND_DB_PATH"] = str(db_path or (project_root / DB_FILENAME))
     try:
         process = subprocess.run(
             [sys.executable, "manage.py", *args],
@@ -152,52 +152,54 @@ def replace_dataset(example_id: str, payload: Any) -> dict[str, Any]:
     records = validate_dataset(payload)["records"]
     root = _personal_root(example_id)
     db_file = root / DB_FILENAME
+    example_dir = storage.example_dir(example_id)
 
     was_running = runtime.manager.is_running
     runtime.manager.stop()
 
-    # The schema must be present and current before we can load data into it.
-    code, stdout, stderr = _run(root, ["migrate", "--noinput"])
-    if code != 0:
-        if was_running:
-            runtime.manager.start(root)
-        raise DatasetError(f"Could not prepare the database: {_last_line(stderr or stdout)}")
-
     had_database = db_file.exists() and db_file.stat().st_size > 0
-    backup_path: str | None = None
+
+    # Do the whole migration + flush + loaddata against a throwaway copy of the
+    # database (or a brand-new file when there is none yet). The live database
+    # is only swapped in, atomically, after every step has succeeded — so a
+    # failure at any point leaves the previous data exactly as it was.
+    handle, work_path = tempfile.mkstemp(prefix=".db-work-", dir=str(example_dir))
+    os.close(handle)
+    work_db = Path(work_path)
+    if had_database:
+        shutil.copy2(db_file, work_db)
+    else:
+        work_db.unlink()  # let Django create it fresh
+
     fixture_path: str | None = None
     try:
-        if had_database:
-            handle, backup_path = tempfile.mkstemp(
-                prefix=".db-backup-", dir=str(storage.example_dir(example_id))
-            )
-            os.close(handle)
-            shutil.copy2(db_file, backup_path)
+        code, stdout, stderr = _run(root, ["migrate", "--noinput"], work_db)
+        if code != 0:
+            raise DatasetError(f"Could not prepare the database: {_last_line(stderr or stdout)}")
+
+        code, stdout, stderr = _run(root, ["flush", "--noinput"], work_db)
+        if code != 0:
+            raise DatasetError(f"Could not clear the existing data: {_last_line(stderr or stdout)}")
 
         handle, fixture_path = tempfile.mkstemp(
-            prefix=".fixture-", suffix=".json", dir=str(storage.example_dir(example_id))
+            prefix=".fixture-", suffix=".json", dir=str(example_dir)
         )
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             json.dump(records, stream)
 
-        code, stdout, stderr = _run(root, ["flush", "--noinput"])
-        if code != 0:
-            raise DatasetError(f"Could not clear the existing data: {_last_line(stderr or stdout)}")
-
-        code, stdout, stderr = _run(root, ["loaddata", fixture_path])
+        code, stdout, stderr = _run(root, ["loaddata", fixture_path], work_db)
         if code != 0:
             raise DatasetError(f"The dataset was rejected: {_last_line(stderr or stdout)}")
-    except DatasetError:
-        # Put the previous database back byte-for-byte so nothing changed.
-        if backup_path is not None:
-            shutil.copy2(backup_path, db_file)
-        elif db_file.exists():
-            db_file.unlink()
-        raise
+
+        # Success: replace the live database with the validated copy.
+        os.replace(work_db, db_file)
     finally:
-        for path in (backup_path, fixture_path):
-            if path and os.path.exists(path):
-                os.remove(path)
+        cleanup = [work_db]
+        if fixture_path is not None:
+            cleanup.append(Path(fixture_path))
+        for path in cleanup:
+            if path.exists():
+                path.unlink()
 
     if was_running:
         runtime.manager.start(root)

@@ -239,3 +239,33 @@ def test_builtin_dataset_operations_are_forbidden(client: TestClient) -> None:
         ).status_code
         == 403
     )
+
+
+def test_dataset_replace_migrate_failure_keeps_database_bytes(client: TestClient) -> None:
+    from app import storage
+
+    example_id = _new_example(client, "Dataset Migrate Fail", "crud")
+    db_file = storage.project_dir(example_id) / "db.sqlite3"
+    before_bytes = db_file.read_bytes()
+    before_rows = client.get("/v1/database/tables/demo_item").json()["rowCount"]
+
+    broken_migration = (
+        "from django.db import migrations\n\n\n"
+        "def boom(apps, schema_editor):\n"
+        "    raise RuntimeError('boom')\n\n\n"
+        "class Migration(migrations.Migration):\n"
+        "    dependencies = [('demo', '0002_seed_items')]\n"
+        "    operations = [migrations.RunPython(boom)]\n"
+    )
+    client.put(
+        "/v1/files/content",
+        json={"path": "demo/migrations/0003_boom.py", "content": broken_migration},
+    )
+
+    valid = client.get(f"/v1/examples/{example_id}/dataset/export").json()
+    response = client.post(f"/v1/examples/{example_id}/dataset/replace", json=valid)
+    assert response.status_code == 400
+
+    # Migration ran on a throwaway copy, so the live database is byte-identical.
+    assert db_file.read_bytes() == before_bytes
+    assert client.get("/v1/database/tables/demo_item").json()["rowCount"] == before_rows
