@@ -13,6 +13,7 @@ import {
 
 import { LessonLab } from "../../lab/lesson-lab";
 import { StatusBadge } from "../../badge";
+import { LessonProgressPanel, ProgressProvider } from "../../progress";
 import styles from "../../academy.module.css";
 
 interface PageProps {
@@ -140,7 +141,10 @@ export default async function LessonPage({ params }: PageProps) {
         )}
 
         {labExercises && labExercises.length > 0 ? (
-          <LessonLab exercises={labExercises} />
+          <ProgressProvider>
+            <LessonProgressPanel lessonId={lesson.id} />
+            <LessonLab exercises={labExercises} />
+          </ProgressProvider>
         ) : null}
       </div>
     </main>

@@ -2,8 +2,8 @@
 
 Not published to the host: only the Next.js BFF reaches it over the internal
 Compose network. It owns the disposable MySQL exercise schemas, runs learner
-SQL/ORM submissions in a controlled way and never returns validator reference
-files.
+SQL/ORM submissions in a controlled way, records durable progress and never
+returns validator reference files.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Any, AsyncIterator
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from . import config, db, exercises, orm_engine, seeds, sql_engine
+from . import checks, config, db, exercises, orm_engine, progress, seeds, sql_engine
 from .db import DbUnavailable
 
 
@@ -22,15 +22,25 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     db.wait_for_mysql()
     for spec in exercises.all_specs():
         seeds.ensure_seeded(spec)
+    progress.schema_version()
     yield
 
 
-app = FastAPI(title="Academy Runner", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Academy Runner", version="0.2.0", lifespan=lifespan)
 
 
 class Submission(BaseModel):
     exerciseId: str
     source: str = Field(default="")
+
+
+class EvaluateRequest(BaseModel):
+    exerciseId: str | None = None
+    source: str = Field(default="")
+
+
+class HintsRequest(BaseModel):
+    revealed: int = 0
 
 
 def _spec_or_404(exercise_id: str) -> exercises.Spec:
@@ -44,6 +54,36 @@ def _system_error(exc: Exception) -> dict[str, Any]:
     return {"status": "system_error", "error": f"خطای سیستمی دیتابیس: {exc}"}
 
 
+def _run_check(spec: exercises.Spec, source: str) -> dict[str, Any]:
+    if spec.kind == "sql":
+        return sql_engine.check(spec, source)
+    if spec.kind == "django-orm":
+        return orm_engine.check(spec, source)
+    raise HTTPException(status_code=400, detail="Exercise kind is not supported yet")
+
+
+def _persist(spec: exercises.Spec, result: dict[str, Any]) -> None:
+    outcome = result.get("outcome", "")
+    passed = bool(result.get("passed"))
+    progress.record_attempt(
+        exercise_id=spec.id,
+        lesson_id=spec.lesson_id,
+        level=spec.level,
+        assessment_version=spec.validator_version,
+        status=result.get("status", ""),
+        outcome=outcome,
+        passed=passed,
+        checks=result.get("checks", []),
+    )
+    if passed and outcome == "success":
+        progress.record_pass(
+            exercise_id=spec.id,
+            lesson_id=spec.lesson_id,
+            level=spec.level,
+            assessment_version=spec.validator_version,
+        )
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     try:
@@ -51,7 +91,12 @@ def health() -> dict[str, Any]:
         mysql_ready = True
     except DbUnavailable:
         mysql_ready = False
-    return {"status": "ok", "service": "academy-runner", "mysql": mysql_ready}
+    return {
+        "status": "ok",
+        "service": "academy-runner",
+        "mysql": mysql_ready,
+        "registryIssues": exercises.registry_issues(),
+    }
 
 
 @app.get("/v1/exercises")
@@ -88,6 +133,49 @@ def reset_exercise(exercise_id: str) -> dict[str, Any]:
     return {"status": "ok", "exerciseId": exercise_id}
 
 
+@app.post("/v1/exercises/{exercise_id}/hints/next")
+def next_hint(exercise_id: str, payload: HintsRequest) -> dict[str, Any]:
+    _spec_or_404(exercise_id)
+    hints = exercises.hints_for(exercise_id)
+    total = exercises.hint_total(exercise_id)
+    revealed = max(0, min(int(payload.revealed), total))
+    if revealed >= total:
+        return {
+            "exerciseId": exercise_id,
+            "hint": None,
+            "revealed": revealed,
+            "total": total,
+            "canRequestMore": False,
+        }
+    hint = hints[revealed]
+    return {
+        "exerciseId": exercise_id,
+        "hint": {"id": hint.get("id"), "text_fa": hint.get("text_fa")},
+        "revealed": revealed + 1,
+        "total": total,
+        "canRequestMore": revealed + 1 < total,
+    }
+
+
+@app.get("/v1/progress")
+def get_progress() -> dict[str, Any]:
+    return progress.snapshot()
+
+
+@app.post("/v1/exercises/{exercise_id}/evaluate")
+def evaluate_exercise(exercise_id: str, payload: EvaluateRequest) -> dict[str, Any]:
+    spec = _spec_or_404(exercise_id)
+    if payload.exerciseId is not None and payload.exerciseId != exercise_id:
+        raise HTTPException(status_code=400, detail="exerciseId in body does not match path")
+    try:
+        result = _run_check(spec, payload.source)
+    except DbUnavailable as exc:
+        result = checks.system_error_payload(spec, f"خطای سیستمی دیتابیس: {exc}")
+    _persist(spec, result)
+    result["progress"] = progress.snapshot()["lessons"].get(spec.lesson_id)
+    return result
+
+
 @app.post("/v1/runtime/sql/execute")
 def sql_execute(payload: Submission) -> dict[str, Any]:
     spec = _spec_or_404(payload.exerciseId)
@@ -107,7 +195,7 @@ def sql_check(payload: Submission) -> dict[str, Any]:
     try:
         return sql_engine.check(spec, payload.source)
     except DbUnavailable as exc:
-        return _system_error(exc)
+        return checks.system_error_payload(spec, f"خطای سیستمی دیتابیس: {exc}")
 
 
 @app.post("/v1/runtime/orm/execute")
@@ -129,4 +217,4 @@ def orm_check(payload: Submission) -> dict[str, Any]:
     try:
         return orm_engine.check(spec, payload.source)
     except DbUnavailable as exc:
-        return _system_error(exc)
+        return checks.system_error_payload(spec, f"خطای سیستمی دیتابیس: {exc}")

@@ -1,10 +1,11 @@
 # academy-runner
 
-Control API for the Database & ORM Academy lab (PRD-02). It runs learner SQL
-and Django ORM submissions against a disposable MySQL 8.4 schema and evaluates
-them with deterministic, real checks. It is **not** published to the host; only
-the Next.js BFF reaches it over the internal Compose network (`/api/academy/*`
-→ `http://academy-runner:8200`).
+Control API for the Database & ORM Academy lab (PRD-02 + PRD-03). It runs
+learner SQL and Django ORM submissions against disposable MySQL 8.4 schemas,
+evaluates them with deterministic, real checks, serves progressive hints and
+stores durable learner progress. It is **not** published to the host; only the
+Next.js BFF reaches it over the internal Compose network (`/api/academy/*` →
+`http://academy-runner:8200`).
 
 ## Services
 
@@ -13,8 +14,11 @@ the Next.js BFF reaches it over the internal Compose network (`/api/academy/*`
 | `academy-mysql` | MySQL 8.4, internal only | none (internal only) |
 | `academy-runner` | this FastAPI control API | none (`expose: 8200`) |
 
-Both live on a dedicated volume (`academy_mysql_data`), fully separate from the
-legacy Django Playground (`playground_data`, SQLite).
+MySQL data lives on `academy_mysql_data`. Learner **progress** lives in a
+separate SQLite file (`/data/academy_progress.sqlite3`) on its own volume
+`academy_progress_data`, fully separate from the legacy Django Playground
+(`playground_data`, SQLite) and from the disposable exercise schemas — so a
+Reset or a MySQL outage never affects earned progress.
 
 ## Isolation contract
 
@@ -59,21 +63,51 @@ Internal routes are mounted under the BFF at `/api/academy/*`, so the public
 URL is `/api/academy` + the path below (for example
 `/api/academy/v1/runtime/sql/execute`).
 
-- `GET  /health`
-- `GET  /v1/exercises` — public metadata only (no validators/solutions)
+- `GET  /health` — includes `registryIssues` (manifest ↔ validator mismatches)
+- `GET  /v1/exercises` — public metadata only (no validators/solutions/hint text)
 - `GET  /v1/exercises/{id}`
 - `GET  /v1/exercises/{id}/schema`
 - `POST /v1/exercises/{id}/reset`
-- `POST /v1/runtime/sql/execute` `{ exerciseId, source }`
-- `POST /v1/runtime/sql/check`   `{ exerciseId, source }`
+- `POST /v1/exercises/{id}/evaluate` — graded + records progress (`{ exerciseId?, source }`)
+- `POST /v1/exercises/{id}/hints/next` `{ revealed }` — one ordered hint per call
+- `GET  /v1/progress` — attempts, passes and derived lesson status
+- `POST /v1/runtime/sql/execute` `{ exerciseId, source }` — raw result, no progress
+- `POST /v1/runtime/sql/check`   `{ exerciseId, source }` — graded, no progress
 - `POST /v1/runtime/orm/execute` `{ exerciseId, source }`
 - `POST /v1/runtime/orm/check`   `{ exerciseId, source }`
 
-Public metadata (title, instructions, starter, public criteria, hints) is read
-from the authored content mounted read-only at `/content`
-(`academy-planning/content-samples`). Exercise behaviour and validators live in
-`app/` and are keyed by exercise id; only exercises listed in
-`app/exercises.py:SPECS` are executable.
+Public metadata (title, instructions, starter, public criteria, hint **count**)
+is read from the authored content mounted read-only at `/content`
+(`academy-planning/content-samples`). Hint text is served only through
+`hints/next` (capped for Mastery). Exercise behaviour and validators live in
+`app/` and are keyed by exercise id.
+
+### Registry by exact id / version / kind
+
+An exercise is executable only when its manifest matches the coded spec exactly
+(`kind`, `level`, `lesson_id`, `validator.id`, `validator.version`). The coded
+`validator.version` is the **assessment version** stored with a pass. A mismatch
+is recorded in `registryIssues` and the exercise is not gradable — it is never
+silently graded with the wrong validator.
+
+### Evaluation contract
+
+`evaluate` returns `status`, `outcome`, `passed`, `assessmentVersion`, per-check
+`{criterionId, status, messageFa, location?, hintAvailable}` and the raw
+`result`. Criterion statuses: `passed`, `failed`, `needs_manual_review`,
+`not_evaluated`. Top-level statuses stay distinct: `passed`, `failed`, `error`
+(syntax), `timeout` (deadline), `system_error` (runner/DB outage). `manual`
+criteria are reported as `needs_manual_review` and never affect `passed` or
+progress. A `system_error`/`timeout` never counts as a failure.
+
+### Progress
+
+A lesson is **Completed** when every `required_for_completion` exercise has a
+pass; it is **Mastered** when it is Completed *and* the independent Mastery
+challenge has passed. Reading a lesson, running without Check, or seeing an
+answer never completes it. Passes are keyed by `(exercise_id,
+assessment_version)` and kept as history; a pass from an older assessment
+version still counts and is flagged `legacy` (explicit content-version notice).
 
 ## Tests
 

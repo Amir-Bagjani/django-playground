@@ -19,6 +19,14 @@ def _int(name: str, default: int) -> int:
 # Mounted read-only authored content (content-samples) with exercise manifests.
 CONTENT_DIR = Path(os.environ.get("ACADEMY_CONTENT_DIR", "/content"))
 
+# Durable, app-owned progress store. Deliberately a separate SQLite file on its
+# own volume: learner progress must survive exercise Reset/Restart and must not
+# depend on the disposable MySQL exercise schemas.
+PROGRESS_DB_PATH = Path(
+    os.environ.get("ACADEMY_PROGRESS_DB", "/data/academy_progress.sqlite3")
+)
+PROGRESS_SCHEMA_VERSION = 1
+
 # MySQL connection (internal Docker network only; never published to the host).
 DB_HOST = os.environ.get("ACADEMY_DB_HOST", "academy-mysql")
 DB_PORT = _int("ACADEMY_DB_PORT", 3306)
@@ -43,5 +51,9 @@ SQL_MAX_ROWS = _int("ACADEMY_SQL_MAX_ROWS", 500)
 ORM_MAX_SOURCE_BYTES = _int("ACADEMY_ORM_MAX_BYTES", 40_000)
 ORM_TIMEOUT_SECONDS = _int("ACADEMY_ORM_TIMEOUT_SECONDS", 12)
 ORM_MAX_ROWS = _int("ACADEMY_ORM_MAX_ROWS", 500)
+
+# Progressive hints: a Mastery challenge deliberately exposes fewer hints than
+# the introductory levels, regardless of how many are authored.
+MASTERY_MAX_HINTS = _int("ACADEMY_MASTERY_MAX_HINTS", 1)
 
 CONTROL_PORT = _int("ACADEMY_CONTROL_PORT", 8200)

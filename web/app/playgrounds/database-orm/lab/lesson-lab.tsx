@@ -4,35 +4,47 @@ import { useCallback, useMemo, useState } from "react";
 
 import Editor, { loader } from "@monaco-editor/react";
 
-import type { LabExercise } from "@/lib/academy";
+import type { LabExercise, LabHint } from "@/lib/academy";
 
 import { Markdown } from "../../../components/markdown";
+import { notifyProgress } from "../progress";
 import styles from "./lab.module.css";
 
 loader.config({ paths: { vs: "/monaco/vs" } });
 
-type RunStatus = "ok" | "error" | "timeout" | "system_error";
-
-interface RuntimeResult {
-  status: RunStatus;
+interface RawResult {
   columns: string[];
   rows: Array<Array<string | number | null>>;
   rowCount: number;
   truncated?: boolean;
   durationMs?: number;
+}
+
+interface RuntimeResult extends RawResult {
+  status: string;
   error?: string | null;
   traceback?: string | null;
 }
 
-interface CriterionResult {
-  id: string;
-  description_fa: string;
-  passed: boolean;
+interface EvaluationCheck {
+  criterionId: string;
+  status: "passed" | "failed" | "needs_manual_review" | "not_evaluated";
+  messageFa: string;
+  location?: { file?: string; line?: number } | null;
+  hintAvailable: boolean;
 }
 
-interface CheckResult extends RuntimeResult {
-  passed: boolean | null;
-  criteria: CriterionResult[];
+interface EvaluationResult {
+  exerciseId: string;
+  assessmentVersion: number;
+  status: "passed" | "failed" | "error" | "timeout" | "system_error";
+  outcome: string;
+  passed: boolean;
+  checks: EvaluationCheck[];
+  result: RawResult;
+  canRequestNextHint: boolean;
+  error: string | null;
+  traceback: string | null;
 }
 
 interface SchemaPreview {
@@ -52,18 +64,29 @@ const LEVEL_LABEL: Record<string, string> = {
   mastery: "Mastery",
 };
 
-const STATUS_CLASS: Record<RunStatus, string> = {
+const STATUS_LABEL: Record<string, string> = {
+  ok: "OK",
+  passed: "Passed",
+  failed: "Not passed",
+  error: "Error",
+  timeout: "Timeout",
+  system_error: "System error",
+};
+
+const STATUS_CLASS: Record<string, string> = {
   ok: styles.statusOk,
+  passed: styles.statusOk,
+  failed: styles.statusError,
   error: styles.statusError,
   timeout: styles.statusTimeout,
   system_error: styles.statusSystem,
 };
 
-const STATUS_LABEL: Record<RunStatus, string> = {
-  ok: "OK",
-  error: "Error",
-  timeout: "Timeout",
-  system_error: "System error",
+const CHECK_MARK: Record<EvaluationCheck["status"], { glyph: string; className: string }> = {
+  passed: { glyph: "✓", className: styles.markPass },
+  failed: { glyph: "✗", className: styles.markFail },
+  needs_manual_review: { glyph: "…", className: styles.markManual },
+  not_evaluated: { glyph: "•", className: "" },
 };
 
 function editorLanguage(exercise: LabExercise): string {
@@ -92,6 +115,22 @@ async function callApi(path: string, body?: unknown): Promise<Record<string, unk
   }
 }
 
+function verdictMessage(evaluation: EvaluationResult): string {
+  if (evaluation.status === "system_error") {
+    return evaluation.error ?? "خطای سیستمی رخ داد؛ این مورد بهعنوان پاسخ غلط ثبت نمیشود.";
+  }
+  if (evaluation.status === "timeout" || evaluation.outcome === "deadline_exceeded") {
+    return "اجرای کد بیش از حد طول کشید و متوقف شد؛ آن را سادهتر یا سریعتر کن.";
+  }
+  if (evaluation.outcome === "syntax_error") {
+    return "کد خطا داد؛ همان خطای واقعی را ببین و اصلاح کن.";
+  }
+  if (evaluation.passed) {
+    return "آفرین! معیارهای خودکار برآورده شدند.";
+  }
+  return "بعضی معیارها برآورده نشد؛ نتیجه و توضیح معیارها را با صورت مسئله مقایسه کن.";
+}
+
 export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
   const [activeId, setActiveId] = useState(exercises[0]?.id ?? "");
   const active = useMemo(
@@ -104,16 +143,35 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
     return initial;
   });
   const [results, setResults] = useState<Record<string, RuntimeResult | null>>({});
-  const [checks, setChecks] = useState<Record<string, CheckResult | null>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-  const [hintsShown, setHintsShown] = useState<Record<string, number>>({});
+  const [evaluations, setEvaluations] = useState<Record<string, EvaluationResult | null>>({});
+  const [revealed, setRevealed] = useState<Record<string, LabHint[]>>({});
+  const [hintTotals, setHintTotals] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = {};
+    for (const exercise of exercises) initial[exercise.id] = exercise.hint_count;
+    return initial;
+  });
   const [schemas, setSchemas] = useState<Record<string, SchemaPreview | null>>({});
+  const [busy, setBusy] = useState<string | null>(null);
 
   const source = sources[activeId] ?? "";
   const result = results[activeId] ?? null;
-  const check = checks[activeId] ?? null;
+  const evaluation = evaluations[activeId] ?? null;
   const schema = schemas[activeId] ?? null;
-  const shownHints = hintsShown[activeId] ?? 0;
+  const shownHints = revealed[activeId] ?? [];
+  const hintTotal = hintTotals[activeId] ?? 0;
+
+  const display: RuntimeResult | null = evaluation
+    ? {
+        status: evaluation.status,
+        columns: evaluation.result.columns,
+        rows: evaluation.result.rows,
+        rowCount: evaluation.result.rowCount,
+        truncated: evaluation.result.truncated,
+        durationMs: evaluation.result.durationMs,
+        error: evaluation.error,
+        traceback: evaluation.traceback,
+      }
+    : result;
 
   const updateSource = useCallback(
     (value: string) => setSources((prev) => ({ ...prev, [activeId]: value })),
@@ -129,7 +187,7 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
         source,
       });
       setResults((prev) => ({ ...prev, [active.id]: data as unknown as RuntimeResult }));
-      setChecks((prev) => ({ ...prev, [active.id]: null }));
+      setEvaluations((prev) => ({ ...prev, [active.id]: null }));
     } finally {
       setBusy(null);
     }
@@ -139,17 +197,38 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
     if (!active) return;
     setBusy("check");
     try {
-      const data = await callApi(`/api/academy/v1/runtime/${runtimePath(active)}/check`, {
+      const data = await callApi(`/api/academy/v1/exercises/${active.id}/evaluate`, {
         exerciseId: active.id,
         source,
       });
-      const payload = data as unknown as CheckResult;
-      setChecks((prev) => ({ ...prev, [active.id]: payload }));
-      setResults((prev) => ({ ...prev, [active.id]: payload }));
+      const payload = data as unknown as EvaluationResult;
+      setEvaluations((prev) => ({ ...prev, [active.id]: payload }));
+      setResults((prev) => ({ ...prev, [active.id]: null }));
+      // Evaluation is what records attempts/passes; refresh progress views.
+      notifyProgress();
     } finally {
       setBusy(null);
     }
   }, [active, source]);
+
+  const doHint = useCallback(async () => {
+    if (!active) return;
+    setBusy("hint");
+    try {
+      const data = await callApi(`/api/academy/v1/exercises/${active.id}/hints/next`, {
+        revealed: shownHints.length,
+      });
+      const hint = data.hint as LabHint | null;
+      if (hint) {
+        setRevealed((prev) => ({ ...prev, [active.id]: [...(prev[active.id] ?? []), hint] }));
+      }
+      if (typeof data.total === "number") {
+        setHintTotals((prev) => ({ ...prev, [active.id]: data.total as number }));
+      }
+    } finally {
+      setBusy(null);
+    }
+  }, [active, shownHints.length]);
 
   const doReset = useCallback(async () => {
     if (!active) return;
@@ -158,8 +237,9 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
       await callApi(`/api/academy/v1/exercises/${active.id}/reset`);
       setSources((prev) => ({ ...prev, [active.id]: starterSource(active) }));
       setResults((prev) => ({ ...prev, [active.id]: null }));
-      setChecks((prev) => ({ ...prev, [active.id]: null }));
+      setEvaluations((prev) => ({ ...prev, [active.id]: null }));
       setSchemas((prev) => ({ ...prev, [active.id]: null }));
+      // Reset restores exercise data but never earned progress or given hints.
     } finally {
       setBusy(null);
     }
@@ -183,6 +263,8 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
     return null;
   }
 
+  const checkById = new Map(evaluation?.checks.map((check) => [check.criterionId, check]) ?? []);
+
   return (
     <div className={styles.lab}>
       <div className={styles.labHead}>
@@ -193,21 +275,28 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
       </div>
 
       <div className={styles.tabs} role="tablist" aria-label="Exercises">
-        {exercises.map((exercise) => (
-          <button
-            key={exercise.id}
-            type="button"
-            role="tab"
-            aria-selected={exercise.id === activeId}
-            className={`${styles.tab} ${exercise.id === activeId ? styles.tabActive : ""}`}
-            onClick={() => setActiveId(exercise.id)}
-          >
-            <span className={styles.tabLevel}>{LEVEL_LABEL[exercise.level] ?? exercise.level}</span>
-            <span className={styles.tabTitle} dir="rtl" lang="fa">
-              {exercise.title_fa}
-            </span>
-          </button>
-        ))}
+        {exercises.map((exercise) => {
+          const passed = evaluations[exercise.id]?.passed;
+          return (
+            <button
+              key={exercise.id}
+              type="button"
+              role="tab"
+              aria-selected={exercise.id === activeId}
+              className={`${styles.tab} ${exercise.id === activeId ? styles.tabActive : ""}`}
+              onClick={() => setActiveId(exercise.id)}
+            >
+              <span className={styles.tabLevel}>
+                {LEVEL_LABEL[exercise.level] ?? exercise.level}
+                {exercise.required_for_completion ? "" : " · optional"}
+              </span>
+              <span className={styles.tabTitle} dir="rtl" lang="fa">
+                {exercise.title_fa}
+              </span>
+              {passed ? <span className={styles.tabPass}>✓ passed</span> : null}
+            </button>
+          );
+        })}
       </div>
 
       <div className={styles.grid}>
@@ -220,18 +309,30 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
           <div className={styles.criteriaBox}>
             <div className={styles.criteriaTitle}>معیارهای قبولی</div>
             <ul className={styles.criteriaList}>
-              {(check?.criteria ?? active.criteria).map((criterion) => {
-                const passed = check ? check.criteria.find((c) => c.id === criterion.id)?.passed : undefined;
+              {active.criteria.map((criterion) => {
+                const check = checkById.get(criterion.id);
+                const mark = check
+                  ? CHECK_MARK[check.status]
+                  : { glyph: "•", className: "" };
                 return (
-                  <li key={criterion.id} className={styles.criterion} dir="rtl" lang="fa">
-                    <span
-                      className={`${styles.criterionMark} ${
-                        passed === undefined ? "" : passed ? styles.markPass : styles.markFail
-                      }`}
-                    >
-                      {passed === undefined ? "•" : passed ? "✓" : "✗"}
+                  <li key={criterion.id} className={styles.checkItem} dir="rtl" lang="fa">
+                    <span className={styles.criterion}>
+                      <span className={`${styles.criterionMark} ${mark.className}`}>
+                        {mark.glyph}
+                      </span>
+                      <span>
+                        {criterion.description_fa}
+                        {criterion.evaluation === "manual" ? " (بازبینی دستی)" : ""}
+                      </span>
                     </span>
-                    {criterion.description_fa}
+                    {check && (check.status === "failed" || check.status === "needs_manual_review") ? (
+                      <span className={styles.checkMessage}>{check.messageFa}</span>
+                    ) : null}
+                    {check?.location?.line ? (
+                      <span className={styles.checkMessage} dir="ltr">
+                        {check.location.file}:{check.location.line}
+                      </span>
+                    ) : null}
                   </li>
                 );
               })}
@@ -242,18 +343,13 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
             <button
               type="button"
               className={styles.hintBtn}
-              onClick={() =>
-                setHintsShown((prev) => ({
-                  ...prev,
-                  [active.id]: Math.min((prev[active.id] ?? 0) + 1, active.hints.length),
-                }))
-              }
-              disabled={shownHints >= active.hints.length}
+              onClick={doHint}
+              disabled={busy !== null || shownHints.length >= hintTotal}
             >
-              Hint ({Math.min(shownHints, active.hints.length)}/{active.hints.length})
+              Hint ({shownHints.length}/{hintTotal})
             </button>
             <ul className={styles.hintList} dir="rtl" lang="fa">
-              {active.hints.slice(0, shownHints).map((hint) => (
+              {shownHints.map((hint) => (
                 <li key={hint.id}>{hint.text_fa}</li>
               ))}
             </ul>
@@ -300,62 +396,56 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
             </button>
           </div>
 
-          {check ? (
+          {evaluation ? (
             <div
               className={`${styles.verdict} ${
-                check.status === "system_error"
+                evaluation.status === "system_error"
                   ? styles.verdictSystem
-                  : check.passed
+                  : evaluation.passed
                     ? styles.verdictPass
                     : styles.verdictFail
               }`}
-              dir={check.status === "system_error" ? "ltr" : "rtl"}
+              dir={evaluation.status === "system_error" ? "ltr" : "rtl"}
               lang="fa"
             >
-              {check.status === "system_error"
-                ? check.error
-                : check.passed
-                  ? "آفرین! همه‌ی معیارها برآورده شد."
-                  : check.status === "error" || check.status === "timeout"
-                    ? "کد خطا داد؛ همان خطای واقعی را ببین و اصلاح کن."
-                    : "بعضی معیارها برآورده نشد؛ نتیجه را با صورت مسئله مقایسه کن."}
+              {verdictMessage(evaluation)}
             </div>
           ) : null}
 
-          {result ? (
+          {display ? (
             <div className={styles.resultBox}>
               <div className={styles.resultMeta}>
-                <span className={`${styles.chip} ${STATUS_CLASS[result.status] ?? ""}`}>
-                  {STATUS_LABEL[result.status] ?? result.status}
+                <span className={`${styles.chip} ${STATUS_CLASS[display.status] ?? ""}`}>
+                  {STATUS_LABEL[display.status] ?? display.status}
                 </span>
-                <span className={styles.metaItem}>{result.rowCount} rows</span>
-                {typeof result.durationMs === "number" ? (
-                  <span className={styles.metaItem}>{result.durationMs} ms</span>
+                <span className={styles.metaItem}>{display.rowCount} rows</span>
+                {typeof display.durationMs === "number" ? (
+                  <span className={styles.metaItem}>{display.durationMs} ms</span>
                 ) : null}
-                {result.truncated ? (
+                {display.truncated ? (
                   <span className={styles.metaWarn}>result truncated</span>
                 ) : null}
               </div>
 
-              {result.error ? (
+              {display.error ? (
                 <pre className={styles.error} dir="ltr">
-                  {result.error}
+                  {display.error}
                 </pre>
               ) : null}
 
-              {result.traceback ? (
+              {display.traceback ? (
                 <details className={styles.traceback}>
                   <summary>Traceback</summary>
-                  <pre dir="ltr">{result.traceback}</pre>
+                  <pre dir="ltr">{display.traceback}</pre>
                 </details>
               ) : null}
 
-              {result.status === "ok" && result.columns.length > 0 ? (
+              {display.columns.length > 0 ? (
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        {result.columns.map((column, i) => (
+                        {display.columns.map((column, i) => (
                           <th key={i} dir="ltr">
                             {column}
                           </th>
@@ -363,7 +453,7 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {result.rows.slice(0, 100).map((row, ri) => (
+                      {display.rows.slice(0, 100).map((row, ri) => (
                         <tr key={ri}>
                           {row.map((cell, ci) => (
                             <td key={ci} dir="ltr">
@@ -377,7 +467,7 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
                 </div>
               ) : null}
 
-              {result.status === "ok" && result.columns.length === 0 && !result.error ? (
+              {display.columns.length === 0 && !display.error && display.status !== "failed" ? (
                 <div className={styles.empty}>دستور اجرا شد اما نتیجه‌ی جدولی برنگرداند.</div>
               ) : null}
             </div>

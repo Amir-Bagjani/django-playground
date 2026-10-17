@@ -7,17 +7,26 @@ ORACLE = (
     'result = Product.objects.filter(in_stock=True)'
     '.order_by("-price").values("name", "price")'
 )
+ALTERNATIVE = (
+    'result = Product.objects.filter(in_stock__exact=True)'
+    '.order_by("-price").values("name", "price")'
+)
 
 
-def criteria(result: dict) -> dict[str, bool]:
-    return {c["id"]: c["passed"] for c in result["criteria"]}
+def statuses(result: dict) -> dict[str, str]:
+    return {check["criterionId"]: check["status"] for check in result["checks"]}
 
 
 def test_reference_solution_passes(orm_spec):
     result = orm_engine.check(orm_spec, ORACLE)
-    assert result["status"] == "ok", result
+    assert result["status"] == "passed", result
     assert result["passed"] is True
-    assert all(criteria(result).values())
+    assert set(statuses(result).values()) == {"passed"}
+
+
+def test_alternative_valid_solution_passes(orm_spec):
+    result = orm_engine.check(orm_spec, ALTERNATIVE)
+    assert result["passed"] is True
 
 
 def test_missing_filter_is_rejected(orm_spec):
@@ -25,7 +34,7 @@ def test_missing_filter_is_rejected(orm_spec):
         orm_spec, 'result = Product.objects.all().order_by("-price").values("name", "price")'
     )
     assert result["passed"] is False
-    assert criteria(result)["filtered-ordered-rows"] is False
+    assert statuses(result)["filtered-ordered-rows"] == "failed"
 
 
 def test_missing_order_is_rejected(orm_spec):
@@ -33,7 +42,7 @@ def test_missing_order_is_rejected(orm_spec):
         orm_spec, 'result = Product.objects.filter(in_stock=True).values("name", "price")'
     )
     assert result["passed"] is False
-    assert criteria(result)["filtered-ordered-rows"] is False
+    assert statuses(result)["filtered-ordered-rows"] == "failed"
 
 
 def test_hardcoded_result_is_rejected(orm_spec):
@@ -46,14 +55,17 @@ def test_hardcoded_result_is_rejected(orm_spec):
     )
     result = orm_engine.check(orm_spec, hardcoded)
     assert result["passed"] is False
-    assert criteria(result)["data-driven"] is False
+    assert statuses(result)["data-driven"] == "failed"
 
 
-def test_python_error_is_a_learner_error(orm_spec):
+def test_python_error_is_a_learner_error_with_location(orm_spec):
     result = orm_engine.check(orm_spec, "result = Product.objects.filter(nope=1)")
     assert result["status"] == "error"
+    assert result["outcome"] == "syntax_error"
     assert result["passed"] is False
     assert result["traceback"]
+    location = result["checks"][0]["location"]
+    assert location and location["file"] == "learner_solution.py" and location["line"] >= 1
 
 
 def test_missing_result_is_rejected(orm_spec):

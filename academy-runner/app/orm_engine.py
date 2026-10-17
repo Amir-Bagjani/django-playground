@@ -15,10 +15,8 @@ import tempfile
 import time
 import uuid
 
-from pymysql.err import MySQLError
-
-from . import config, seeds
-from .exercises import Spec, get_public
+from . import checks, config
+from .exercises import Spec
 from .normalize import normalize_rows
 from .sql_engine import LOCK
 
@@ -140,64 +138,13 @@ def execute(spec: Spec, source: str) -> dict:
 
 
 def check(spec: Spec, source: str) -> dict:
-    defs = list((get_public(spec.id) or {}).get("criteria", []))
-    ids = [c["id"] for c in defs]
-
-    def payload(passed: bool, outcome: dict[str, bool], run: dict, error: str | None = None) -> dict:
-        criteria = [
-            {
-                "id": c["id"],
-                "description_fa": c["description_fa"],
-                "passed": outcome.get(c["id"], False),
-            }
-            for c in defs
-        ]
-        return {
-            "status": run["status"],
-            "passed": passed,
-            "criteria": criteria,
-            "columns": run["columns"],
-            "rows": run["rows"],
-            "rowCount": run["rowCount"],
-            "durationMs": run["durationMs"],
-            "error": error if error is not None else run["error"],
-            "traceback": run["traceback"],
-        }
-
-    source = source or ""
-    if not source.strip():
-        return payload(False, {}, _result("error", error="کد خالی است."), error="کد خالی است.")
-    if len(source.encode("utf-8")) > config.ORM_MAX_SOURCE_BYTES:
-        return payload(False, {}, _result("error"), error="متن کد از حد مجاز بزرگ‌تر است.")
-
+    """Evaluate a submission and return the structured PRD-03 contract."""
     with LOCK:
-        run = _run(spec, source)
-        if run["status"] != "ok":
-            return payload(False, {}, run)
-
-        columns = [column.lower() for column in run["columns"]]
-        columns_ok = columns == ["name", "price"]
-        rows_ok = run["rows"] == seeds.EXPECTED_ROWS
-
-        data_driven_ok = False
-        try:
-            seeds.insert_sentinel(spec.schema)
-            probe = _run(spec, source)
-            data_driven_ok = (
-                probe["status"] == "ok"
-                and probe["rows"] == seeds.EXPECTED_ROWS_WITH_SENTINEL
-            )
-        finally:
-            try:
-                seeds.remove_sentinel(spec.schema)
-            except MySQLError:
-                seeds.reset(spec)
-
-        outcome = {
-            "queryset-executes": True,
-            "projected-columns": columns_ok,
-            "filtered-ordered-rows": rows_ok,
-            "data-driven": data_driven_ok,
-        }
-        passed = all(outcome.get(cid, False) for cid in ids)
-        return payload(passed, outcome, run)
+        return checks.build_payload(
+            spec,
+            source,
+            lambda text: _run(spec, text),
+            max_bytes=config.ORM_MAX_SOURCE_BYTES,
+            empty_message="کد خالی است. یک QuerySet بنویس و در result بگذار.",
+            too_large_message="متن کد از حد مجاز بزرگ‌تر است.",
+        )

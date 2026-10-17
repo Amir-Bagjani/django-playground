@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "first-query-mastery",
+  "lesson_id": "DB-00-008",
+  "version": 1,
+  "level": "mastery",
+  "kind": "sql",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.sql"
+  ],
+  "validator": {
+    "id": "first-query-mastery-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "query-executes",
+      "description_fa": "پرس‌وجو بدون خطا روی جدول books اجرا می‌شود.",
+      "visibility": "public"
+    },
+    {
+      "id": "projected-columns",
+      "description_fa": "نتیجه فقط دو ستون title و price دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "in-range-ordered-top3",
+      "description_fa": "فقط کتاب‌های منتشرشده با قیمت بین ۱۰ و ۵۰ (شامل دو سر)، به ترتیب نزولی قیمت و حداکثر ۳ ردیف برمی‌گردند.",
+      "visibility": "public"
+    },
+    {
+      "id": "data-driven",
+      "description_fa": "نتیجه از خود جدول می‌آید، نه از مقدار ثابت در کوئری.",
+      "visibility": "public"
+    },
+    {
+      "id": "explain-approach",
+      "description_fa": "انتخاب شرط بازه، ترتیب نزولی و LIMIT با یک یادداشت کوتاه توضیح داده می‌شود (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "در یک کامنت بالای کوئری، دلیل انتخاب بازه‌ی قیمت، ترتیب نزولی و عدد LIMIT را کوتاه توضیح بده. این معیار به‌صورت دستی بررسی می‌شود و در قبولی خودکار اثری ندارد و درست/غلط اعلام نمی‌شود."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "بازه‌ی قیمت را با BETWEEN یا ترکیب >= و <= بنویس؛ ترتیب نزولی ORDER BY price DESC و محدودکردن ردیف‌ها LIMIT 3 در انتهای پرس‌وجو می‌آید."
+    }
+  ]
+}

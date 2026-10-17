@@ -140,11 +140,25 @@ def load_lab_exercises(authored: dict) -> dict[str, list]:
             "lesson_id": lid,
             "level": obj.get("level"),
             "kind": obj.get("kind"),
+            "required_for_completion": bool(obj.get("required_for_completion", False)),
+            "assessment_version": (obj.get("validator") or {}).get("version", 1),
             "title_fa": _first_heading(instructions),
             "instructions_markdown": instructions,
             "starter": starters,
-            "criteria": [c for c in obj.get("criteria", []) if c.get("visibility") == "public"],
-            "hints": obj.get("hints", []),
+            "criteria": [
+                {
+                    "id": c.get("id"),
+                    "description_fa": c.get("description_fa"),
+                    "visibility": c.get("visibility"),
+                    "evaluation": c.get("evaluation", "auto"),
+                    "rubric_fa": c.get("rubric_fa"),
+                }
+                for c in obj.get("criteria", [])
+                if c.get("visibility") == "public"
+            ],
+            # Only the ordered count is embedded; hint text is served one at a
+            # time by the runner's hints/next endpoint.
+            "hint_count": len(obj.get("hints", [])),
             "time_limit_seconds": obj.get("time_limit_seconds"),
         })
 

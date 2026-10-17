@@ -162,6 +162,28 @@
   color: var(--amber);
 }
 
+.markManual {
+  color: var(--accent);
+}
+
+.checkItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checkMessage {
+  font-size: 11.5px;
+  color: var(--faint);
+  padding-inline-start: 24px;
+  line-height: 1.6;
+}
+
+.tabPass {
+  color: var(--green);
+  font-size: 10px;
+}
+
 .hints {
   display: flex;
   flex-direction: column;

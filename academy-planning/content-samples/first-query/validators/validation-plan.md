@@ -1,51 +1,105 @@
 # Instructor-only validation plan — DB-00-008 (first query)
 
 This file documents the **real** checks implemented by `academy-runner` for the
-two exercises of lesson `DB-00-008`. It is not shipped to the learner UI.
+three exercises of lesson `DB-00-008`. It is not shipped to the learner UI.
 
-Both exercises are evaluated with `Check Solution` (separate from `Execute`).
-Running without error is **not** enough: the returned result set is compared
-against the dataset of the current exercise schema.
+Every exercise is evaluated with `Check Solution` (`POST
+/v1/exercises/{id}/evaluate`), which is **separate** from `Execute`. Running
+without error is **not** enough: the returned result set is compared against the
+dataset of the current exercise schema, and the evaluation is what records
+progress.
+
+## Registered exercises (exact id / validator / level / kind)
+
+| exercise id | validator id | version | level | kind | dataset | required for Completed |
+|---|---|---|---|---|---|---|
+| `first-query-sql` | `first-query-sql-validator` | 1 | practice | sql | `products` | yes |
+| `first-query-orm` | `first-query-orm-validator` | 1 | problem-solving | django-orm | `products` | yes |
+| `first-query-mastery` | `first-query-mastery-validator` | 1 | mastery | sql | `books` | no |
+
+The runner only treats an exercise as executable when the manifest's `kind`,
+`level`, `lesson_id` and `validator.id`/`validator.version` match the coded
+registry exactly. `validator.version` is the **assessment version** stored with
+a pass.
 
 ## Shared evaluation idea (SQL and ORM)
 
-1. The learner query/code runs against the disposable exercise schema
-   (`products` table, seeded rows) using a restricted, schema-scoped user.
+1. The learner query/code runs against the disposable exercise schema on the
+   exercise's dataset, using a restricted, schema-scoped user.
 2. The result is normalized: numeric cells (MySQL `DECIMAL` / Python
    `Decimal`/`float`/`int`) become canonical 2-decimal strings, strings stay
    strings, `NULL` stays `NULL`.
-3. Criteria:
-   - `select-executes` / `queryset-executes`: the statement/code ran and
-     returned a result set (a learner syntax error fails here, not as a system error).
-   - `projected-columns`: the result has exactly the columns `name`, `price`.
-   - `filtered-ordered-rows`: rows equal the expected in-stock products in
-     descending price order.
-   - `data-driven` (anti-hardcode): a hidden sentinel row is inserted into the
-     table, the learner query/code is run again, and the sentinel must appear
-     in the correct position; then the sentinel is removed. A hardcoded result
-     (`SELECT 'X' AS name, '1.00' AS price` or `result = [...]`) fails here.
+3. Semantic rowset checks (never textual SQL comparison):
+   - *executes*: the statement/code ran and returned a result set (a learner
+     syntax error is reported distinctly, not as a system error).
+   - *projected-columns*: exactly the required columns, in the required order.
+   - *rows*: rows equal the expected result of the dataset (ordering matters
+     only because the task explicitly requires `ORDER BY`).
+   - *data-driven* (anti-hardcode): a hidden sentinel row is inserted into the
+     dataset table, the query/code is run again, and the sentinel must appear in
+     the correct position; then the sentinel is removed. A hardcoded result
+     (`SELECT 'X' AS name ...` or `result = [...]`) fails here.
 
-## first-query-sql
-Run as restricted SQL user on schema `academy_first_query_sql`, single statement,
-`MAX_EXECUTION_TIME` + socket read timeout enforced. Fetch capped at a fixed row
-limit. No parser/regex sandbox: safety comes from the disposable schema and
-schema-scoped grants, never from validating SQL text.
+## Structured evaluation contract
 
-## first-query-orm
-Learner Python runs in a **separate subprocess** (`python -m app.orm_child`) with
-a hard timeout; Django connects to the same schema through a restricted user.
-`result` is normalized the same way. A Python/Django exception is a learner
-failure (traceback shown), not a system error. No `import` is required: `Product`
-is preloaded. No Docker socket, no privileged mode, no shell interpolation.
+`evaluate` returns `status`, `outcome`, `passed`, `assessmentVersion`, per-check
+`{criterionId, status, messageFa, location?, hintAvailable}` and the raw
+`result`. Criterion statuses: `passed`, `failed`, `needs_manual_review`,
+`not_evaluated`. Top-level statuses stay distinct: `passed`, `failed`, `error`
+(syntax/learner), `timeout` (deadline), `system_error` (runner/DB outage).
+
+- `first-query-mastery` also carries one `explain-approach` criterion with
+  `evaluation: "manual"`: it is reported as `needs_manual_review` with a rubric,
+  is **not** called wrong, and never affects `passed`.
+
+## Datasets, boundaries and negative fixtures
+
+- `products` (practice/problem-solving): in-stock rows, descending price. The
+  hidden sentinel `zz-probe` (price `1.23`) must appear last.
+- `books` (mastery): published books with price in `[10, 50]`, descending price,
+  top 3. The seed includes boundary data: `10.00` (lower bound), `50.00` (upper
+  bound included in the top 3), `60.00` (above range, excluded), and unpublished
+  in-range rows (excluded) — including `45.00` "Draft Best", which would enter
+  the top 3 if the published filter were dropped. The hidden sentinel `zz-probe`
+  (price `49.99`) must slot into descending position 2. Under `LIMIT 3` the lower
+  bound is not independently observable; it is listed as a known limitation, not
+  silently claimed as tested.
+- Multiple valid solutions are accepted because only the returned relation is
+  compared: e.g. `in_stock = 1`, `in_stock = TRUE`, `in_stock <> 0` for SQL, and
+  `filter(in_stock=True)` vs `filter(in_stock__exact=True)` for the ORM.
+
+## Progressive hints
+
+Hint text is **not** in the web bundle; only the count is. `POST
+/v1/exercises/{id}/hints/next` returns exactly one ordered hint per request
+(`hint`, `revealed`, `total`, `canRequestMore`). Mastery is capped to fewer
+hints than the introductory levels (`ACADEMY_MASTERY_MAX_HINTS`, default 1) and
+`first-query-mastery` authors only one hint. No reference solution or hidden
+test detail is ever returned.
+
+## Progress policy
+
+`POST /v1/exercises/{id}/evaluate` records an attempt and, on success, a pass in
+the app-owned SQLite progress store (separate volume, independent of MySQL and
+of Reset). A pass is keyed by `(exercise_id, assessment_version)` and history is
+kept. A lesson is **Completed** when every `required_for_completion` exercise
+has a pass; it is **Mastered** when it is Completed *and* the Mastery challenge
+has passed. Reading a lesson, running without Check, or seeing an answer never
+completes it. A pass recorded under an older assessment version keeps counting
+and is flagged `legacy` (explicit content-version notice) rather than being
+silently removed. `system_error`/`timeout` outcomes are recorded as attempts but
+never as failures and never reduce earned progress.
 
 ## Validator QA cases required before publish
-- Reference SQL solution and reference ORM solution both pass on real MySQL 8.4 + Django 6.1.
-- Intentionally wrong cases fail: missing `WHERE`, ascending order, and a hardcoded result.
-- A deliberate syntax error returns a real MySQL/`ProgrammingError` message.
-- Timeout is reported as `timeout`, not as an infinite spinner.
+- Reference SQL, ORM and Mastery solutions pass on real MySQL 8.4 + Django 6.1.
+- Intentionally wrong cases fail: missing `WHERE`, ascending order, wrong
+  column set, out-of-range mastery rows, and a hardcoded result.
+- Alternative valid implementations pass (multi-solution).
+- A deliberate syntax error returns a real MySQL / `ProgrammingError` message
+  with `status: error`; a slow query/submission returns `timeout`.
 - `Reset` restores the exercise dataset and does not touch the other exercise
-  schema or any legacy Django Playground data.
+  schemas, the legacy Django Playground data, or the progress store.
 
 ## Not implemented here (deferred)
-- General multi-lesson validator engine, ERD validation and project checkpoints
-  remain out of scope (PRD-03+).
+- Interactive ERD validation, project Checkpoint/Snapshot engine, AI feedback
+  and full-curriculum authoring remain out of scope for PRD-03.

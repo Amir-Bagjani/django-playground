@@ -112,6 +112,17 @@
               "public",
               "hidden"
             ]
+          },
+          "evaluation": {
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "default": "auto"
+          },
+          "rubric_fa": {
+            "type": "string",
+            "minLength": 8
           }
         }
       }

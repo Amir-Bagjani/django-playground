@@ -5,48 +5,151 @@ known dataset. MySQL DDL causes implicit commits, so rollback is never used as
 the reset mechanism. Only the named exercise schema is touched; the legacy
 Django Playground (a separate SQLite-backed container and volume) is never
 referenced here.
+
+Each exercise maps to one dataset (``Spec.dataset``). A dataset owns its table
+DDL, its visible seed rows, a hidden sentinel row used by the anti-hardcode
+``data-driven`` probe, and the normalized expected result used by validators.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any
 
 from . import config
 from .db import admin_connection, ensure_exercise_identity, schema_exists, table_exists
 from .exercises import Spec
 
-PRODUCTS_DDL = (
-    "CREATE TABLE `products` ("
+
+def _ddl(table: str, columns: str) -> str:
+    return (
+        f"CREATE TABLE `{table}` ({columns}) "
+        f"ENGINE=InnoDB DEFAULT CHARSET={config.DB_CHARSET} COLLATE={config.DB_COLLATION}"
+    )
+
+
+@dataclass(frozen=True)
+class Dataset:
+    table: str
+    ddl: str
+    insert_columns: tuple[str, ...]
+    rows: list[tuple[Any, ...]]
+    sentinel_row: tuple[Any, ...]
+    name_column: str
+    sentinel_name: str
+    result_columns: list[str]
+    expected_rows: list[list[Any]]
+    expected_rows_with_sentinel: list[list[Any]]
+
+
+# --- products: the practice/problem-solving dataset of DB-00-008 ------------
+
+PRODUCTS_DDL = _ddl(
+    "products",
     "`id` INT NOT NULL AUTO_INCREMENT,"
     "`name` VARCHAR(80) NOT NULL,"
     "`price` DECIMAL(10,2) NOT NULL,"
     "`in_stock` TINYINT(1) NOT NULL DEFAULT 1,"
-    "PRIMARY KEY (`id`)) "
-    f"ENGINE=InnoDB DEFAULT CHARSET={config.DB_CHARSET} COLLATE={config.DB_COLLATION}"
+    "PRIMARY KEY (`id`)",
 )
 
-# Practice dataset visible to the learner.
-SEED_ROWS: list[tuple[str, Decimal, int]] = [
-    ("Widget", Decimal("9.99"), 1),
-    ("Gadget", Decimal("24.50"), 1),
-    ("Doohickey", Decimal("4.00"), 0),
-    ("Sprocket", Decimal("15.75"), 1),
-    ("Gizmo", Decimal("30.00"), 0),
-]
+PRODUCTS = Dataset(
+    table="products",
+    ddl=PRODUCTS_DDL,
+    insert_columns=("name", "price", "in_stock"),
+    rows=[
+        ("Widget", Decimal("9.99"), 1),
+        ("Gadget", Decimal("24.50"), 1),
+        ("Doohickey", Decimal("4.00"), 0),
+        ("Sprocket", Decimal("15.75"), 1),
+        ("Gizmo", Decimal("30.00"), 0),
+    ],
+    sentinel_row=("zz-probe", Decimal("1.23"), 1),
+    name_column="name",
+    sentinel_name="zz-probe",
+    result_columns=["name", "price"],
+    expected_rows=[
+        ["Gadget", "24.50"],
+        ["Sprocket", "15.75"],
+        ["Widget", "9.99"],
+    ],
+    expected_rows_with_sentinel=[
+        ["Gadget", "24.50"],
+        ["Sprocket", "15.75"],
+        ["Widget", "9.99"],
+        ["zz-probe", "1.23"],
+    ],
+)
 
-# Hidden sentinel used by the anti-hardcode "data-driven" criterion.
-SENTINEL_NAME = "zz-probe"
-SENTINEL_PRICE = Decimal("1.23")
 
-# Expected normalized results.
-EXPECTED_ROWS: list[list[str]] = [
-    ["Gadget", "24.50"],
-    ["Sprocket", "15.75"],
-    ["Widget", "9.99"],
-]
-EXPECTED_ROWS_WITH_SENTINEL: list[list[str]] = EXPECTED_ROWS + [[SENTINEL_NAME, "1.23"]]
+# --- books: the independent Mastery dataset of DB-00-008 --------------------
+# The lesson teaches on a ``books`` table; the practice exercises use
+# ``products``, so an aggregation-free but *composed* query on ``books`` is a
+# genuinely independent challenge rather than a renamed practice task.
+
+BOOKS_DDL = _ddl(
+    "books",
+    "`id` INT NOT NULL AUTO_INCREMENT,"
+    "`title` VARCHAR(80) NOT NULL,"
+    "`price` DECIMAL(10,2) NOT NULL,"
+    "`published` TINYINT(1) NOT NULL DEFAULT 1,"
+    "PRIMARY KEY (`id`)",
+)
+
+BOOKS = Dataset(
+    table="books",
+    ddl=BOOKS_DDL,
+    insert_columns=("title", "price", "published"),
+    rows=[
+        ("Pinnacle", Decimal("50.00"), 1),
+        ("Mid Guide", Decimal("40.00"), 1),
+        ("Extra Read", Decimal("35.00"), 1),
+        ("Learning SQL", Decimal("29.90"), 1),
+        ("Cheap Notes", Decimal("10.00"), 1),
+        ("Too Dear", Decimal("60.00"), 1),
+        # Unpublished but in range and expensive: omitting the published filter
+        # wrongly promotes this row into the descending top 3.
+        ("Draft Best", Decimal("45.00"), 0),
+        ("Old Draft", Decimal("9.00"), 0),
+        ("Other Draft", Decimal("25.00"), 0),
+    ],
+    # Hidden probe: published, in range (10..50), and expensive enough to enter
+    # the descending top-3 while preserving a deterministic position.
+    sentinel_row=("zz-probe", Decimal("49.99"), 1),
+    name_column="title",
+    sentinel_name="zz-probe",
+    result_columns=["title", "price"],
+    expected_rows=[
+        ["Pinnacle", "50.00"],
+        ["Mid Guide", "40.00"],
+        ["Extra Read", "35.00"],
+    ],
+    expected_rows_with_sentinel=[
+        ["Pinnacle", "50.00"],
+        ["zz-probe", "49.99"],
+        ["Mid Guide", "40.00"],
+    ],
+)
+
+
+DATASETS: dict[str, Dataset] = {"products": PRODUCTS, "books": BOOKS}
+
+
+def dataset_for(spec: Spec) -> Dataset:
+    return DATASETS[spec.dataset]
+
+
+def _insert_rows(cursor, schema: str, dataset: Dataset, rows: list[tuple]) -> None:
+    columns = ", ".join(f"`{name}`" for name in dataset.insert_columns)
+    placeholders = ", ".join(["%s"] * len(dataset.insert_columns))
+    cursor.executemany(
+        f"INSERT INTO `{schema}`.`{dataset.table}` ({columns}) VALUES ({placeholders})",
+        rows,
+    )
 
 
 def reset(spec: Spec) -> None:
+    dataset = dataset_for(spec)
     with admin_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(f"DROP DATABASE IF EXISTS `{spec.schema}`")
@@ -55,35 +158,31 @@ def reset(spec: Spec) -> None:
                 f"CHARACTER SET {config.DB_CHARSET} COLLATE {config.DB_COLLATION}"
             )
             cursor.execute(f"USE `{spec.schema}`")
-            cursor.execute(PRODUCTS_DDL)
-            cursor.executemany(
-                "INSERT INTO `products` (`name`, `price`, `in_stock`) VALUES (%s, %s, %s)",
-                SEED_ROWS,
-            )
+            cursor.execute(dataset.ddl)
+            _insert_rows(cursor, spec.schema, dataset, dataset.rows)
     ensure_exercise_identity(spec.schema, spec.user)
 
 
 def ensure_seeded(spec: Spec) -> None:
-    if not schema_exists(spec.schema) or not table_exists(spec.schema, "products"):
+    dataset = dataset_for(spec)
+    if not schema_exists(spec.schema) or not table_exists(spec.schema, dataset.table):
         reset(spec)
         return
     ensure_exercise_identity(spec.schema, spec.user)
 
 
-def insert_sentinel(schema: str) -> None:
+def insert_sentinel(spec: Spec) -> None:
+    dataset = dataset_for(spec)
+    with admin_connection() as connection:
+        with connection.cursor() as cursor:
+            _insert_rows(cursor, spec.schema, dataset, [dataset.sentinel_row])
+
+
+def remove_sentinel(spec: Spec) -> None:
+    dataset = dataset_for(spec)
     with admin_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                f"INSERT INTO `{schema}`.`products` (`name`, `price`, `in_stock`) "
-                "VALUES (%s, %s, %s)",
-                (SENTINEL_NAME, SENTINEL_PRICE, 1),
-            )
-
-
-def remove_sentinel(schema: str) -> None:
-    with admin_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"DELETE FROM `{schema}`.`products` WHERE `name` = %s",
-                (SENTINEL_NAME,),
+                f"DELETE FROM `{spec.schema}`.`{dataset.table}` WHERE `{dataset.name_column}` = %s",
+                (dataset.sentinel_name,),
             )

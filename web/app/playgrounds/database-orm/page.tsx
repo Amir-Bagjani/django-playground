@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { academy, academyModules, authoredLessons } from "@/lib/academy";
+import { academy, academyModules, authoredLessons, labLessons } from "@/lib/academy";
 
 import { StatusBadge } from "./badge";
+import { LessonStatusChip, ProgressProvider, SyllabusProgressSummary } from "./progress";
 import styles from "./academy.module.css";
 
 export const metadata: Metadata = {
@@ -54,41 +55,46 @@ export default function AcademySyllabusPage() {
           </span>
         </div>
 
-        <section className={styles.moduleList} aria-label="Course modules">
-          {academyModules.map((module) => (
-            <article key={module.id} className={styles.moduleCard}>
-              <div className={styles.moduleHead}>
-                <span className={styles.moduleId}>{module.id}</span>
-                <span className={styles.moduleTitleFa} dir="rtl" lang="fa">
-                  {module.title_fa}
-                </span>
-                <span className={styles.moduleCount}>{module.lessons.length} lessons</span>
-              </div>
-              <div className={styles.lessonList}>
-                {module.lessons.map((lesson) => (
-                  <Link
-                    key={lesson.id}
-                    href={`/playgrounds/database-orm/lessons/${lesson.id}`}
-                    className={styles.lessonRow}
-                  >
-                    <span className={styles.lessonId}>{lesson.id}</span>
-                    <span className={styles.lessonMain}>
-                      <span className={styles.lessonTitleFa} dir="rtl" lang="fa">
-                        {lesson.title_fa}
+        <ProgressProvider>
+          <SyllabusProgressSummary modules={academyModules} />
+
+          <section className={styles.moduleList} aria-label="Course modules">
+            {academyModules.map((module) => (
+              <article key={module.id} className={styles.moduleCard}>
+                <div className={styles.moduleHead}>
+                  <span className={styles.moduleId}>{module.id}</span>
+                  <span className={styles.moduleTitleFa} dir="rtl" lang="fa">
+                    {module.title_fa}
+                  </span>
+                  <span className={styles.moduleCount}>{module.lessons.length} lessons</span>
+                </div>
+                <div className={styles.lessonList}>
+                  {module.lessons.map((lesson) => (
+                    <Link
+                      key={lesson.id}
+                      href={`/playgrounds/database-orm/lessons/${lesson.id}`}
+                      className={styles.lessonRow}
+                    >
+                      <span className={styles.lessonId}>{lesson.id}</span>
+                      <span className={styles.lessonMain}>
+                        <span className={styles.lessonTitleFa} dir="rtl" lang="fa">
+                          {lesson.title_fa}
+                        </span>
+                        <span className={styles.lessonOutcomeFa} dir="rtl" lang="fa">
+                          {lesson.outcome_fa}
+                        </span>
                       </span>
-                      <span className={styles.lessonOutcomeFa} dir="rtl" lang="fa">
-                        {lesson.outcome_fa}
+                      <span className={styles.lessonAside}>
+                        {labLessons[lesson.id] ? <LessonStatusChip lessonId={lesson.id} /> : null}
+                        <StatusBadge status={authoredLessons[lesson.id]?.status ?? lesson.status} />
                       </span>
-                    </span>
-                    <span className={styles.lessonAside}>
-                      <StatusBadge status={authoredLessons[lesson.id]?.status ?? lesson.status} />
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </article>
-          ))}
-        </section>
+                    </Link>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </section>
+        </ProgressProvider>
       </div>
     </main>
   );

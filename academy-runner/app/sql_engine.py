@@ -11,12 +11,11 @@ import threading
 import time
 from typing import Any
 
-import pymysql
 from pymysql.err import MySQLError, OperationalError
 
-from . import config, seeds
+from . import checks, config
 from .db import DbUnavailable, learner_connection
-from .exercises import Spec, get_public
+from .exercises import Spec
 from .normalize import normalize_rows
 
 # Serializes submissions and reset for a single-user local lab. RLock because
@@ -39,10 +38,6 @@ def _result(status: str, **overrides: Any) -> dict[str, Any]:
     }
     payload.update(overrides)
     return payload
-
-
-def _too_large(source: str) -> bool:
-    return len(source.encode("utf-8")) > config.SQL_MAX_SOURCE_BYTES
 
 
 def _run(spec: Spec, source: str) -> dict[str, Any]:
@@ -91,6 +86,10 @@ def _run(spec: Spec, source: str) -> dict[str, Any]:
                 pass
 
 
+def _too_large(source: str) -> bool:
+    return len(source.encode("utf-8")) > config.SQL_MAX_SOURCE_BYTES
+
+
 def execute(spec: Spec, source: str) -> dict[str, Any]:
     source = source or ""
     if not source.strip():
@@ -101,77 +100,14 @@ def execute(spec: Spec, source: str) -> dict[str, Any]:
         return _run(spec, source)
 
 
-def _criteria_defs(spec: Spec) -> list[dict]:
-    public = get_public(spec.id) or {}
-    return list(public.get("criteria", []))
-
-
 def check(spec: Spec, source: str) -> dict[str, Any]:
-    defs = _criteria_defs(spec)
-    ids = [c["id"] for c in defs]
-
-    def payload(
-        passed: bool,
-        outcome: dict[str, str],
-        run: dict[str, Any] | None = None,
-        error: str | None = None,
-    ) -> dict[str, Any]:
-        criteria = [
-            {
-                "id": c["id"],
-                "description_fa": c["description_fa"],
-                "passed": outcome.get(c["id"], False),
-            }
-            for c in defs
-        ]
-        run = run or _result("error")
-        return {
-            "status": run["status"],
-            "passed": passed,
-            "criteria": criteria,
-            "columns": run["columns"],
-            "rows": run["rows"],
-            "rowCount": run["rowCount"],
-            "truncated": run["truncated"],
-            "durationMs": run["durationMs"],
-            "error": error if error is not None else run["error"],
-        }
-
-    source = source or ""
-    if not source.strip():
-        return payload(False, {}, error="پرس‌وجو خالی است.")
-    if _too_large(source):
-        return payload(False, {}, error="متن پرس‌وجو از حد مجاز بزرگ‌تر است.")
-
+    """Evaluate a submission and return the structured PRD-03 contract."""
     with LOCK:
-        run = _run(spec, source)
-        if run["status"] != "ok":
-            return payload(False, {}, run=run)
-
-        columns = [column.lower() for column in run["columns"]]
-        columns_ok = columns == ["name", "price"]
-        rows_ok = run["rows"] == seeds.EXPECTED_ROWS
-
-        # Anti-hardcode: inject a hidden row and require the query to reflect it.
-        data_driven_ok = False
-        try:
-            seeds.insert_sentinel(spec.schema)
-            probe = _run(spec, source)
-            data_driven_ok = (
-                probe["status"] == "ok"
-                and probe["rows"] == seeds.EXPECTED_ROWS_WITH_SENTINEL
-            )
-        finally:
-            try:
-                seeds.remove_sentinel(spec.schema)
-            except MySQLError:
-                seeds.reset(spec)
-
-        outcome = {
-            "select-executes": True,
-            "projected-columns": columns_ok,
-            "filtered-ordered-rows": rows_ok,
-            "data-driven": data_driven_ok,
-        }
-        passed = all(outcome.get(cid, False) for cid in ids)
-        return payload(passed, outcome, run=run)
+        return checks.build_payload(
+            spec,
+            source,
+            lambda text: _run(spec, text),
+            max_bytes=config.SQL_MAX_SOURCE_BYTES,
+            empty_message="پرس‌وجو خالی است. یک دستور SELECT بنویس.",
+            too_large_message="متن پرس‌وجو از حد مجاز بزرگ‌تر است.",
+        )
