@@ -27,6 +27,39 @@ export interface AcademyReference {
   url: string;
 }
 
+export type LabLevel = "practice" | "problem-solving" | "mastery";
+export type LabKind = "sql" | "django-orm" | "erd" | "combined";
+
+export interface LabStarterFile {
+  name: string;
+  language: string;
+  content: string;
+}
+
+export interface LabCriterion {
+  id: string;
+  description_fa: string;
+  visibility: "public" | "hidden";
+}
+
+export interface LabHint {
+  id: string;
+  text_fa: string;
+}
+
+export interface LabExercise {
+  id: string;
+  lesson_id: string;
+  level: LabLevel;
+  kind: LabKind;
+  title_fa: string;
+  instructions_markdown: string;
+  starter: LabStarterFile[];
+  criteria: LabCriterion[];
+  hints: LabHint[];
+  time_limit_seconds?: number | null;
+}
+
 export interface AuthoredLesson {
   id: string;
   slug: string;
@@ -52,12 +85,18 @@ interface AcademyContent {
   };
   modules: AcademyModule[];
   authored_lessons: Record<string, AuthoredLesson>;
+  lab_lessons: Record<string, LabExercise[]>;
   totals: { modules: number; lessons: number; authored: number };
 }
 
 export const academy = content as AcademyContent;
 export const academyModules = academy.modules;
 export const authoredLessons = academy.authored_lessons;
+export const labLessons = academy.lab_lessons;
+
+export function getLabExercises(lessonId: string): LabExercise[] | undefined {
+  return labLessons[lessonId];
+}
 
 export interface LessonLocation {
   lesson: AcademyLesson;

@@ -78,7 +78,7 @@ modules:
     slug: first-query
     title_fa: اولین SELECT و QuerySet
     outcome_fa: یک پرس‌وجوی ساده را در SQL و ORM بنویسد
-    status: planned
+    status: approved
     tracks: *id001
     assessment_profile: practice-problem-mastery
     parity: related

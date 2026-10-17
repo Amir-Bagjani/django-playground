@@ -5,11 +5,13 @@ import { notFound } from "next/navigation";
 import { Markdown } from "../../../../components/markdown";
 import {
   academyModules,
+  getLabExercises,
   getLessonLocation,
   isAuthored,
   type AcademyLesson,
 } from "@/lib/academy";
 
+import { LessonLab } from "../../lab/lesson-lab";
 import { StatusBadge } from "../../badge";
 import styles from "../../academy.module.css";
 
@@ -44,6 +46,7 @@ export default async function LessonPage({ params }: PageProps) {
   const { lesson, module, authored } = location;
   const authoredContent = isAuthored(location) ? authored : undefined;
   const status = authoredContent?.status ?? lesson.status;
+  const labExercises = getLabExercises(lesson.id);
 
   const index = flatIndex.get(lesson.id) ?? 0;
   const prev = index > 0 ? flatLessons[index - 1] : undefined;
@@ -135,6 +138,10 @@ export default async function LessonPage({ params }: PageProps) {
             داده نمی‌شود.
           </div>
         )}
+
+        {labExercises && labExercises.length > 0 ? (
+          <LessonLab exercises={labExercises} />
+        ) : null}
       </div>
     </main>
   );

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "first-query-orm",
+  "lesson_id": "DB-00-008",
+  "version": 1,
+  "level": "problem-solving",
+  "kind": "django-orm",
+  "required_for_completion": true,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.py"
+  ],
+  "validator": {
+    "id": "first-query-orm-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "queryset-executes",
+      "description_fa": "کد پایتون بدون خطا اجرا می‌شود و نتیجه روی دیتابیس اجرا می‌شود.",
+      "visibility": "public"
+    },
+    {
+      "id": "projected-columns",
+      "description_fa": "نتیجه فقط دو فیلد name و price دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "filtered-ordered-rows",
+      "description_fa": "فقط محصولات موجود و به ترتیب نزولی قیمت برمی‌گردند.",
+      "visibility": "public"
+    },
+    {
+      "id": "data-driven",
+      "description_fa": "نتیجه از خود جدول می‌آید، نه از مقدار ثابت در کد.",
+      "visibility": "public"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "برای فیلترکردن از Product.objects.filter(in_stock=True) شروع کن."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "ترتیب نزولی با order_by(\"-price\") نوشته می‌شود."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای گرفتن فقط دو فیلد، values(\"name\", \"price\") را اضافه کن و نتیجه را در متغیر result بگذار."
+    }
+  ],
+  "time_limit_seconds": 20
+}

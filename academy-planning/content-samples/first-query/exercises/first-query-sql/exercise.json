@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "first-query-sql",
+  "lesson_id": "DB-00-008",
+  "version": 1,
+  "level": "practice",
+  "kind": "sql",
+  "required_for_completion": true,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.sql"
+  ],
+  "validator": {
+    "id": "first-query-sql-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "select-executes",
+      "description_fa": "پرس‌وجو بدون خطا روی جدول products اجرا می‌شود.",
+      "visibility": "public"
+    },
+    {
+      "id": "projected-columns",
+      "description_fa": "نتیجه فقط دو ستون name و price دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "filtered-ordered-rows",
+      "description_fa": "فقط محصولات موجود و به ترتیب نزولی قیمت برمی‌گردند.",
+      "visibility": "public"
+    },
+    {
+      "id": "data-driven",
+      "description_fa": "نتیجه از خود جدول می‌آید، نه از مقدار ثابت در کوئری.",
+      "visibility": "public"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "ستون موجودبودن محصول in_stock است و مقدار موجود برابر ۱ (یا TRUE) است."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "برای انتخاب دو ستون، نام آن‌ها را بعد از SELECT و جدا با کاما بنویس."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای مرتب‌سازی نزولی روی قیمت از ORDER BY price DESC استفاده کن."
+    }
+  ],
+  "time_limit_seconds": 10
+}

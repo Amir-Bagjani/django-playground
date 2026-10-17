@@ -24,11 +24,74 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Academy: internal MySQL 8.4 for disposable exercise schemas.
+  # No host port is published; only the internal Compose network reaches it.
+  # A new named volume keeps it fully separate from legacy playground_data.
+  academy-mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+      - --transaction-isolation=REPEATABLE-READ
+      - --sql-mode=STRICT_ALL_TABLES,ONLY_FULL_GROUP_BY,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE
+    environment:
+      MYSQL_ROOT_PASSWORD: academy-root-local
+      MYSQL_DATABASE: academy_control
+    volumes:
+      - academy_mysql_data:/var/lib/mysql
+    expose:
+      - "3306"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  # Academy: control API for SQL/ORM execution, evaluation and reset.
+  # Mounts authored content read-only; runs learner code only in subprocesses.
+  academy-runner:
+    build:
+      context: ./academy-runner
+    environment:
+      ACADEMY_DB_HOST: academy-mysql
+      ACADEMY_DB_PORT: "3306"
+      ACADEMY_DB_ADMIN_USER: root
+      ACADEMY_DB_ADMIN_PASSWORD: academy-root-local
+      ACADEMY_CONTROL_SCHEMA: academy_control
+      ACADEMY_EXERCISE_PASSWORD: academy-local-lab
+      ACADEMY_CONTENT_DIR: /content
+      ACADEMY_CONTROL_PORT: "8200"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./academy-planning/content-samples:/content:ro
+    expose:
+      - "8200"
+    depends_on:
+      academy-mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8200/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
   web:
     build:
       context: ./web
     environment:
       RUNNER_URL: http://runner:8100
+      ACADEMY_URL: http://academy-runner:8200
       NODE_ENV: production
     ports:
       - "127.0.0.1:3000:3000"
@@ -39,3 +102,4 @@ services:
 
 volumes:
   playground_data:
+  academy_mysql_data:

@@ -110,7 +110,7 @@
           "slug": "first-query",
           "title_fa": "اولین SELECT و QuerySet",
           "outcome_fa": "یک پرس‌وجوی ساده را در SQL و ORM بنویسد",
-          "status": "planned",
+          "status": "approved",
           "parity": "related",
           "tracks": [
             "mysql",
@@ -2310,6 +2310,30 @@
     }
   ],
   "authored_lessons": {
+    "DB-00-008": {
+      "id": "DB-00-008",
+      "slug": "first-query",
+      "title_fa": "اولین SELECT و QuerySet: خواندن داده از جدول",
+      "status": "approved",
+      "objectives": [
+        "بتواند با SELECT ستون‌های موردنیاز را از یک جدول انتخاب کند.",
+        "بتواند با WHERE، ORDER BY و LIMIT مجموعه نتیجه را کنترل کند.",
+        "بتواند همان نتیجه را با QuerySet، filter و order_by در Django بسازد.",
+        "تفاوت ارزیابی تنبل QuerySet با اجرای فوری SQL را توضیح دهد."
+      ],
+      "references": [
+        {
+          "label": "Django QuerySet API (filter, order_by, values)",
+          "url": "https://docs.djangoproject.com/en/6.1/ref/models/querysets/"
+        },
+        {
+          "label": "MySQL SELECT Statement",
+          "url": "https://dev.mysql.com/doc/refman/8.4/en/select.html"
+        }
+      ],
+      "estimated_minutes": 30,
+      "markdown": "# اولین SELECT و QuerySet\n\n> **هدف:** بعد از این درس می‌توانی یک «سؤال از داده» را به یک دستور `SELECT` و به یک QuerySet معادل تبدیل کنی، نتیجه را روی جدول واقعی اجرا کنی و بفهمی چرا Django همه‌ی کوئری‌ها را همان لحظه اجرا نمی‌کند. تمرین‌ها را *خودت* می‌نویسی.\n\n## ۱. مسئله واقعی\n\nتا اینجا یاد گرفتیم داده در جدول ذخیره می‌شود و کلید، هر سطر را یکتا می‌کند. اما کار روزمره‌ی ما «خواندن» است: «چه کتاب‌هایی موجودند و ارزان‌ترین کدام است؟» نوشتن کل جدول روی صفحه راه‌حل نیست؛ باید مشخص کنیم **کدام ستون‌ها** و **کدام سطرها** و **با چه ترتیبی** برگردند.\n\nهمان سه تصمیم در SQL و در ORM تکرار می‌شود:\n\n- انتخاب ستون (Projection): فقط `title, price`.\n- فیلتر سطرها (Selection): فقط کتاب‌های منتشرشده.\n- ترتیب نتیجه (Ordering): ارزان‌ترین به گران‌ترین یا برعکس.\n\n## ۲. جدول نمونه‌ی این درس\n\nبرای آموزش از جدول `books` استفاده می‌کنیم (جدول تمرین‌های شما جدول دیگری است و همان‌جا توضیح داده می‌شود).\n\n```sql\nCREATE TABLE books (\n  id INT NOT NULL AUTO_INCREMENT,\n  title VARCHAR(80) NOT NULL,\n  price DECIMAL(10,2) NOT NULL,\n  published TINYINT(1) NOT NULL DEFAULT 1,\n  PRIMARY KEY (id)\n);\n```\n\nتصور کن این داده‌ها درج شده‌اند: `Learning SQL` با قیمت `29.90`، `Django By Example` با قیمت `45.00` و `Old Draft` با قیمت `9.00` که `published = 0` است.\n\n## ۳. همان سؤال در SQL\n\nمی‌خواهیم کتاب‌های منتشرشده را با عنوان و قیمت، از گران به ارزان ببینیم:\n\n```sql\nSELECT title, price\nFROM books\nWHERE published = 1\nORDER BY price DESC;\n```\n\n- `SELECT title, price` می‌گوید دقیقاً کدام ستون‌ها برگردند؛ `SELECT *` در کد واقعی کمتر استفاده می‌شود چون داده‌ی بی‌مصرف می‌آورد.\n- `WHERE published = 1` سطرهای نامربوط را حذف می‌کند.\n- `ORDER BY price DESC` ترتیب را نزولی می‌کند؛ بدون آن، ترتیب نتیجه تضمین‌شده نیست.\n\nنتیجه چیزی شبیه این است: `Django By Example | 45.00` و بعد `Learning SQL | 29.90`. دقت کن `Old Draft` چون `published = 0` است اصلاً برنگشت.\n\n## ۴. همان سؤال در Django ORM\n\nاگر مدل `Book` را داشته باشیم، همان سه تصمیم با QuerySet نوشته می‌شوند:\n\n```python\nBook.objects.filter(published=True).order_by(\"-price\").values(\"title\", \"price\")\n```\n\n- `Book.objects` نقطه‌ی ورود کوئری روی مدل است.\n- `.filter(published=True)` متناظر `WHERE` است.\n- `.order_by(\"-price\")` متناظر `ORDER BY ... DESC` است؛ علامت منفی یعنی نزولی.\n- `.values(\"title\", \"price\")` یعنی به‌جای شیء کامل، فقط این دو ستون برگردند — نزدیک‌ترین معادل `SELECT title, price`.\n\n## ۵. تفاوت مهم SQL و ORM: ارزیابی تنبل\n\nاین بخش جایی است که خیلی‌ها اشتباه می‌کنند. در SQL، به‌محض ارسال دستور، دیتابیس اجرا می‌کند. در ORM اما یک QuerySet **تنبل (lazy)** است:\n\n```python\nqueryset = Book.objects.filter(published=True).order_by(\"-price\")\nprint(queryset.query)     # فقط کوئری ساخته شده؛ هنوز به دیتابیس نرفته است\nrows = list(queryset)     # همین لحظه واقعاً اجرا می‌شود\n```\n\nتا وقتی نتیجه را مصرف نکنی (`list()`، حلقه `for`، `len()`، سریالایز کردن)، Django کوئری را به دیتابیس نمی‌فرستد. نتیجه‌ی عملی: می‌توانی QuerySet را پشت‌سرهم بسازی و ادامه بدهی، اما «اجرا شد یا نه» را نباید حدس بزنی — برای دیدن SQL نهایی از `str(queryset.query)` استفاده کن.\n\nنکته‌ی مرزی: SQL و ORM در این درس معادلِ رفتاری‌اند، ولی همیشه یکی نیستند. ویژگی‌هایی مثل برخی توابع پنجره‌ای یا دستورات مدیریتی در ORM معادل مستقیم ندارند و باید با `raw()` یا SQL دستی نوشته شوند.\n\n## ۶. محدودکردن حجم نتیجه\n\nبرای دیدن چند سطر اول، در SQL از `LIMIT` استفاده می‌کنیم:\n\n```sql\nSELECT title, price FROM books WHERE published = 1 ORDER BY price DESC LIMIT 2;\n```\n\nدر ORM معادل آن برش (Slicing) است؛ نه یک متد جدا:\n\n```python\nBook.objects.filter(published=True).order_by(\"-price\").values(\"title\", \"price\")[:2]\n```\n\n## ۷. سه خطای رایج\n\n**الف) فراموش‌کردن `WHERE`:** نتیجه به‌جای «کتاب‌های منتشرشده» می‌شود «همه‌ی کتاب‌ها». خیلی از خطاهای منطقی از همین‌جا شروع می‌شود.\n\n**ب) فراموش‌کردن `ORDER BY`:** دیتابیس هیچ ترتیبی را تضمین نمی‌کند. اگر ترتیب مهم است، باید صریح بنویسی؛ در ORM هم `.order_by()` را جا نینداز.\n\n**ج) مقایسه‌ی `NULL` با `=`:** `WHERE price = NULL` هرگز درست کار نمی‌کند؛ باید `IS NULL` نوشت. جزئیات این رفتار در درس `DB-00-009` می‌آید.\n\n## ۸. تمرین‌ها\n\nدو تمرین پایین همین صفحه را باز کن. هر دو روی یک جدول واقعی اجرا می‌شوند:\n\n- **تمرین SQL:** جدول `products` را با `SELECT` می‌خوانی؛ باید فقط محصولات موجود را با دو ستون و ترتیب مشخص برگردانی.\n- **تمرین ORM:** همان نتیجه را با QuerySet می‌سازی و در متغیر `result` می‌گذاری.\n\nمعیار قبولی هر تمرین زیر ویرایشگر نوشته شده است. `Execute` فقط نتیجه‌ی خام را نشان می‌دهد؛ `Check Solution` معیارها را می‌سنجد. توجه: اجرای بدون خطا به‌معنای درست‌بودن جواب نیست — ممکن است کوئری اجرا شود ولی سطرهای اشتباه برگرداند.\n\n> Starter هر تمرین یک اسکلت ناقص است و **پاسخ کامل ندارد**. اول خودت بنویس، بعد Check کن؛ اگر شکست خورد، Hint بخواه.\n\n## منابع و مطالعه بیشتر\n\n- [Django QuerySet API](https://docs.djangoproject.com/en/6.1/ref/models/querysets/)\n- [MySQL SELECT Statement](https://dev.mysql.com/doc/refman/8.4/en/select.html)\n"
+    },
     "DB-03-005": {
       "id": "DB-03-005",
       "slug": "one-to-many",
@@ -2335,9 +2359,117 @@
       "markdown": "# ForeignKey و رابطه یک‌به‌چند\n\n> **هدف:** بعد از این درس، بتوانی رابطهٔ «هر مشتری چند سفارش؛ هر سفارش دقیقاً متعلق به یک مشتری» را از توضیح کسب‌وکار به ERD، SQL و Django Model تبدیل کنی. تمرین‌ها را *خودت* می‌نویسی.\n\n## ۱. مسئله واقعی و دلیل نیاز به رابطه\n\nفرض کن اطلاعات مشتری در هر سفارش دوباره نوشته شود. تغییر شماره تماس مشتری مستلزم تغییر چندین ردیف خواهد بود؛ اگر یک ردیف جا بماند، تناقض به وجود می‌آید. جداکردن `customer` و `orders` باعث می‌شود سفارش به شناسه مشتری اشاره کند و داده شخص مستقل بماند.\n\n**قانون دامنه:** هر سفارش باید دقیقاً یک مشتری داشته باشد؛ مشتری می‌تواند صفر یا چند سفارش داشته باشد. سمت سفارش مشارکت اجباری است، سمت مشتری اختیاری. پیش از کدنویسی این قانون را روی ERD مشخص کن.\n\n## ۲. PK و FK، یکسان نیستند\n\n- `customers.id` کلید اصلی است: هر مشتری را در جدول خودش یکتا مشخص می‌کند.\n- `orders.customer_id` کلید خارجی است: به کلید موجود جدول مشتری ارجاع می‌دهد؛ چند سفارش می‌توانند `customer_id` مشترک داشته باشند.\n- `NOT NULL` الزامی‌بودن مشتری برای سفارش را بیان می‌کند؛ `FOREIGN KEY` معتبر بودن مقدار ارجاعی را بررسی می‌کند.\n\n## ۳. نمونه تشریحی MySQL\n\n```sql\nCREATE TABLE customers (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  full_name VARCHAR(120) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB;\n\nCREATE TABLE orders (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  customer_id BIGINT NOT NULL,\n  total DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  CONSTRAINT fk_orders_customer\n    FOREIGN KEY (customer_id) REFERENCES customers(id)\n) ENGINE=InnoDB;\n```\n\nبرای تمرین، اول یک مشتری درج کن و سفارشی برای او بساز. سپس سفارش با `customer_id` ناموجود را امتحان کن؛ انتظار داریم دیتابیس آن را رد کند. این مثال تشریحی است و جواب تمرین‌های پایین نیست.\n\n## ۴. بیان همان رابطه در Django\n\n```python\nfrom django.db import models\n\nclass Customer(models.Model):\n    full_name = models.CharField(max_length=120)\n\nclass Order(models.Model):\n    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)\n    total = models.DecimalField(max_digits=12, decimal_places=2)\n```\n\nDjango معمولاً نام ستون FK را `customer_id` می‌گذارد. دقت کن `on_delete=models.PROTECT` رفتار حذف را در سطح ORM کنترل می‌کند؛ لزوماً معادل مستقیم `ON DELETE RESTRICT` در SQL تولیدشده نیست. برای درک رفتار دقیق، Migration و SQL واقعی را بررسی کن.\n\nاز Django 6.1 به بعد variantهای سطح‌دیتابیس (`DB_CASCADE`، `DB_SET_NULL`، `DB_SET_DEFAULT`) هم وجود دارند و برخلاف variantهای Python، همان عمل را در خود دیتابیس انجام می‌دهند (بدون fetch کردن ردیف‌های مرتبط). دو محدودیت مهم: این variantها را نمی‌توان با variantهای Python (جز `DO_NOTHING`) در یک مدل یا مدل‌های مرتبط ترکیب کرد، و `DB_SET_DEFAULT` روی MySQL/MariaDB پشتیبانی نمی‌شود. جزئیات کامل رفتار حذف در درس DB-03-009 و گزینه‌های فیلد رابطه در DB-07-011 می‌آید.\n\n## ۵. پارامترهایی که باید بدانی\n\n- `on_delete`: `CASCADE`، `PROTECT`، `RESTRICT`، `SET_NULL`، `SET_DEFAULT`، `DO_NOTHING`، `SET(...)` و variantهای سطح‌دیتابیس `DB_CASCADE`/`DB_SET_NULL`/`DB_SET_DEFAULT` را با قوانین کسب‌وکار بسنج. `SET_NULL`/`DB_SET_NULL` فقط همراه `null=True` و `DB_SET_DEFAULT` فقط با `db_default` معنی دارد.\n- `related_name`: نام دسترسی معکوس از مشتری به سفارش‌ها را مشخص می‌کند.\n- `to_field`: به‌صورت معمول نیازی نیست؛ استفاده از یک فیلد غیر PK شرایط یکتایی لازم دارد.\n- `db_constraint=False`: حذف Constraint واقعی، تضمین یکپارچگی داده در DB را ضعیف می‌کند؛ صرفاً با دلیل روشن استفاده کن.\n- `null` و `blank`: یکی در سطح Schema و دیگری در سطح Validation رفتار متفاوتی دارند.\n\n## ۶. سه خطای رایج\n\n**الف) استفاده از `CharField` برای ذخیره شناسه مشتری:** دیتابیس نمی‌تواند Referential Integrity را فقط از روی یک رشته تضمین کند.\n\n**ب) یکسان‌فرض‌کردن `on_delete` و `ON DELETE`:** رفتار Django را از SQL Constraint جدا بررسی کن.\n\n**ج) افزودن رابطه بدون تعریف قانون حذف:** در سامانه‌های مالی و رزرو حذف بی‌احتیاط می‌تواند تاریخچه را از بین ببرد.\n\n## ۷. بررسی مهندسی\n\nاگر سفارش پس از ثبت باید از نظر تاریخی نگهداری شود، حذف مشتری چه سیاستی باید داشته باشد؟ `PROTECT`، Soft Delete یا مدل‌کردن Snapshot اطلاعات مشتری می‌توانند Trade-offهای متفاوتی داشته باشند؛ قبل از انتخاب قاعده، Business Rule را مستند کن.\n\n## ۸. تمرین‌ها — فقط مسئله و Hint\n\n- **Practice:** پیوند اجباری سفارش به مشتری را در Django Model بنویس.\n- **Problem Solving:** رابطه اجباری را در MySQL بنویس و تست کن که Customer ناموجود پذیرفته نمی‌شود.\n- **Mastery:** برای سیستم Booking تصمیم طراحی و اجرای چندمرحله‌ای با دو رابطه و سناریوی حذف ارائه کن.\n\n> هیچ‌کدام از فایل‌های Starter پاسخ کامل را ندارند. معیارها را بخوان، خودت پیاده‌سازی کن و در صورت شکست، Hint مرحله بعد را درخواست بده.\n\n## منابع و مطالعه بیشتر\n\n- [Django Model Field Reference](https://docs.djangoproject.com/en/6.1/ref/models/fields/#foreignkey)\n- [MySQL Foreign Key Constraints](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)\n"
     }
   },
+  "lab_lessons": {
+    "DB-00-008": [
+      {
+        "id": "first-query-sql",
+        "lesson_id": "DB-00-008",
+        "level": "practice",
+        "kind": "sql",
+        "title_fa": "تمرین SQL: خواندن محصولات موجود",
+        "instructions_markdown": "# تمرین SQL: خواندن محصولات موجود\n\nجدول `products` با ستون‌های `id`، `name`، `price` و `in_stock` در اختیار توست و چند سطر نمونه در آن درج شده است.\n\nیک دستور `SELECT` بنویس که:\n\n1. فقط محصولاتی را برگرداند که `in_stock = 1` هستند.\n2. فقط ستون‌های `name` و `price` را برگرداند.\n3. نتیجه را بر اساس `price` به‌صورت **نزولی** مرتب کند.\n\n**قبولی:** پرس‌وجو روی همان جدول واقعی اجرا می‌شود و نتیجه باید دقیقاً همان سطرها و ستون‌ها و ترتیب را بدهد. مقدار ثابت و از پیش نوشته‌شده قبول نیست.\n",
+        "starter": [
+          {
+            "name": "starter.sql",
+            "language": "sql",
+            "content": "-- جدول products با ستون‌های id، name، price و in_stock در اختیار توست.\n-- TODO: محصولات موجود (in_stock = 1) را فقط با ستون‌های name و price،\n--       به ترتیب نزولی price برگردان. (پاسخ کامل از قبل نوشته نشده است.)\n"
+          }
+        ],
+        "criteria": [
+          {
+            "id": "select-executes",
+            "description_fa": "پرس‌وجو بدون خطا روی جدول products اجرا می‌شود.",
+            "visibility": "public"
+          },
+          {
+            "id": "projected-columns",
+            "description_fa": "نتیجه فقط دو ستون name و price دارد.",
+            "visibility": "public"
+          },
+          {
+            "id": "filtered-ordered-rows",
+            "description_fa": "فقط محصولات موجود و به ترتیب نزولی قیمت برمی‌گردند.",
+            "visibility": "public"
+          },
+          {
+            "id": "data-driven",
+            "description_fa": "نتیجه از خود جدول می‌آید، نه از مقدار ثابت در کوئری.",
+            "visibility": "public"
+          }
+        ],
+        "hints": [
+          {
+            "id": "hint-1",
+            "text_fa": "ستون موجودبودن محصول in_stock است و مقدار موجود برابر ۱ (یا TRUE) است."
+          },
+          {
+            "id": "hint-2",
+            "text_fa": "برای انتخاب دو ستون، نام آن‌ها را بعد از SELECT و جدا با کاما بنویس."
+          },
+          {
+            "id": "hint-3",
+            "text_fa": "برای مرتب‌سازی نزولی روی قیمت از ORDER BY price DESC استفاده کن."
+          }
+        ],
+        "time_limit_seconds": 10
+      },
+      {
+        "id": "first-query-orm",
+        "lesson_id": "DB-00-008",
+        "level": "problem-solving",
+        "kind": "django-orm",
+        "title_fa": "تمرین ORM: همان نتیجه با QuerySet",
+        "instructions_markdown": "# تمرین ORM: همان نتیجه با QuerySet\n\nمدل `Product` از قبل در محیط اجرا بارگذاری شده است و همان داده‌ی تمرین SQL را می‌خواند. کافی است روی `Product.objects` کار کنی؛ نیازی به `import` نیست.\n\nکد پایتونی بنویس که:\n\n1. محصولات موجود (`in_stock=True`) را انتخاب کند.\n2. فقط فیلدهای `name` و `price` را بگیرد.\n3. بر اساس `price` به‌صورت **نزولی** مرتب کند.\n4. نتیجه را در متغیر `result` بگذارد.\n\n**قبولی:** کد در یک پروسه‌ی کنترل‌شده‌ی Django روی همان دیتابیس اجرا می‌شود؛ `result` باید همان سطرها، ستون‌ها و ترتیب تمرین SQL را بدهد. اگر کد خطا بدهد، همان خطا (Traceback) نمایش داده می‌شود و قبول نمی‌شود.\n",
+        "starter": [
+          {
+            "name": "starter.py",
+            "language": "python",
+            "content": "# مدل Product با فیلدهای name، price و in_stock از قبل در محیط بارگذاری شده است.\n# TODO: با QuerySet محصولات موجود (in_stock=True) را انتخاب کن،\n#       فقط فیلدهای name و price را بگیر، بر اساس price نزولی مرتب کن،\n#       و نتیجه را در متغیر result بگذار. (پاسخ کامل از قبل نوشته نشده است.)\n\nresult = None\n"
+          }
+        ],
+        "criteria": [
+          {
+            "id": "queryset-executes",
+            "description_fa": "کد پایتون بدون خطا اجرا می‌شود و نتیجه روی دیتابیس اجرا می‌شود.",
+            "visibility": "public"
+          },
+          {
+            "id": "projected-columns",
+            "description_fa": "نتیجه فقط دو فیلد name و price دارد.",
+            "visibility": "public"
+          },
+          {
+            "id": "filtered-ordered-rows",
+            "description_fa": "فقط محصولات موجود و به ترتیب نزولی قیمت برمی‌گردند.",
+            "visibility": "public"
+          },
+          {
+            "id": "data-driven",
+            "description_fa": "نتیجه از خود جدول می‌آید، نه از مقدار ثابت در کد.",
+            "visibility": "public"
+          }
+        ],
+        "hints": [
+          {
+            "id": "hint-1",
+            "text_fa": "برای فیلترکردن از Product.objects.filter(in_stock=True) شروع کن."
+          },
+          {
+            "id": "hint-2",
+            "text_fa": "ترتیب نزولی با order_by(\"-price\") نوشته می‌شود."
+          },
+          {
+            "id": "hint-3",
+            "text_fa": "برای گرفتن فقط دو فیلد، values(\"name\", \"price\") را اضافه کن و نتیجه را در متغیر result بگذار."
+          }
+        ],
+        "time_limit_seconds": 20
+      }
+    ]
+  },
   "totals": {
     "modules": 16,
     "lessons": 176,
-    "authored": 1
+    "authored": 2
   }
 }

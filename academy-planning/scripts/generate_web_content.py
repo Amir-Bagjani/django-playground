@@ -9,6 +9,7 @@ Academy routes.
 Sources:
   curriculum/curriculum.yaml          -> course outline (modules + lessons)
   content-samples/**/lesson.fa.md     -> authored lesson bodies + frontmatter
+  content-samples/**/exercises/*.json -> public exercise metadata for the lab
 
 Output:
   ../web/lib/academy-content.json
@@ -16,6 +17,9 @@ Output:
 Fails loudly (non-zero exit) on duplicate lesson IDs, duplicate module IDs, or
 an authored lesson whose ID is missing from the curriculum, so broken content
 cannot be silently published.
+
+Only exercises whose lesson is authored *and* approved are embedded as lab
+capability; instructor-only validators never leave the academy-runner.
 
 Usage:
   python academy-planning/scripts/generate_web_content.py
@@ -84,6 +88,71 @@ def load_authored_lessons(known_ids: set[str]) -> dict:
     return authored
 
 
+LEVEL_ORDER = {"practice": 0, "problem-solving": 1, "mastery": 2}
+
+
+def _first_heading(markdown: str) -> str:
+    for line in markdown.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            return stripped.lstrip("#").strip()
+    return ""
+
+
+def load_lab_exercises(authored: dict) -> dict[str, list]:
+    """Embed public metadata for exercises of approved, authored lessons.
+
+    The lab UI renders instructions/starter/criteria offline; only execution
+    (execute/check/reset) is delegated to the academy-runner. Validator
+    reference files are never included here.
+    """
+    labs: dict[str, list] = {}
+    for manifest in sorted(CONTENT_SAMPLES.rglob("exercises/*/exercise.json")):
+        try:
+            obj = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            fail(f"{manifest}: cannot read exercise manifest: {exc}")
+            continue
+        lid = obj.get("lesson_id")
+        lesson = authored.get(lid)
+        if lesson is None or lesson.get("status") != "approved":
+            continue
+        edir = manifest.parent
+        try:
+            instructions = (edir / obj["instructions_file"]).read_text(encoding="utf-8")
+        except (OSError, KeyError) as exc:
+            fail(f"{manifest}: cannot read instructions: {exc}")
+            continue
+        starters = []
+        for fname in obj.get("starter_files", []):
+            try:
+                content = (edir / fname).read_text(encoding="utf-8")
+            except OSError as exc:
+                fail(f"{manifest}: cannot read starter {fname}: {exc}")
+                continue
+            starters.append({
+                "name": fname,
+                "language": "sql" if fname.endswith(".sql") else "python",
+                "content": content,
+            })
+        labs.setdefault(lid, []).append({
+            "id": obj.get("id"),
+            "lesson_id": lid,
+            "level": obj.get("level"),
+            "kind": obj.get("kind"),
+            "title_fa": _first_heading(instructions),
+            "instructions_markdown": instructions,
+            "starter": starters,
+            "criteria": [c for c in obj.get("criteria", []) if c.get("visibility") == "public"],
+            "hints": obj.get("hints", []),
+            "time_limit_seconds": obj.get("time_limit_seconds"),
+        })
+
+    for exercises in labs.values():
+        exercises.sort(key=lambda e: (LEVEL_ORDER.get(e["level"], 99), e["id"]))
+    return labs
+
+
 def main() -> int:
     try:
         cur = yaml.safe_load(CURRICULUM.read_text(encoding="utf-8"))
@@ -131,6 +200,7 @@ def main() -> int:
         })
 
     authored = load_authored_lessons(known_ids)
+    lab_lessons = load_lab_exercises(authored)
 
     if errors:
         for e in errors:
@@ -152,6 +222,7 @@ def main() -> int:
         },
         "modules": modules_out,
         "authored_lessons": authored,
+        "lab_lessons": lab_lessons,
         "totals": {
             "modules": len(modules_out),
             "lessons": len(known_ids),
