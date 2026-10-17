@@ -1,0 +1,2343 @@
+{
+  "source": "academy-planning/curriculum/curriculum.yaml",
+  "course": {
+    "id": "database-orm-academy",
+    "title_en": "Database & ORM Academy",
+    "title_fa": "آکادمی پایگاه داده و ORM",
+    "locale": "fa-IR",
+    "ui_locale": "en-US",
+    "content_version": "0.1.0-planning",
+    "framework_targets": {
+      "django": "6.1",
+      "mysql": "8.4"
+    },
+    "access_policy": "open"
+  },
+  "modules": [
+    {
+      "id": "DB-00",
+      "slug": "database-mental-model",
+      "title_fa": "از داده تا مدل رابطه‌ای",
+      "status": "planned",
+      "focus": "foundations",
+      "lessons": [
+        {
+          "id": "DB-00-001",
+          "slug": "data-vs-information",
+          "title_fa": "داده، اطلاعات و نیازمندی",
+          "outcome_fa": "یک سناریو را به موجودیت، ویژگی و نمونه داده تفکیک کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-002",
+          "slug": "files-vs-dbms",
+          "title_fa": "فایل، DBMS و چرایی پایگاه داده",
+          "outcome_fa": "مشکلات هم‌زمانی و یکپارچگی فایل ساده را تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-003",
+          "slug": "relational-model",
+          "title_fa": "رابطه، سطر، ستون و دامنه",
+          "outcome_fa": "یک رابطه و قوانین داده مجاز آن را تشریح کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-004",
+          "slug": "schema-instance",
+          "title_fa": "Schema، Instance و تغییرات داده",
+          "outcome_fa": "تفاوت Schema و داده جاری را روی نمونه نشان دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-005",
+          "slug": "keys-overview",
+          "title_fa": "کلید اصلی، نامزد و خارجی",
+          "outcome_fa": "کلیدهای نامزد و اصلی یک مجموعه داده را تعیین کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-006",
+          "slug": "sql-vs-orm",
+          "title_fa": "SQL در برابر ORM و مرز انتزاع",
+          "outcome_fa": "یک عملیات داده را به زبان SQL و ORM مقایسه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-007",
+          "slug": "mysql-django-stack",
+          "title_fa": "معماری MySQL، Driver، Django و Migration",
+          "outcome_fa": "مسیر درخواست از Model تا SQL و دیتابیس را ردگیری کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-008",
+          "slug": "first-query",
+          "title_fa": "اولین SELECT و QuerySet",
+          "outcome_fa": "یک پرس‌وجوی ساده را در SQL و ORM بنویسد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-009",
+          "slug": "null-three-valued",
+          "title_fa": "NULL و منطق سه‌ارزشی",
+          "outcome_fa": "نتایج شرایط NULL در MySQL و Django را پیش‌بینی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-00-010",
+          "slug": "exercise-environments",
+          "title_fa": "محیط تمرین، تغییر داده و Reset",
+          "outcome_fa": "بین داده نمونه، جواب تمرین و نتیجه ارزیابی تمایز بگذارد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-01",
+      "slug": "schema-tables-datatypes",
+      "title_fa": "جدول، انواع داده و اولین Model",
+      "status": "planned",
+      "focus": "sql-orm",
+      "lessons": [
+        {
+          "id": "DB-01-001",
+          "slug": "create-table",
+          "title_fa": "CREATE TABLE و تعریف Model",
+          "outcome_fa": "جدول متناظر را به SQL و Django Model بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-002",
+          "slug": "int-family",
+          "title_fa": "انواع عدد صحیح و دامنه آن‌ها",
+          "outcome_fa": "نوع عدد صحیح مناسب یک سناریو را انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-003",
+          "slug": "strings-varchar",
+          "title_fa": "CHAR، VARCHAR و CharField",
+          "outcome_fa": "محدودیت طول و اثر آن را در SQL و ORM تست کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-004",
+          "slug": "text-types",
+          "title_fa": "TEXT و TextField",
+          "outcome_fa": "بین متن بلند و کوتاه نوع مناسبی انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-005",
+          "slug": "decimal-vs-float",
+          "title_fa": "DECIMAL و DecimalField در برابر FLOAT",
+          "outcome_fa": "محاسبه مالی بدون خطای شناور پیاده کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-006",
+          "slug": "dates-times",
+          "title_fa": "DATE، DATETIME، TIMESTAMP و فیلدهای زمانی",
+          "outcome_fa": "داده زمانی و منطقه زمانی را مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-007",
+          "slug": "boolean-types",
+          "title_fa": "BOOLEAN، BooleanField و قرارداد داده",
+          "outcome_fa": "نوع Boolean و قیود مقدار را در هر دو لایه بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-008",
+          "slug": "uuid-json-binary",
+          "title_fa": "UUID، JSON و داده باینری",
+          "outcome_fa": "برای داده نیمه‌ساختاریافته یا شناسه نوع مناسب انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-009",
+          "slug": "default-null-blank",
+          "title_fa": "DEFAULT، NULL، blank و default",
+          "outcome_fa": "تفاوت اعتبارسنجی فرم و محدودیت دیتابیس را آزمایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-010",
+          "slug": "insert-and-create",
+          "title_fa": "INSERT و objects.create",
+          "outcome_fa": "در هر دو محیط رکورد بسازد و نتیجه را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-011",
+          "slug": "model-lifecycle",
+          "title_fa": "save، refresh_from_db و delete",
+          "outcome_fa": "چرخه حیات Instance و QuerySet را عملی نشان دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-01-012",
+          "slug": "first-migration",
+          "title_fa": "makemigrations، migrate و SQL خروجی",
+          "outcome_fa": "تغییر Model را به Schema واقعی تبدیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-02",
+      "slug": "sql-orm-queries",
+      "title_fa": "خواندن، فیلتر و مدیریت داده",
+      "status": "planned",
+      "focus": "sql-orm",
+      "lessons": [
+        {
+          "id": "DB-02-001",
+          "slug": "select-columns",
+          "title_fa": "SELECT ستون‌ها و values",
+          "outcome_fa": "ستون‌های موردنیاز را با SQL و QuerySet انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-002",
+          "slug": "where-lookups",
+          "title_fa": "WHERE و Field Lookups",
+          "outcome_fa": "فیلترهای برابری و بازه را در هر دو محیط بنویسد",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-003",
+          "slug": "and-or-q",
+          "title_fa": "AND/OR/NOT و Q objects",
+          "outcome_fa": "شرط ترکیبی را با اولویت درست بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-004",
+          "slug": "ordering",
+          "title_fa": "ORDER BY و order_by",
+          "outcome_fa": "مرتب‌سازی چندسطحی پایدار اجرا کند",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-005",
+          "slug": "limit-offset",
+          "title_fa": "LIMIT/OFFSET و slicing",
+          "outcome_fa": "صفحه داده را با ترتیب قطعی واکشی کند",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-006",
+          "slug": "like-patterns",
+          "title_fa": "LIKE، contains، startswith و escaping",
+          "outcome_fa": "جستجوی الگو و Escaping را توضیح و اجرا کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-007",
+          "slug": "in-between",
+          "title_fa": "IN، BETWEEN و __in/__range",
+          "outcome_fa": "فیلتر مجموعه و محدوده بسازد",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-008",
+          "slug": "update-delete",
+          "title_fa": "UPDATE/DELETE و update/delete در ORM",
+          "outcome_fa": "تغییر جمعی داده را بدون اثر ناخواسته اجرا کند",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-009",
+          "slug": "f-expressions",
+          "title_fa": "محاسبات UPDATE و F expressions",
+          "outcome_fa": "افزایش اتمیک مقادیر را بدون خواندن-نوشتن ناامن انجام دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-010",
+          "slug": "exists-count",
+          "title_fa": "EXISTS/COUNT و exists/count",
+          "outcome_fa": "وجود داده را بهینه بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-011",
+          "slug": "distinct",
+          "title_fa": "DISTINCT و distinct",
+          "outcome_fa": "حذف تکرار را با Join و Ordering مقایسه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-02-012",
+          "slug": "queryset-laziness",
+          "title_fa": "تنبل‌بودن QuerySet و Evaluation",
+          "outcome_fa": "زمان اجرای Query و Cache آن را آزمایش کند",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-03",
+      "slug": "erd-relationships",
+      "title_fa": "ERD و مدل‌سازی روابط",
+      "status": "planned",
+      "focus": "modeling",
+      "lessons": [
+        {
+          "id": "DB-03-001",
+          "slug": "entities-attributes",
+          "title_fa": "موجودیت، ویژگی و کلید در ERD",
+          "outcome_fa": "نیازمندی را به Entity و Attribute تبدیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-002",
+          "slug": "cardinality",
+          "title_fa": "Cardinality و Crow’s Foot",
+          "outcome_fa": "رابطه 1:1 و 1:N و N:M را از سناریو استخراج کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-003",
+          "slug": "optionality",
+          "title_fa": "Optionality و Participation",
+          "outcome_fa": "الزامی یا اختیاری‌بودن رابطه را مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-004",
+          "slug": "one-to-one",
+          "title_fa": "OneToOneField و UNIQUE FK",
+          "outcome_fa": "رابطه یک‌به‌یک را در دیاگرام، SQL و Django بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-005",
+          "slug": "one-to-many",
+          "title_fa": "ForeignKey و رابطه یک‌به‌چند",
+          "outcome_fa": "یک FK معتبر در هر دو لایه بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-006",
+          "slug": "many-to-many",
+          "title_fa": "جدول واسط و ManyToManyField",
+          "outcome_fa": "رابطه چندبه‌چند را با جدول واسط مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-007",
+          "slug": "through-table",
+          "title_fa": "M2M با through و ویژگی رابطه",
+          "outcome_fa": "رابطه دارای ویژگی مستقل را طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-008",
+          "slug": "self-relation",
+          "title_fa": "رابطه بازگشتی و Self FK",
+          "outcome_fa": "ساختار درختی را با محدودیت‌های لازم مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-009",
+          "slug": "fk-actions",
+          "title_fa": "رفتار حذف در SQL و Django: CASCADE، DB_CASCADE و SET_DEFAULT",
+          "outcome_fa": "رفتار Python-level و DB-level حذف (CASCADE/DB_CASCADE، SET_NULL/DB_SET_NULL، SET_DEFAULT/DB_SET_DEFAULT)، نکته عدم ارسال pre_delete/post_delete در DB_CASCADE، عدم امکان ترکیب variantهای DB_* با Python و نبود پشتیبانی DB_SET_DEFAULT در MySQL/MariaDB را در MySQL 8.4 تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-010",
+          "slug": "related-names",
+          "title_fa": "related_name، related_query_name و Reverse Access",
+          "outcome_fa": "تراورس دوطرفه رابطه را در ORM نشان دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-011",
+          "slug": "natural-surrogate",
+          "title_fa": "کلید طبیعی، جانشین و مرکب",
+          "outcome_fa": "با معیار تغییرپذیری و یکتایی کلید انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-03-012",
+          "slug": "erd-to-implementation",
+          "title_fa": "از ERD به Migration و Schema",
+          "outcome_fa": "دیاگرام را به Model و SQL سازگار تبدیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-04",
+      "slug": "integrity-normalization",
+      "title_fa": "قیدها، یکپارچگی و نرمال‌سازی",
+      "status": "planned",
+      "focus": "design",
+      "lessons": [
+        {
+          "id": "DB-04-001",
+          "slug": "pk-fk-unique",
+          "title_fa": "PK، FK، UNIQUE و IntegrityError",
+          "outcome_fa": "یک سناریوی داده نامعتبر را در دیتابیس رد کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-002",
+          "slug": "check-constraints",
+          "title_fa": "CHECK و CheckConstraint",
+          "outcome_fa": "قید دامنه را مستقل از اپلیکیشن اعمال کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-003",
+          "slug": "composite-uniqueness",
+          "title_fa": "UniqueConstraint و کلید ترکیبی",
+          "outcome_fa": "قانون یکتایی ترکیبی را دقیق پیاده کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-004",
+          "slug": "candidate-functional-deps",
+          "title_fa": "وابستگی تابعی و Candidate Key",
+          "outcome_fa": "وابستگی‌های تابعی یک Relation را استخراج کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-005",
+          "slug": "first-normal-form",
+          "title_fa": "1NF و مقادیر اتمیک",
+          "outcome_fa": "ساختار تکرارشونده را به رابطه اتمیک تبدیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-006",
+          "slug": "second-normal-form",
+          "title_fa": "2NF و وابستگی جزئی",
+          "outcome_fa": "وابستگی جزئی در کلید ترکیبی را برطرف کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-007",
+          "slug": "third-normal-form",
+          "title_fa": "3NF و وابستگی انتقالی",
+          "outcome_fa": "وابستگی انتقالی را حذف کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-008",
+          "slug": "bcnf",
+          "title_fa": "BCNF و محدودیت‌های آن",
+          "outcome_fa": "طراحی را نسبت به BCNF و Trade-off بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-009",
+          "slug": "fourth-fifth",
+          "title_fa": "4NF/5NF و وابستگی چندمقداری/Join",
+          "outcome_fa": "سناریوی غیرعادی نیازمند تجزیه را تشخیص دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-010",
+          "slug": "update-anomalies",
+          "title_fa": "Anomalyهای درج، تغییر و حذف",
+          "outcome_fa": "Anomaly را با داده واقعی بازتولید و اصلاح کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-011",
+          "slug": "denormalization",
+          "title_fa": "Denormalization کنترل‌شده",
+          "outcome_fa": "Trade-off خواندن، نوشتن و سازگاری را مستند کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-04-012",
+          "slug": "integrity-checks",
+          "title_fa": "دامنه اعتبارسنجی ORM در برابر DB",
+          "outcome_fa": "قوانین نیازمند Constraint DB را مشخص کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-05",
+      "slug": "joins-related-queries",
+      "title_fa": "JOINها و دسترسی به داده مرتبط",
+      "status": "planned",
+      "focus": "sql-orm",
+      "lessons": [
+        {
+          "id": "DB-05-001",
+          "slug": "inner-left",
+          "title_fa": "INNER JOIN و LEFT JOIN",
+          "outcome_fa": "رکوردهای فاقد رابطه را درست گزارش کند",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-002",
+          "slug": "right-cross",
+          "title_fa": "RIGHT/CROSS JOIN و محدودیت ORM",
+          "outcome_fa": "محصول دکارتی و تفاوت بیان JOIN در ORM را شرح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-003",
+          "slug": "self-joins",
+          "title_fa": "Self Join و ساختار سلسله‌مراتبی",
+          "outcome_fa": "مدیر و کارمند را در یک جدول مرتبط کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-004",
+          "slug": "join-cardinality",
+          "title_fa": "Cardinality و Duplicate Rows",
+          "outcome_fa": "افزایش ردیف بعد از JOIN را توضیح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-005",
+          "slug": "related-traversal",
+          "title_fa": "Double-underscore Traversal",
+          "outcome_fa": "فیلتر روی چند رابطه در ORM بنویسد",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-006",
+          "slug": "select-related",
+          "title_fa": "select_related و یک Query JOIN",
+          "outcome_fa": "N+1 روابط تک‌مقداری را کاهش دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-007",
+          "slug": "prefetch-related",
+          "title_fa": "prefetch_related و Batch Load",
+          "outcome_fa": "N+1 روابط چندمقداری را کاهش دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-008",
+          "slug": "prefetch-object",
+          "title_fa": "Prefetch و to_attr",
+          "outcome_fa": "پیش‌واکشی فیلترشده و صحیح انجام دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-009",
+          "slug": "joins-vs-exists",
+          "title_fa": "JOIN در برابر EXISTS",
+          "outcome_fa": "نتیجه و هزینه Queryهای عضویت را مقایسه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-05-010",
+          "slug": "multiple-joins",
+          "title_fa": "چند JOIN، نام مستعار و Null",
+          "outcome_fa": "Query چندرابطه‌ای بدون تکرار ناخواسته بنویسد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-06",
+      "slug": "aggregation-analytics",
+      "title_fa": "گزارش‌گیری و Analytics",
+      "status": "planned",
+      "focus": "sql-orm",
+      "lessons": [
+        {
+          "id": "DB-06-001",
+          "slug": "group-by",
+          "title_fa": "GROUP BY و aggregate",
+          "outcome_fa": "گزارش تجمیعی را از داده خام تولید کند",
+          "status": "planned",
+          "parity": "equivalent",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-002",
+          "slug": "having",
+          "title_fa": "HAVING و فیلتر Annotation",
+          "outcome_fa": "گروه‌های دارای شرط جمعی را درست انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-003",
+          "slug": "count-sum-avg",
+          "title_fa": "COUNT/SUM/AVG و Aggregates",
+          "outcome_fa": "تفاوت Null و شمارش صحیح را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-004",
+          "slug": "conditional-aggregation",
+          "title_fa": "CASE، FILTER و Conditional Aggregates",
+          "outcome_fa": "گزارش وضعیت‌ها را در یک Query بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-005",
+          "slug": "annotate-values",
+          "title_fa": "annotate و values و grouping",
+          "outcome_fa": "تفاوت ترتیب فراخوانی QuerySet را آزمایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-006",
+          "slug": "subqueries",
+          "title_fa": "Subquery و OuterRef",
+          "outcome_fa": "زیرپرس‌وجوی وابسته بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-007",
+          "slug": "exists-expressions",
+          "title_fa": "Exists و Anti-Join",
+          "outcome_fa": "رکوردهای فاقد رابطه را بهینه پیدا کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-008",
+          "slug": "cte",
+          "title_fa": "CTE و WITH",
+          "outcome_fa": "Query چندبخشی را بازنویسی و تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-009",
+          "slug": "window-functions",
+          "title_fa": "ROW_NUMBER، RANK و Window در Django",
+          "outcome_fa": "رتبه‌بندی هر گروه را بدون حذف ردیف انجام دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-010",
+          "slug": "set-operations",
+          "title_fa": "UNION، INTERSECT و EXCEPT",
+          "outcome_fa": "دو مجموعه خروجی سازگار را ترکیب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-06-011",
+          "slug": "report-correctness",
+          "title_fa": "گزارش‌های مالی و مرزهای زمانی",
+          "outcome_fa": "دقت مبلغ و بازه زمانی گزارش را تضمین کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-07",
+      "slug": "fields-options-api",
+      "title_fa": "مرجع عمیق Django Model Fields",
+      "status": "planned",
+      "focus": "django",
+      "lessons": [
+        {
+          "id": "DB-07-001",
+          "slug": "field-api",
+          "title_fa": "Field class و قرارداد ORM",
+          "outcome_fa": "فرق Field class و Instance را شرح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-002",
+          "slug": "string-field-options",
+          "title_fa": "CharField، TextField، SlugField",
+          "outcome_fa": "نوع متن و Validation مناسب انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-003",
+          "slug": "email-url-files",
+          "title_fa": "EmailField، URLField، FileField، ImageField",
+          "outcome_fa": "محدوده اعتبارسنجی و وابستگی فایل را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-004",
+          "slug": "integer-autofields",
+          "title_fa": "AutoField، BigAutoField، IntegerField، PositiveIntegerField",
+          "outcome_fa": "محدوده عددی و PK مناسب را انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-005",
+          "slug": "float-decimal",
+          "title_fa": "FloatField، DecimalField و precision",
+          "outcome_fa": "مناسب‌ترین نمایش پول و محاسبات را آزمایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-006",
+          "slug": "date-duration",
+          "title_fa": "DateField، TimeField، DateTimeField، DurationField",
+          "outcome_fa": "نوع زمان و پیش‌فرض آن را پیاده کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-007",
+          "slug": "boolean-uuid-json",
+          "title_fa": "BooleanField، UUIDField، JSONField",
+          "outcome_fa": "معادل DB و رفتار Query را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-008",
+          "slug": "binary-choices",
+          "title_fa": "BinaryField، choices و TextChoices",
+          "outcome_fa": "گزینه‌های محدود و داده باینری را درست مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-009",
+          "slug": "field-options",
+          "title_fa": "db_column، db_index، unique، null، blank و editable",
+          "outcome_fa": "پیامد هر option بر دیتابیس و فرم را تفکیک کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-010",
+          "slug": "field-validation",
+          "title_fa": "validators، clean_fields، full_clean",
+          "outcome_fa": "زمان اجرای Validation را آزمایش کند",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-011",
+          "slug": "relational-field-options",
+          "title_fa": "on_delete و DB_* actions، to_field، db_constraint، related_name",
+          "outcome_fa": "پارامترهای رابطه و نگاشت on_delete — از جمله variantهای DB_CASCADE/DB_SET_NULL/DB_SET_DEFAULT — را در DDL/Migration و Query مقایسه کند و محدودیت MySQL را تشخیص دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-012",
+          "slug": "custom-fields",
+          "title_fa": "ساخت Field سفارشی و db_type",
+          "outcome_fa": "در سناریوی لازم Field سفارشی تعریف کند",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-013",
+          "slug": "model-methods",
+          "title_fa": "__str__، properties، save/delete overrides",
+          "outcome_fa": "رفتار Instance را بدون Side Effect ناموجه پیاده کند",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-07-014",
+          "slug": "field-reference-audit",
+          "title_fa": "مرور پوشش کامل Field API",
+          "outcome_fa": "فهرست Fieldها و گزینه‌ها را نسبت به مستندات نسخه هدف ممیزی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-08",
+      "slug": "models-meta-managers",
+      "title_fa": "Model Meta، Managers و QuerySet API",
+      "status": "planned",
+      "focus": "django",
+      "lessons": [
+        {
+          "id": "DB-08-001",
+          "slug": "model-meta",
+          "title_fa": "Meta: ordering، db_table، verbose_name",
+          "outcome_fa": "Model metadata را مطابق قرارداد تعیین کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-002",
+          "slug": "meta-constraints",
+          "title_fa": "constraints، indexes، ordering و default_related_name",
+          "outcome_fa": "قید و ایندکس را در مدل تعریف کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-003",
+          "slug": "abstract-proxy",
+          "title_fa": "Abstract/Proxy Models",
+          "outcome_fa": "ارث‌بری DB و رفتار Proxy را از هم تفکیک کند",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-004",
+          "slug": "multitable-inheritance",
+          "title_fa": "Multi-table Inheritance",
+          "outcome_fa": "هزینه JOIN و انتخاب طراحی را توضیح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-005",
+          "slug": "custom-manager",
+          "title_fa": "Custom Manager و get_queryset",
+          "outcome_fa": "API ساده برای پرس‌وجوی متداول بسازد",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-006",
+          "slug": "custom-queryset",
+          "title_fa": "Custom QuerySet و as_manager",
+          "outcome_fa": "منطق query قابل زنجیره‌کردن بسازد",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-007",
+          "slug": "queryset-api",
+          "title_fa": "filter، exclude، get، first، last، iterator",
+          "outcome_fa": "متد مناسب را با توجه به نتیجه و ارزیابی انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-008",
+          "slug": "bulk-operations",
+          "title_fa": "bulk_create، bulk_update، update_or_create",
+          "outcome_fa": "محدودیت Signal و Race را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-009",
+          "slug": "defer-only",
+          "title_fa": "defer، only و Projection",
+          "outcome_fa": "موقعیت مناسب خواندن ستون‌های کمتر را تشخیص دهد",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-010",
+          "slug": "raw-query",
+          "title_fa": "raw و محدودیت ORM",
+          "outcome_fa": "بفهمد چه زمانی Raw SQL لازم یا پرریسک است",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-08-011",
+          "slug": "signals-side-effects",
+          "title_fa": "Signals، Side Effects و Data Integrity",
+          "outcome_fa": "مسئولیت‌های ناایمن در Signal را تشخیص دهد",
+          "status": "planned",
+          "parity": "orm-only",
+          "tracks": [
+            "django-orm",
+            "mysql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-09",
+      "slug": "migrations-schema-evolution",
+      "title_fa": "Migration و تغییر تدریجی Schema",
+      "status": "planned",
+      "focus": "sql-orm",
+      "lessons": [
+        {
+          "id": "DB-09-001",
+          "slug": "migration-graph",
+          "title_fa": "Migration Graph و Dependencies",
+          "outcome_fa": "وابستگی Migrationها را تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-002",
+          "slug": "add-rename-remove",
+          "title_fa": "افزودن، تغییر نام و حذف Field",
+          "outcome_fa": "تغییر غیرمخرب Schema طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-003",
+          "slug": "data-migrations",
+          "title_fa": "RunPython و Historical Models",
+          "outcome_fa": "داده موجود را در Migration جابه‌جا کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-004",
+          "slug": "migration-sql",
+          "title_fa": "sqlmigrate و DDL قابل مشاهده",
+          "outcome_fa": "SQL واقعی تولیدشده را بررسی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-005",
+          "slug": "schema-mismatch",
+          "title_fa": "ناهماهنگی Schema و Migration State",
+          "outcome_fa": "علت خطای جدول/ستون مفقود را تشخیص دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-006",
+          "slug": "constraints-evolution",
+          "title_fa": "اعمال قید روی داده ناسازگار",
+          "outcome_fa": "قبل از Constraint داده را پالایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-007",
+          "slug": "zero-downtime-basics",
+          "title_fa": "Expand/Contract و Backfill",
+          "outcome_fa": "طرح ساده مهاجرت کم‌ریسک ارائه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-008",
+          "slug": "mysql-ddl-implicit-commit",
+          "title_fa": "MySQL DDL و Implicit Commit",
+          "outcome_fa": "دلیل ناکافی‌بودن ROLLBACK برای DDL را توضیح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-009",
+          "slug": "rollback-forward",
+          "title_fa": "Migration Rollback و Forward Fix",
+          "outcome_fa": "مسیر اصلاح بعد از شکست را انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-09-010",
+          "slug": "fixtures-seeding",
+          "title_fa": "Fixture، Seed و Data Migrations",
+          "outcome_fa": "فرق داده نمونه با داده کسب‌وکار را رعایت کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-10",
+      "slug": "indexes-explain-performance",
+      "title_fa": "Index، EXPLAIN و بهینه‌سازی",
+      "status": "planned",
+      "focus": "performance",
+      "lessons": [
+        {
+          "id": "DB-10-001",
+          "slug": "btree-index",
+          "title_fa": "B-Tree Index و کارکرد Lookup",
+          "outcome_fa": "نوع Index را برای Query تشخیص دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-002",
+          "slug": "composite-index",
+          "title_fa": "Composite Index و Leftmost Prefix",
+          "outcome_fa": "ترتیب ستون‌ها را بر اساس Query انتخاب کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-003",
+          "slug": "unique-covering",
+          "title_fa": "Unique/Covering Index",
+          "outcome_fa": "ایندکس مناسب بدون زیاده‌روی طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-004",
+          "slug": "selectivity-cardinality",
+          "title_fa": "Cardinality و Selectivity",
+          "outcome_fa": "اثر توزیع داده بر Index را تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-005",
+          "slug": "explain",
+          "title_fa": "EXPLAIN در MySQL",
+          "outcome_fa": "Access Type و Rows/Filtered را تفسیر کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-006",
+          "slug": "analyze-tracing",
+          "title_fa": "EXPLAIN ANALYZE و هزینه Query",
+          "outcome_fa": "نحوه اندازه‌گیری عملکرد را نشان دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-007",
+          "slug": "index-antipatterns",
+          "title_fa": "توابع روی ستون، Wildcard و Index Miss",
+          "outcome_fa": "علت استفاده‌نشدن از Index را تشخیص دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-008",
+          "slug": "orm-query-inspection",
+          "title_fa": "QuerySet.query، connection.queries و explain",
+          "outcome_fa": "SQL تولیدی ORM را با دیتابیس مقایسه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-009",
+          "slug": "n-plus-one",
+          "title_fa": "N+1 و سنجش Query Count",
+          "outcome_fa": "N+1 را بازتولید و اصلاح کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-010",
+          "slug": "pagination-large",
+          "title_fa": "OFFSET بزرگ و Keyset Pagination",
+          "outcome_fa": "Trade-off دو روش صفحه‌بندی را بیان کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-011",
+          "slug": "workload-benchmarks",
+          "title_fa": "اندازه داده، Cache و Benchmarks",
+          "outcome_fa": "مقایسه منصفانه عملکرد انجام دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-10-012",
+          "slug": "full-text-search",
+          "title_fa": "جست‌وجوی تمام‌متن در MySQL و ORM",
+          "outcome_fa": "FULLTEXT index، MATCH ... AGAINST و معادل ORM را پیاده کند و محدودیت‌های MySQL 8.4 (شامل پارامترهای token size و نوع ایندکس) را تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-11",
+      "slug": "transactions-concurrency",
+      "title_fa": "Transactions، قفل و Concurrency",
+      "status": "planned",
+      "focus": "concurrency",
+      "lessons": [
+        {
+          "id": "DB-11-001",
+          "slug": "acid",
+          "title_fa": "ACID و Atomicity در عمل",
+          "outcome_fa": "حالت خطا را بدون داده نیمه‌ثبت‌شده مدیریت کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-002",
+          "slug": "mysql-transactions",
+          "title_fa": "BEGIN/COMMIT/ROLLBACK و Autocommit",
+          "outcome_fa": "تراکنش MySQL را روی چند تغییر کنترل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-003",
+          "slug": "django-atomic",
+          "title_fa": "transaction.atomic و Savepoint",
+          "outcome_fa": "تراکنش Django را با خطای داخلی آزمایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-004",
+          "slug": "isolation-levels",
+          "title_fa": "Isolation Levels و پدیده‌های هم‌زمانی",
+          "outcome_fa": "Dirty/Nonrepeatable/Phantom را تفکیک کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-005",
+          "slug": "mysql-django-defaults",
+          "title_fa": "پیش‌فرض MySQL و Django در Isolation",
+          "outcome_fa": "تفاوت InnoDB و اتصال Django را توضیح دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-006",
+          "slug": "locks-and-select-for-update",
+          "title_fa": "Row Lock و select_for_update",
+          "outcome_fa": "رقابت هم‌زمان روی رکورد را کنترل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-007",
+          "slug": "lost-update",
+          "title_fa": "Lost Update و F/Locks",
+          "outcome_fa": "سناریوی افزایش موجودی را ایمن کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-008",
+          "slug": "deadlocks",
+          "title_fa": "Deadlock، Timeout و Retry",
+          "outcome_fa": "خطای Deadlock را تشخیص و واکنش مناسب طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-009",
+          "slug": "booking-overlap",
+          "title_fa": "جلوگیری از رزرو متداخل",
+          "outcome_fa": "درستی شرط هم‌زمانی را برای چند کاربر آزمایش کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-11-010",
+          "slug": "on-commit",
+          "title_fa": "transaction.on_commit و Side Effects",
+          "outcome_fa": "اجرای اثر بیرونی را پس از Commit برنامه‌ریزی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-12",
+      "slug": "mysql-operations-internals",
+      "title_fa": "MySQL حرفه‌ای و عملیات دیتابیس",
+      "status": "planned",
+      "focus": "mysql",
+      "lessons": [
+        {
+          "id": "DB-12-001",
+          "slug": "innodb-basics",
+          "title_fa": "InnoDB، صفحات و Buffer Pool",
+          "outcome_fa": "اثر حافظه و Storage را بر Query توضیح دهد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-002",
+          "slug": "charset-collation",
+          "title_fa": "utf8mb4، Charset و Collation",
+          "outcome_fa": "ترتیب و مقایسه صحیح متن چندزبانه را تنظیم کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-003",
+          "slug": "json-generated",
+          "title_fa": "JSON Functions و Generated Columns",
+          "outcome_fa": "حدود استفاده از JSON در Schema را تشخیص دهد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-004",
+          "slug": "views",
+          "title_fa": "View و موارد کاربرد",
+          "outcome_fa": "View خواندنی برای گزارش بسازد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-005",
+          "slug": "stored-routines",
+          "title_fa": "Stored Procedure و Function",
+          "outcome_fa": "Trade-off انتقال منطق به DB را توضیح دهد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-006",
+          "slug": "triggers",
+          "title_fa": "Trigger، Audit و مخاطرات",
+          "outcome_fa": "Side Effect دیتابیس را تحلیل کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-007",
+          "slug": "mysql-privileges",
+          "title_fa": "Users/Roles/GRANT و Least Privilege",
+          "outcome_fa": "کاربر اپلیکیشن را کم‌دسترسی تعریف کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-008",
+          "slug": "backups",
+          "title_fa": "Logical Backup/Restore و سازگاری",
+          "outcome_fa": "مراحل بازیابی ایمن را روی دیتابیس آزمایشی اجرا کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-009",
+          "slug": "replication-concepts",
+          "title_fa": "Replication، Replica Lag و Read Consistency",
+          "outcome_fa": "پیامد خواندن از Replica را توضیح دهد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-010",
+          "slug": "partitions-scale",
+          "title_fa": "Partitioning، Sharding و محدودیت‌ها",
+          "outcome_fa": "نیاز یا بی‌نیازی به Partitioning را استدلال کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-011",
+          "slug": "monitoring-slow-query",
+          "title_fa": "Slow Query Log و Observability",
+          "outcome_fa": "نشانه‌های Query پرهزینه را بیابد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-012",
+          "slug": "mysql-security-safety",
+          "title_fa": "SQL Injection، Secrets، Least Privilege",
+          "outcome_fa": "Query پارامتری و کنترل دسترسی را درست به‌کار ببرد",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        },
+        {
+          "id": "DB-12-013",
+          "slug": "sql-mode",
+          "title_fa": "sql_mode و رفتار سخت‌گیرانه MySQL",
+          "outcome_fa": "اثر sql_mode (STRICT، ONLY_FULL_GROUP_BY، NO_ZERO_DATE و ...) را روی پذیرش داده، GROUP BY و تفاوت با پیش‌فرض Django/MySQL تحلیل کند",
+          "status": "planned",
+          "parity": "sql-only",
+          "tracks": [
+            "mysql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-13",
+      "slug": "advanced-database-design",
+      "title_fa": "طراحی پیشرفته و بازبینی معماری",
+      "status": "planned",
+      "focus": "design",
+      "lessons": [
+        {
+          "id": "DB-13-001",
+          "slug": "requirements-discovery",
+          "title_fa": "استخراج Domain و Business Rules",
+          "outcome_fa": "فهرست قواعد داده‌ای از شرح مسئله استخراج کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-002",
+          "slug": "entity-boundaries",
+          "title_fa": "مرز Entity و Aggregate",
+          "outcome_fa": "موجودیت‌ها را بدون تکرار مسئولیت تقسیم کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-003",
+          "slug": "temporal-data",
+          "title_fa": "Soft Delete، Audit و تاریخچه وضعیت",
+          "outcome_fa": "تاریخچه معتبر تغییر وضعیت طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-004",
+          "slug": "multi-tenancy",
+          "title_fa": "Multi-tenancy و Scope داده",
+          "outcome_fa": "نشت داده بین Tenantها را در Schema کاهش دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-005",
+          "slug": "financial-modeling",
+          "title_fa": "دقت مالی، Ledger و Idempotency",
+          "outcome_fa": "داده مالی غیرقابل‌تکرار مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-006",
+          "slug": "booking-modeling",
+          "title_fa": "Booking، Availability و Overlap",
+          "outcome_fa": "قواعد ظرفیت و تداخل را در مدل بگنجاند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-007",
+          "slug": "inventory-modeling",
+          "title_fa": "انبار، حرکت موجودی و Reservation",
+          "outcome_fa": "ثبت حرکت موجودی قابل ردگیری طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-008",
+          "slug": "schema-review",
+          "title_fa": "Review ERD با Rubric مهندسی",
+          "outcome_fa": "یک طراحی را با معیارهای سنجش‌پذیر نقد کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-009",
+          "slug": "tradeoffs",
+          "title_fa": "Trade-off، ADR و تصمیم معماری",
+          "outcome_fa": "گزینه‌های جایگزین را با شواهد مقایسه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-010",
+          "slug": "scaling-strategies",
+          "title_fa": "Read/Write Scaling و Cache Invalidation",
+          "outcome_fa": "محدودیت‌های مقیاس‌پذیری داده را تحلیل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-13-011",
+          "slug": "schema-change-scenarios",
+          "title_fa": "تغییر نیازمندی حین عمر سیستم",
+          "outcome_fa": "Schema را بدون ازبین‌بردن داده تکامل دهد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-14",
+      "slug": "guided-projects",
+      "title_fa": "پروژه‌های تخصصی چندمرحله‌ای",
+      "status": "planned",
+      "focus": "projects",
+      "lessons": [
+        {
+          "id": "DB-14-001",
+          "slug": "blog-project",
+          "title_fa": "Blog و Comment از نیازمندی تا Migration",
+          "outcome_fa": "مدل Blog را به‌صورت چندمرحله‌ای بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-14-002",
+          "slug": "library-project",
+          "title_fa": "کتابخانه، امانت و M2M",
+          "outcome_fa": "روابط و قیدهای امانت را پیاده کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-14-003",
+          "slug": "ecommerce-project",
+          "title_fa": "فروشگاه، سبد و سفارش",
+          "outcome_fa": "داده سفارش را مدل و تست کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-14-004",
+          "slug": "inventory-project",
+          "title_fa": "Inventory و Transactions",
+          "outcome_fa": "موجودی را با تراکنش ایمن مدیریت کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-14-005",
+          "slug": "booking-project",
+          "title_fa": "Booking با ظرفیت و Concurrency",
+          "outcome_fa": "رزرو متداخل و Race را در تست واقعی رفع کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-14-006",
+          "slug": "project-review",
+          "title_fa": "بازبینی و Refactor پروژه‌های میانی",
+          "outcome_fa": "Index و Schema هر پروژه را نقد و اصلاح کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DB-15",
+      "slug": "insurance-capstone",
+      "title_fa": "Capstone نهایی: بیمه‌نامه و هزینه درمان",
+      "status": "planned",
+      "focus": "capstone",
+      "lessons": [
+        {
+          "id": "DB-15-001",
+          "slug": "insurance-requirements",
+          "title_fa": "تحلیل قوانین بیمه‌شده، قرارداد و پوشش",
+          "outcome_fa": "Business Rules و مرز دامنه را ثبت کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-002",
+          "slug": "policy-contract-schema",
+          "title_fa": "Schema بیمه‌نامه، اشخاص و قرارداد",
+          "outcome_fa": "ERD چندمدلی با کلیدهای معتبر طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-003",
+          "slug": "coverage-rules",
+          "title_fa": "پوشش، سقف تعهد و دوره اعتبار",
+          "outcome_fa": "قواعد سقف تعهد و زمان را مدل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-004",
+          "slug": "claim-documents",
+          "title_fa": "هزینه درمان، مدارک و نوع خدمت",
+          "outcome_fa": "روابط Claim و Document را طراحی کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-005",
+          "slug": "claim-workflow",
+          "title_fa": "ارزیابی، رد، تأیید و History",
+          "outcome_fa": "State Transition و Audit معتبر بسازد",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-006",
+          "slug": "payments-ledger",
+          "title_fa": "پرداخت، حواله و دقت مالی",
+          "outcome_fa": "Data Integrity تراکنش‌های مالی را تضمین کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-007",
+          "slug": "claims-concurrency",
+          "title_fa": "ثبت هم‌زمان و عدم دوباره‌پرداخت",
+          "outcome_fa": "Race و Idempotency را با آزمون کنترل کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-008",
+          "slug": "schema-evolution",
+          "title_fa": "درخواست تغییر کسب‌وکار و Migration",
+          "outcome_fa": "داده قدیمی را حین افزودن قابلیت حفظ کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-009",
+          "slug": "claims-reporting",
+          "title_fa": "گزارش‌گیری، Aggregation و Index",
+          "outcome_fa": "گزارش صحیح و Query بهینه ارائه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        },
+        {
+          "id": "DB-15-010",
+          "slug": "final-review",
+          "title_fa": "ارزیابی جامع طراحی و عملکرد",
+          "outcome_fa": "دفاع مهندسی از Trade-offها و تست‌های کلیدی ارائه کند",
+          "status": "planned",
+          "parity": "related",
+          "tracks": [
+            "erd",
+            "mysql",
+            "django-orm"
+          ]
+        }
+      ]
+    }
+  ],
+  "authored_lessons": {
+    "DB-03-005": {
+      "id": "DB-03-005",
+      "slug": "one-to-many",
+      "title_fa": "ForeignKey و رابطه یک‌به‌چند: از ERD تا SQL و Django",
+      "status": "draft",
+      "objectives": [
+        "بتواند رابطه یک‌به‌چند را در ERD با Cardinality و Optionality صحیح مدل کند.",
+        "بتواند ستون FK و محدودیت Referential Integrity را در MySQL تعریف و آزمایش کند.",
+        "بتواند ForeignKey و on_delete را در Django Model تعریف و رفتار آن را توضیح دهد.",
+        "بتواند محدودیت متفاوت Django on_delete و قید واقعی MySQL را تشخیص دهد."
+      ],
+      "references": [
+        {
+          "label": "Django ForeignKey Fields",
+          "url": "https://docs.djangoproject.com/en/6.1/ref/models/fields/#foreignkey"
+        },
+        {
+          "label": "MySQL Foreign Key Constraints",
+          "url": "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html"
+        }
+      ],
+      "estimated_minutes": 45,
+      "markdown": "# ForeignKey و رابطه یک‌به‌چند\n\n> **هدف:** بعد از این درس، بتوانی رابطهٔ «هر مشتری چند سفارش؛ هر سفارش دقیقاً متعلق به یک مشتری» را از توضیح کسب‌وکار به ERD، SQL و Django Model تبدیل کنی. تمرین‌ها را *خودت* می‌نویسی.\n\n## ۱. مسئله واقعی و دلیل نیاز به رابطه\n\nفرض کن اطلاعات مشتری در هر سفارش دوباره نوشته شود. تغییر شماره تماس مشتری مستلزم تغییر چندین ردیف خواهد بود؛ اگر یک ردیف جا بماند، تناقض به وجود می‌آید. جداکردن `customer` و `orders` باعث می‌شود سفارش به شناسه مشتری اشاره کند و داده شخص مستقل بماند.\n\n**قانون دامنه:** هر سفارش باید دقیقاً یک مشتری داشته باشد؛ مشتری می‌تواند صفر یا چند سفارش داشته باشد. سمت سفارش مشارکت اجباری است، سمت مشتری اختیاری. پیش از کدنویسی این قانون را روی ERD مشخص کن.\n\n## ۲. PK و FK، یکسان نیستند\n\n- `customers.id` کلید اصلی است: هر مشتری را در جدول خودش یکتا مشخص می‌کند.\n- `orders.customer_id` کلید خارجی است: به کلید موجود جدول مشتری ارجاع می‌دهد؛ چند سفارش می‌توانند `customer_id` مشترک داشته باشند.\n- `NOT NULL` الزامی‌بودن مشتری برای سفارش را بیان می‌کند؛ `FOREIGN KEY` معتبر بودن مقدار ارجاعی را بررسی می‌کند.\n\n## ۳. نمونه تشریحی MySQL\n\n```sql\nCREATE TABLE customers (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  full_name VARCHAR(120) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB;\n\nCREATE TABLE orders (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  customer_id BIGINT NOT NULL,\n  total DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  CONSTRAINT fk_orders_customer\n    FOREIGN KEY (customer_id) REFERENCES customers(id)\n) ENGINE=InnoDB;\n```\n\nبرای تمرین، اول یک مشتری درج کن و سفارشی برای او بساز. سپس سفارش با `customer_id` ناموجود را امتحان کن؛ انتظار داریم دیتابیس آن را رد کند. این مثال تشریحی است و جواب تمرین‌های پایین نیست.\n\n## ۴. بیان همان رابطه در Django\n\n```python\nfrom django.db import models\n\nclass Customer(models.Model):\n    full_name = models.CharField(max_length=120)\n\nclass Order(models.Model):\n    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)\n    total = models.DecimalField(max_digits=12, decimal_places=2)\n```\n\nDjango معمولاً نام ستون FK را `customer_id` می‌گذارد. دقت کن `on_delete=models.PROTECT` رفتار حذف را در سطح ORM کنترل می‌کند؛ لزوماً معادل مستقیم `ON DELETE RESTRICT` در SQL تولیدشده نیست. برای درک رفتار دقیق، Migration و SQL واقعی را بررسی کن.\n\nاز Django 6.1 به بعد variantهای سطح‌دیتابیس (`DB_CASCADE`، `DB_SET_NULL`، `DB_SET_DEFAULT`) هم وجود دارند و برخلاف variantهای Python، همان عمل را در خود دیتابیس انجام می‌دهند (بدون fetch کردن ردیف‌های مرتبط). دو محدودیت مهم: این variantها را نمی‌توان با variantهای Python (جز `DO_NOTHING`) در یک مدل یا مدل‌های مرتبط ترکیب کرد، و `DB_SET_DEFAULT` روی MySQL/MariaDB پشتیبانی نمی‌شود. جزئیات کامل رفتار حذف در درس DB-03-009 و گزینه‌های فیلد رابطه در DB-07-011 می‌آید.\n\n## ۵. پارامترهایی که باید بدانی\n\n- `on_delete`: `CASCADE`، `PROTECT`، `RESTRICT`، `SET_NULL`، `SET_DEFAULT`، `DO_NOTHING`، `SET(...)` و variantهای سطح‌دیتابیس `DB_CASCADE`/`DB_SET_NULL`/`DB_SET_DEFAULT` را با قوانین کسب‌وکار بسنج. `SET_NULL`/`DB_SET_NULL` فقط همراه `null=True` و `DB_SET_DEFAULT` فقط با `db_default` معنی دارد.\n- `related_name`: نام دسترسی معکوس از مشتری به سفارش‌ها را مشخص می‌کند.\n- `to_field`: به‌صورت معمول نیازی نیست؛ استفاده از یک فیلد غیر PK شرایط یکتایی لازم دارد.\n- `db_constraint=False`: حذف Constraint واقعی، تضمین یکپارچگی داده در DB را ضعیف می‌کند؛ صرفاً با دلیل روشن استفاده کن.\n- `null` و `blank`: یکی در سطح Schema و دیگری در سطح Validation رفتار متفاوتی دارند.\n\n## ۶. سه خطای رایج\n\n**الف) استفاده از `CharField` برای ذخیره شناسه مشتری:** دیتابیس نمی‌تواند Referential Integrity را فقط از روی یک رشته تضمین کند.\n\n**ب) یکسان‌فرض‌کردن `on_delete` و `ON DELETE`:** رفتار Django را از SQL Constraint جدا بررسی کن.\n\n**ج) افزودن رابطه بدون تعریف قانون حذف:** در سامانه‌های مالی و رزرو حذف بی‌احتیاط می‌تواند تاریخچه را از بین ببرد.\n\n## ۷. بررسی مهندسی\n\nاگر سفارش پس از ثبت باید از نظر تاریخی نگهداری شود، حذف مشتری چه سیاستی باید داشته باشد؟ `PROTECT`، Soft Delete یا مدل‌کردن Snapshot اطلاعات مشتری می‌توانند Trade-offهای متفاوتی داشته باشند؛ قبل از انتخاب قاعده، Business Rule را مستند کن.\n\n## ۸. تمرین‌ها — فقط مسئله و Hint\n\n- **Practice:** پیوند اجباری سفارش به مشتری را در Django Model بنویس.\n- **Problem Solving:** رابطه اجباری را در MySQL بنویس و تست کن که Customer ناموجود پذیرفته نمی‌شود.\n- **Mastery:** برای سیستم Booking تصمیم طراحی و اجرای چندمرحله‌ای با دو رابطه و سناریوی حذف ارائه کن.\n\n> هیچ‌کدام از فایل‌های Starter پاسخ کامل را ندارند. معیارها را بخوان، خودت پیاده‌سازی کن و در صورت شکست، Hint مرحله بعد را درخواست بده.\n\n## منابع و مطالعه بیشتر\n\n- [Django Model Field Reference](https://docs.djangoproject.com/en/6.1/ref/models/fields/#foreignkey)\n- [MySQL Foreign Key Constraints](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)\n"
+    }
+  },
+  "totals": {
+    "modules": 16,
+    "lessons": 176,
+    "authored": 1
+  }
+}

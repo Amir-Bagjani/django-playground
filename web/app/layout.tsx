@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Django Playground",
-  description: "Local Django lab: edit, run and test code",
+  title: "Dev Playground",
+  description: "Local developer playgrounds: Django backend lab and Database & ORM Academy",
 };
 
 export default function RootLayout({
