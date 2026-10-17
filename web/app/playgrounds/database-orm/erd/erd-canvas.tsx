@@ -185,7 +185,7 @@ function buildEdges(graph: ErdGraph, mode: "view" | "edit"): Edge[] {
     animated: false,
     selectable: mode === "edit",
     data: { relationship, mode } satisfies ErdEdgeData,
-    style: { stroke: "#94a3b8", strokeWidth: 1.6 },
+    style: { stroke: "var(--muted)", strokeWidth: 1.6 },
   }));
 }
 
@@ -238,7 +238,7 @@ export function ErdCanvas({ graph, mode, onMoveEntity, onConnect, onSelect }: Er
         maxZoom={1.8}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={18} color="#e2e8f0" />
+        <Background gap={18} color="var(--erd-grid)" />
         <Controls showInteractive={false} />
         <MiniMap pannable zoomable className={styles.minimap} />
       </ReactFlow>

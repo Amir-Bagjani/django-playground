@@ -57,10 +57,11 @@ export default async function LessonPage({ params }: PageProps) {
   const next = index < flatLessons.length - 1 ? flatLessons[index + 1] : undefined;
 
   const isDraft = status === "draft";
+  const wide = erdExercises.length > 0;
 
   return (
     <main className={styles.page}>
-      <div className={styles.container}>
+      <div className={`${styles.container} ${wide ? styles.containerWide : ""}`}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
           <Link href="/">Home</Link>
           <span className={styles.breadcrumbSep}>/</span>
@@ -107,7 +108,7 @@ export default async function LessonPage({ params }: PageProps) {
                 نیست. تا پس از بازبینی مستقل و تأیید اجرا، در وضعیت «منتشر‌نشده» باقی می‌ماند.
               </div>
             ) : null}
-            <div className={styles.lessonBody} dir="rtl" lang="fa">
+            <div className={`${styles.lessonBody} ${wide ? styles.lessonBodyWide : ""}`} dir="rtl" lang="fa">
               {authoredContent.objectives.length > 0 ? (
                 <div className={styles.refs} style={{ marginTop: 0, borderTop: "none", paddingTop: 0 }}>
                   <div className={styles.refsTitle}>اهداف یادگیری</div>

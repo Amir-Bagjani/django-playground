@@ -23,6 +23,68 @@
   --panel-w: 410px;
   --mono: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  /* semantic state tokens (used by verdicts, badges, warnings, criteria) */
+  --surface-hover: #313a48;
+  --ok: var(--green);
+  --ok-bg: rgba(63, 185, 80, 0.12);
+  --ok-border: rgba(63, 185, 80, 0.42);
+  --danger: var(--red);
+  --danger-bg: rgba(240, 97, 106, 0.1);
+  --danger-border: rgba(240, 97, 106, 0.42);
+  --warn: var(--amber);
+  --warn-bg: rgba(217, 163, 54, 0.1);
+  --warn-border: rgba(217, 163, 54, 0.36);
+  --info: #6aa8ff;
+  --info-bg: rgba(106, 168, 255, 0.12);
+  --info-border: rgba(106, 168, 255, 0.36);
+
+  /* ERD canvas */
+  --erd-canvas: #0e1219;
+  --erd-grid: #232c39;
+
+  color-scheme: dark;
+}
+
+/*
+ * Optional light theme. The Academy shell ships dark by default; these tokens
+ * let the same semantic styles render correctly if a light theme is enabled
+ * (e.g. by setting `data-theme="light"` on <html>). Nothing enables it by
+ * default, so behaviour is unchanged unless opted in.
+ */
+[data-theme="light"] {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --surface: #f1f3f7;
+  --surface-2: #e8ebf1;
+  --surface-3: #dde2ea;
+  --border: #d2d8e1;
+  --border-soft: #e4e8ee;
+  --text: #2b3340;
+  --text-strong: #101620;
+  --muted: #5a6473;
+  --faint: #78828f;
+  --accent: #2563eb;
+  --accent-2: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --green: #15803d;
+  --red: #b91c1c;
+  --amber: #b45309;
+  --code: #f2f4f8;
+  --surface-hover: #dde2ea;
+  --ok-bg: rgba(21, 128, 61, 0.1);
+  --ok-border: rgba(21, 128, 61, 0.4);
+  --danger-bg: rgba(185, 28, 28, 0.08);
+  --danger-border: rgba(185, 28, 28, 0.38);
+  --warn-bg: rgba(180, 83, 9, 0.1);
+  --warn-border: rgba(180, 83, 9, 0.36);
+  --info: #2563eb;
+  --info-bg: rgba(37, 99, 235, 0.1);
+  --info-border: rgba(37, 99, 235, 0.36);
+  --erd-canvas: #eef1f5;
+  --erd-grid: #d8dde5;
+
+  color-scheme: light;
 }
 
 * {
@@ -61,14 +123,14 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2b3341;
+  background: var(--surface-3);
   border: 2px solid transparent;
   background-clip: padding-box;
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4453;
+  background: var(--border);
   background-clip: padding-box;
 }
 
@@ -90,7 +152,7 @@ button {
 
 button:hover:not(:disabled) {
   background: var(--surface-3);
-  border-color: #313a48;
+  border-color: var(--surface-hover);
 }
 
 button:disabled {

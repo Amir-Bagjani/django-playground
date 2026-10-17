@@ -8,6 +8,16 @@
   padding: 32px 24px 72px;
 }
 
+/* Lessons that host an ERD designer need room for a real canvas. */
+.containerWide {
+  max-width: 1360px;
+}
+
+.lessonBodyWide {
+  max-width: 920px;
+  margin-inline: auto;
+}
+
 .breadcrumb {
   display: flex;
   align-items: center;

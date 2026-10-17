@@ -1,0 +1,290 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.barGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.saveState {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(264px, 320px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+
+.bodyNoAside {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  max-height: clamp(420px, 72vh, 900px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aside {
+    max-height: none;
+  }
+}
+
+/* ------------------------------------------------------------ aside content */
+.paneHead {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+
+.instructions {
+  font-size: 14px;
+  line-height: 1.95;
+  color: var(--text);
+}
+
+.criteriaBox {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
+}
+
+.criteriaTitle {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-strong);
+  margin-bottom: 8px;
+}
+
+.criteriaList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkItem {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.criterion {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.criterionMark {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--faint);
+}
+
+.markPass {
+  color: var(--green);
+}
+
+.markFail {
+  color: var(--red);
+}
+
+.markManual {
+  color: var(--amber);
+}
+
+.checkMessage {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hints {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
+}
+
+.hintList {
+  margin: 8px 0 0;
+  padding-inline-start: 18px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+/* ----------------------------------------------------------------- buttons */
+.primary,
+.secondary,
+.ghost,
+.danger,
+.hintBtn {
+  border-radius: var(--radius-sm);
+  padding: 7px 13px;
+  font-size: 12.5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
+.secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.danger {
+  background: var(--surface-2);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+.hintBtn {
+  align-self: flex-start;
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.hintBtn:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.primary:disabled,
+.secondary:disabled,
+.ghost:disabled,
+.danger:disabled,
+.hintBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tabActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.tabIdle {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- verdicts */
+.verdict {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.verdictPass {
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-border);
+  color: var(--ok);
+}
+
+.verdictFail {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+}
+
+.verdictSystem {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn);
+}
