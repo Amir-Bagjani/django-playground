@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "ecommerce",
+  "title_fa": "فروشگاه آنلاین",
+  "status": "planned",
+  "detail_level": "metadata-only",
+  "domain": "retail-commerce",
+  "description_fa": "قرارداد حداقلی پروژه فروشگاه برای تمرین سفارش، موجودی و پرداخت با تمرکز بر صحت تراکنش در سطح طرح‌ریزی.",
+  "milestones": [
+    {
+      "id": "ecommerce-requirements",
+      "title_fa": "تحلیل نیازمندی و قواعد سفارش",
+      "checkpoint_id": "ecommerce-requirements-cp",
+      "acceptance_criteria_fa": [
+        "چرخه سفارش، پرداخت و لغو مشخص شوند."
+      ]
+    },
+    {
+      "id": "ecommerce-erd",
+      "title_fa": "طراحی ERD کاتالوگ و سفارش",
+      "checkpoint_id": "ecommerce-erd-cp",
+      "depends_on": [
+        "ecommerce-requirements"
+      ],
+      "acceptance_criteria_fa": [
+        "رابطه محصول/سفارش و اقلام با مبالغ درست مدل شوند."
+      ]
+    },
+    {
+      "id": "ecommerce-schema",
+      "title_fa": "ساخت MySQL Schema",
+      "checkpoint_id": "ecommerce-schema-cp",
+      "depends_on": [
+        "ecommerce-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "کلیدهای اصلی/خارجی و محدودیت‌های مبلغ موجود باشند."
+      ]
+    },
+    {
+      "id": "ecommerce-models",
+      "title_fa": "پیاده‌سازی Django Models",
+      "checkpoint_id": "ecommerce-models-cp",
+      "depends_on": [
+        "ecommerce-schema"
+      ],
+      "acceptance_criteria_fa": [
+        "Migration بدون خطا اجرا شود."
+      ]
+    },
+    {
+      "id": "ecommerce-payments",
+      "title_fa": "پرداخت و کنترل هم‌زمانی",
+      "checkpoint_id": "ecommerce-payments-cp",
+      "depends_on": [
+        "ecommerce-models"
+      ],
+      "acceptance_criteria_fa": [
+        "پرداخت تکراری و کاهش موجودی ناسازگار جلوگیری شود."
+      ]
+    },
+    {
+      "id": "ecommerce-review",
+      "title_fa": "بازبینی و تحویل",
+      "checkpoint_id": "ecommerce-review-cp",
+      "depends_on": [
+        "ecommerce-payments"
+      ],
+      "acceptance_criteria_fa": [
+        "Trade-offهای تراکنش و ایندکس طبق Rubric بررسی شوند."
+      ]
+    }
+  ]
+}

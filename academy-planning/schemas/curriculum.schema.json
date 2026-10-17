@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dev-playground.local/schemas/curriculum.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "course_id",
+    "content_version",
+    "locale",
+    "ui_locale",
+    "framework_targets",
+    "access_policy",
+    "completion_policy",
+    "mastery_policy",
+    "modules"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "course_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "content_version": {
+      "type": "string",
+      "minLength": 3
+    },
+    "locale": {
+      "const": "fa-IR"
+    },
+    "ui_locale": {
+      "const": "en-US"
+    },
+    "framework_targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "django",
+        "mysql"
+      ],
+      "properties": {
+        "django": {
+          "type": "string"
+        },
+        "mysql": {
+          "type": "string"
+        }
+      }
+    },
+    "access_policy": {
+      "const": "open"
+    },
+    "completion_policy": {
+      "const": "required-exercises"
+    },
+    "mastery_policy": {
+      "const": "independent-mastery-challenge"
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "slug",
+          "title_fa",
+          "status",
+          "focus",
+          "lessons"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^DB-[0-9]{2}$"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title_fa": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "draft",
+              "approved"
+            ]
+          },
+          "focus": {
+            "type": "string"
+          },
+          "lessons": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "slug",
+                "title_fa",
+                "outcome_fa",
+                "status",
+                "tracks",
+                "assessment_profile"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^DB-[0-9]{2}-[0-9]{3}$"
+                },
+                "slug": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "title_fa": {
+                  "type": "string"
+                },
+                "outcome_fa": {
+                  "type": "string",
+                  "minLength": 10
+                },
+                "status": {
+                  "enum": [
+                    "planned",
+                    "draft",
+                    "in-review",
+                    "approved"
+                  ]
+                },
+                "tracks": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      "mysql",
+                      "django-orm",
+                      "erd"
+                    ]
+                  }
+                },
+                "assessment_profile": {
+                  "const": "practice-problem-mastery"
+                },
+                "parity": {
+                  "description": "Optional teaching relation between the SQL and Django ORM views of this lesson. equivalent = same operation with a faithful 1:1 mapping; related = overlapping but with backend-specific behavior/support/limits; sql-only = no meaningful ORM counterpart; orm-only = no meaningful SQL counterpart.",
+                  "enum": [
+                    "equivalent",
+                    "related",
+                    "sql-only",
+                    "orm-only"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

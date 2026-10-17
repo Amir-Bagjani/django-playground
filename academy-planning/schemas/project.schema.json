@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dev-playground.local/schemas/project.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title_fa",
+    "status",
+    "milestones"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title_fa": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "draft",
+        "approved"
+      ]
+    },
+    "detail_level": {
+      "description": "metadata-only = planning stub (stage sequence, dependencies and checkpoints only, no authored content); blueprint = full milestone design with prompts and criteria.",
+      "enum": [
+        "metadata-only",
+        "blueprint"
+      ]
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 3
+    },
+    "description_fa": {
+      "type": "string",
+      "minLength": 8
+    },
+    "milestones": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title_fa",
+          "checkpoint_id",
+          "acceptance_criteria_fa"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title_fa": {
+            "type": "string"
+          },
+          "depends_on": {
+            "description": "Earlier milestone ids in the same project that must pass before this milestone starts. Must reference existing milestones and no forward/self reference.",
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "checkpoint_id": {
+            "description": "Stable id of the checkpoint captured when this milestone passes (per PRD-05).",
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "acceptance_criteria_fa": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

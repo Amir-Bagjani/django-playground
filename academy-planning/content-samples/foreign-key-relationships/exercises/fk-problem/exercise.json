@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "fk-problem",
+  "lesson_id": "DB-03-005",
+  "version": 1,
+  "level": "problem-solving",
+  "kind": "sql",
+  "required_for_completion": true,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.sql"
+  ],
+  "validator": {
+    "id": "fk-problem-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "tables-present",
+      "description_fa": "هر دو جدول ساخته شده‌اند",
+      "visibility": "public"
+    },
+    {
+      "id": "real-fk",
+      "description_fa": "قید FK واقعی در information_schema وجود دارد",
+      "visibility": "public"
+    },
+    {
+      "id": "bad-row-rejected",
+      "description_fa": "داده با Customer ناموجود ثبت نمی‌شود",
+      "visibility": "public"
+    },
+    {
+      "id": "good-row-inserted",
+      "description_fa": "داده معتبر با موفقیت درج می‌شود",
+      "visibility": "public"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "صرفاً نام‌گذاری customer_id قید FK ایجاد نمی‌کند."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "از FOREIGN KEY ... REFERENCES ... استفاده کن و نوع دو ستون مرتبط را سازگار نگه دار."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "NOT NULL و FOREIGN KEY دو نیازمندی متفاوت را پوشش می‌دهند."
+    }
+  ]
+}

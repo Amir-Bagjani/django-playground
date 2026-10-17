@@ -1,0 +1,208 @@
+coverage_group,topic,primary_lesson_id,primary_lesson_title_fa,secondary_lesson_ids,status,mapping_review,review_note
+django-field-reference,AutoField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,BigAutoField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,SmallAutoField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,BigIntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,IntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,SmallIntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,PositiveIntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,PositiveSmallIntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,PositiveBigIntegerField,DB-07-004,AutoField، BigAutoField، IntegerField، PositiveIntegerField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,CharField,DB-07-002,CharField، TextField، SlugField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,TextField,DB-07-002,CharField، TextField، SlugField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,SlugField,DB-07-002,CharField، TextField، SlugField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,EmailField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,URLField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,GenericIPAddressField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,BooleanField,DB-07-007,BooleanField، UUIDField، JSONField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DecimalField,DB-07-005,FloatField، DecimalField و precision,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,FloatField,DB-07-005,FloatField، DecimalField و precision,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DateField,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DateTimeField,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,TimeField,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DurationField,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,UUIDField,DB-07-007,BooleanField، UUIDField، JSONField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,JSONField,DB-07-007,BooleanField، UUIDField، JSONField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,BinaryField,DB-07-008,BinaryField، choices و TextChoices,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,FileField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,ImageField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,FilePathField,DB-07-003,EmailField، URLField، FileField، ImageField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,ForeignKey,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,DB-03-005,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,OneToOneField,DB-03-004,OneToOneField و UNIQUE FK,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,ManyToManyField,DB-03-006,جدول واسط و ManyToManyField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,GeneratedField,DB-07-012,ساخت Field سفارشی و db_type,DB-12-003,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,CompositePrimaryKey,DB-03-011,کلید طبیعی، جانشین و مرکب,DB-04-003,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,custom Field,DB-07-012,ساخت Field سفارشی و db_type,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,null,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,blank,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,default,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_default,DB-07-009,db_column، db_index، unique، null، blank و editable,DB-12-003,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_comment,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,db_collation,DB-07-009,db_column، db_index، unique، null، blank و editable,DB-12-002,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,unique,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_index,DB-07-009,db_column، db_index، unique، null، blank و editable,DB-10-001,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_column,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,primary_key,DB-07-009,db_column، db_index، unique، null، blank و editable,DB-00-005,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,editable,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,choices,DB-07-008,BinaryField، choices و TextChoices,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,validators,DB-07-010,validators، clean_fields، full_clean,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,help_text,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,verbose_name,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,error_messages,DB-07-010,validators، clean_fields، full_clean,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_constraint,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,related_name,DB-03-010,related_name، related_query_name و Reverse Access,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,related_query_name,DB-03-010,related_name، related_query_name و Reverse Access,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,limit_choices_to,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,to_field,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,on_delete,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,DB-03-009,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DB_CASCADE,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,DB-03-009,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DB_SET_NULL,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,DB-03-009,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,DB_SET_DEFAULT,DB-07-011,on_delete و DB_* actions، to_field، db_constraint، related_name,DB-03-009,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,symmetrical,DB-03-006,جدول واسط و ManyToManyField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,through,DB-03-006,جدول واسط و ManyToManyField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,through_fields,DB-03-006,جدول واسط و ManyToManyField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,db_tablespace,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-field-reference,unique_for_date,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,unique_for_month,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-field-reference,unique_for_year,DB-07-009,db_column، db_index، unique، null، blank و editable,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,filter,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,exclude,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,get,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Q,DB-02-003,AND/OR/NOT و Q objects,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,F,DB-02-009,محاسبات UPDATE و F expressions,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,annotate,DB-06-005,annotate و values و grouping,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,aggregate,DB-06-001,GROUP BY و aggregate,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,values,DB-06-005,annotate و values و grouping,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,values_list,DB-06-005,annotate و values و grouping,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,select_related,DB-05-006,select_related و یک Query JOIN,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,prefetch_related,DB-05-007,prefetch_related و Batch Load,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Prefetch,DB-05-008,Prefetch و to_attr,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,only,DB-08-009,defer، only و Projection,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,defer,DB-08-009,defer، only و Projection,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,iterator,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,select_for_update,DB-11-006,Row Lock و select_for_update,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Subquery,DB-06-006,Subquery و OuterRef,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,OuterRef,DB-06-006,Subquery و OuterRef,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Exists,DB-06-007,Exists و Anti-Join,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Window,DB-06-009,ROW_NUMBER، RANK و Window در Django,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,union,DB-06-010,UNION، INTERSECT و EXCEPT,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,intersection,DB-06-010,UNION، INTERSECT و EXCEPT,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,difference,DB-06-010,UNION، INTERSECT و EXCEPT,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,bulk_create,DB-08-008,bulk_create، bulk_update، update_or_create,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,bulk_update,DB-08-008,bulk_create، bulk_update، update_or_create,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,update_or_create,DB-08-008,bulk_create، bulk_update، update_or_create,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,get_or_create,DB-08-008,bulk_create، bulk_update، update_or_create,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,raw,DB-08-010,raw و محدودیت ORM,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,explain,DB-10-008,QuerySet.query، connection.queries و explain,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,exists,DB-06-007,Exists و Anti-Join,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,count,DB-02-010,EXISTS/COUNT و exists/count,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,order_by,DB-02-004,ORDER BY و order_by,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,distinct,DB-02-011,DISTINCT و distinct,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,first,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,last,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,reverse,DB-02-004,ORDER BY و order_by,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,latest,DB-02-004,ORDER BY و order_by,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,earliest,DB-02-004,ORDER BY و order_by,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,dates,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,datetimes,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,times,DB-07-006,DateField، TimeField، DateTimeField، DurationField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,fetch_mode,DB-05-006,select_related و یک Query JOIN,DB-10-009,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,totally_ordered,DB-02-004,ORDER BY و order_by,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,Case,DB-06-004,CASE، FILTER و Conditional Aggregates,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,When,DB-06-004,CASE، FILTER و Conditional Aggregates,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,Coalesce,DB-06-004,CASE، FILTER و Conditional Aggregates,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,Cast,DB-06-004,CASE، FILTER و Conditional Aggregates,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,JSONNull,DB-07-007,BooleanField، UUIDField، JSONField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,UUID4,DB-07-007,BooleanField، UUIDField، JSONField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,UUID7,DB-07-007,BooleanField، UUIDField، JSONField,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+django-query-reference,in_bulk,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,alias,DB-06-005,annotate و values و grouping,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,none,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-query-reference,using,DB-08-007,filter، exclude، get، first، last، iterator,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,Meta,DB-08-001,Meta: ordering، db_table، verbose_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,Index,DB-08-002,constraints، indexes، ordering و default_related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,UniqueConstraint,DB-08-002,constraints، indexes، ordering و default_related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,CheckConstraint,DB-08-002,constraints، indexes، ordering و default_related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,conditional UniqueConstraint,DB-08-002,constraints، indexes، ordering و default_related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,expressions,DB-08-002,constraints، indexes، ordering و default_related_name,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,abstract models,DB-08-003,Abstract/Proxy Models,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,proxy models,DB-08-003,Abstract/Proxy Models,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,multi-table inheritance,DB-08-004,Multi-table Inheritance,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,custom manager,DB-08-005,Custom Manager و get_queryset,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,custom QuerySet,DB-08-006,Custom QuerySet و as_manager,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,RunPython,DB-09-003,RunPython و Historical Models,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,RunSQL,DB-09-003,RunPython و Historical Models,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,sqlmigrate,DB-09-004,sqlmigrate و DDL قابل مشاهده,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,atomic,DB-11-003,transaction.atomic و Savepoint,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,on_commit,DB-11-010,transaction.on_commit و Side Effects,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,migration dependencies,DB-09-001,Migration Graph و Dependencies,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,historical models,DB-09-003,RunPython و Historical Models,,planned,verified,Needs detailed lesson-level QA before approval
+django-schema-ops,backfill,DB-09-007,Expand/Contract و Backfill,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,InnoDB,DB-12-001,InnoDB، صفحات و Buffer Pool,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,data types,DB-01-002,انواع عدد صحیح و دامنه آن‌ها,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,character set,DB-12-002,utf8mb4، Charset و Collation,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,collation,DB-12-002,utf8mb4، Charset و Collation,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,DDL,DB-01-001,CREATE TABLE و تعریف Model,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,DML,DB-02-008,UPDATE/DELETE و update/delete در ORM,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,TCL,DB-11-002,BEGIN/COMMIT/ROLLBACK و Autocommit,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,constraints,DB-04-002,CHECK و CheckConstraint,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,foreign keys,DB-03-005,ForeignKey و رابطه یک‌به‌چند,DB-07-011,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,joins,DB-05-001,INNER JOIN و LEFT JOIN,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,subqueries,DB-06-006,Subquery و OuterRef,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,CTE,DB-06-008,CTE و WITH,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,window functions,DB-06-009,ROW_NUMBER، RANK و Window در Django,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,views,DB-12-004,View و موارد کاربرد,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,triggers,DB-12-006,Trigger، Audit و مخاطرات,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,stored routines,DB-12-005,Stored Procedure و Function,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,JSON,DB-12-003,JSON Functions و Generated Columns,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,fulltext,DB-10-012,جست‌وجوی تمام‌متن در MySQL و ORM,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,generated columns,DB-12-003,JSON Functions و Generated Columns,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,indexes,DB-10-001,B-Tree Index و کارکرد Lookup,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,functional index,DB-10-001,B-Tree Index و کارکرد Lookup,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,descending index,DB-10-001,B-Tree Index و کارکرد Lookup,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,invisible index,DB-10-001,B-Tree Index و کارکرد Lookup,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,multi-valued index,DB-10-001,B-Tree Index و کارکرد Lookup,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,EXPLAIN,DB-10-005,EXPLAIN در MySQL,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,EXPLAIN FORMAT,DB-10-005,EXPLAIN در MySQL,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,EXPLAIN ANALYZE,DB-10-006,EXPLAIN ANALYZE و هزینه Query,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,lateral,DB-06-008,CTE و WITH,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,ACID,DB-11-001,ACID و Atomicity در عمل,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,isolation,DB-11-004,Isolation Levels و پدیده‌های هم‌زمانی,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,read committed,DB-11-005,پیش‌فرض MySQL و Django در Isolation,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,repeatable read,DB-11-005,پیش‌فرض MySQL و Django در Isolation,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,MVCC,DB-11-004,Isolation Levels و پدیده‌های هم‌زمانی,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,locking,DB-11-006,Row Lock و select_for_update,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,deadlocks,DB-11-008,Deadlock، Timeout و Retry,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,implicit DDL commits,DB-09-008,MySQL DDL و Implicit Commit,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,sql_mode,DB-12-013,sql_mode و رفتار سخت‌گیرانه MySQL,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,AUTO_INCREMENT,DB-01-011,save، refresh_from_db و delete,,planned,needs-manual-review,Needs detailed lesson-level QA before approval; mapping target is judgment-based
+mysql-84,backups,DB-12-008,Logical Backup/Restore و سازگاری,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,replication,DB-12-009,Replication، Replica Lag و Read Consistency,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,partitioning,DB-12-010,Partitioning، Sharding و محدودیت‌ها,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,roles,DB-12-007,Users/Roles/GRANT و Least Privilege,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,privileges,DB-12-007,Users/Roles/GRANT و Least Privilege,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,SQL injection prevention,DB-12-012,SQL Injection، Secrets، Least Privilege,,planned,verified,Needs detailed lesson-level QA before approval
+mysql-84,performance schema,DB-12-011,Slow Query Log و Observability,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,ER model,DB-03-001,موجودیت، ویژگی و کلید در ERD,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,EER,DB-03-001,موجودیت، ویژگی و کلید در ERD,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,crow foot,DB-03-002,Cardinality و Crow’s Foot,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,cardinality,DB-03-002,Cardinality و Crow’s Foot,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,optionality,DB-03-003,Optionality و Participation,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,candidate keys,DB-04-004,وابستگی تابعی و Candidate Key,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,functional dependencies,DB-04-004,وابستگی تابعی و Candidate Key,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,1NF,DB-04-005,1NF و مقادیر اتمیک,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,2NF,DB-04-006,2NF و وابستگی جزئی,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,3NF,DB-04-007,3NF و وابستگی انتقالی,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,BCNF,DB-04-008,BCNF و محدودیت‌های آن,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,4NF,DB-04-009,4NF/5NF و وابستگی چندمقداری/Join,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,5NF,DB-04-009,4NF/5NF و وابستگی چندمقداری/Join,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,weak entities,DB-03-001,موجودیت، ویژگی و کلید در ERD,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,associative entities,DB-03-006,جدول واسط و ManyToManyField,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,surrogate key,DB-03-011,کلید طبیعی، جانشین و مرکب,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,natural key,DB-03-011,کلید طبیعی، جانشین و مرکب,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,business rules,DB-13-001,استخراج Domain و Business Rules,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,audit history,DB-13-003,Soft Delete، Audit و تاریخچه وضعیت,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,temporal modeling,DB-13-003,Soft Delete، Audit و تاریخچه وضعیت,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,multi tenancy,DB-13-004,Multi-tenancy و Scope داده,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,design trade-offs,DB-13-009,Trade-off، ADR و تصمیم معماری,,planned,verified,Needs detailed lesson-level QA before approval
+data-modeling,review rubrics,DB-13-008,Review ERD با Rubric مهندسی,,planned,verified,Needs detailed lesson-level QA before approval

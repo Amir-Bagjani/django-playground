@@ -1,0 +1,2 @@
+-- TODO: Create customers and orders with a real FK.
+-- Hint: customer_id must reference customers(id).

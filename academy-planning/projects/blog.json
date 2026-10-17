@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "blog",
+  "title_fa": "وبلاگ چندنویسنده",
+  "status": "planned",
+  "detail_level": "metadata-only",
+  "domain": "content-publishing",
+  "description_fa": "قرارداد حداقلی پروژه وبلاگ چندنویسنده برای تمرین روابط چندبه‌چند، دسته‌بندی و نظرات در سطح طرح‌ریزی.",
+  "milestones": [
+    {
+      "id": "blog-requirements",
+      "title_fa": "تحلیل نیازمندی و نقش‌ها",
+      "checkpoint_id": "blog-requirements-cp",
+      "acceptance_criteria_fa": [
+        "نقش نویسنده/ویرایشگر و قواعد انتشار مشخص شوند."
+      ]
+    },
+    {
+      "id": "blog-erd",
+      "title_fa": "طراحی ERD و روابط چندبه‌چند",
+      "checkpoint_id": "blog-erd-cp",
+      "depends_on": [
+        "blog-requirements"
+      ],
+      "acceptance_criteria_fa": [
+        "رابطه نویسنده-نوشته و نوشته-برچسب درست مدل شوند."
+      ]
+    },
+    {
+      "id": "blog-schema",
+      "title_fa": "ساخت MySQL Schema",
+      "checkpoint_id": "blog-schema-cp",
+      "depends_on": [
+        "blog-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "کلیدهای اصلی/خارجی و جداول واسط موجود باشند."
+      ]
+    },
+    {
+      "id": "blog-models",
+      "title_fa": "پیاده‌سازی Django Models",
+      "checkpoint_id": "blog-models-cp",
+      "depends_on": [
+        "blog-schema"
+      ],
+      "acceptance_criteria_fa": [
+        "Migration بدون خطا اجرا شود."
+      ]
+    },
+    {
+      "id": "blog-queries",
+      "title_fa": "Queryها و گزارش‌ها",
+      "checkpoint_id": "blog-queries-cp",
+      "depends_on": [
+        "blog-models"
+      ],
+      "acceptance_criteria_fa": [
+        "گزارش پربازدیدترین نوشته‌ها بدون N+1 اجرا شود."
+      ]
+    },
+    {
+      "id": "blog-review",
+      "title_fa": "بازبینی و تحویل",
+      "checkpoint_id": "blog-review-cp",
+      "depends_on": [
+        "blog-queries"
+      ],
+      "acceptance_criteria_fa": [
+        "Trade-offهای طراحی طبق Rubric بررسی شوند."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+{
+  "package": "database-orm-academy-planning-v1",
+  "as_of": "2026-10-17",
+  "files": [
+    {
+      "path": ".DS_Store",
+      "size_bytes": 6148,
+      "sha256": "9d544294b909ca6d39aa661e81393ac09386b04eac1ce3870d2c5d6bd49d7738"
+    },
+    {
+      "path": "AGENTS.md",
+      "size_bytes": 2322,
+      "sha256": "5ed5e3afee1a020462ffb7851dabbab226c6c4c62003b6f0a83b736cf16581d9"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 4724,
+      "sha256": "cbf95d967f2b01ce99b10980e0e03f3c8623a4ffacef0eb0606b3ea38de2655e"
+    },
+    {
+      "path": "VALIDATION_REPORT.md",
+      "size_bytes": 1610,
+      "sha256": "74745840132dcceae8fcbe8f4293b1a4b87d3060ad4c8a5b910434b9f2ab9dad"
+    },
+    {
+      "path": "content-samples/.DS_Store",
+      "size_bytes": 6148,
+      "sha256": "7047fd32e54c7805427c60349ce97ad40583a68cc728a794f56bdfeebaea74c9"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/.DS_Store",
+      "size_bytes": 6148,
+      "sha256": "00c2e92cbc06f57628d42102b32e3b6d726968ceab19ca25f4dcf48d3d04d551"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/README.md",
+      "size_bytes": 664,
+      "sha256": "fee2a3edeff4cee6d13dc5fb5f4d11495335d01d83d112dbf57af33f0953bd5d"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/.DS_Store",
+      "size_bytes": 6148,
+      "sha256": "7c9a9358ddb7cc2a78df90abe97fc925f8fde4ed730fa8b16cf21d2fc5b6d0c3"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-mastery/exercise.json",
+      "size_bytes": 1568,
+      "sha256": "e82bc8a43074dc297cb015dcbe74d8ae3954af0b0a7bc76cbd54f87a620027f1"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-mastery/instructions.fa.md",
+      "size_bytes": 849,
+      "sha256": "020543ceb4d2bed49412312d81bcba915fe6fd4f7e9b7c080441e86ee0541073"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-mastery/starter.py",
+      "size_bytes": 61,
+      "sha256": "8597eb2fb14f7ddbffa5078f09119480aee554ec16f329d56abc2847fe533cf9"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-practice/exercise.json",
+      "size_bytes": 1385,
+      "sha256": "ca5d6c3ba8c06fe075d68ef007e7577103cf33150d9f39ad4c3581ad10b777ed"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-practice/instructions.fa.md",
+      "size_bytes": 695,
+      "sha256": "dc483de29631b4aa99eb0b16f0a3ca42747ee4c91bf91311f29d38f6e4a938ea"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-practice/starter.py",
+      "size_bytes": 188,
+      "sha256": "e3b1bc0b48769d72fb90ff9c01f343a282c86ba612a64d0ee2bf58f8b506cf20"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-problem/exercise.json",
+      "size_bytes": 1513,
+      "sha256": "1808f220686582737a3447b96169ca7b81fe715e0295d84eb552bbf32f1f2f6e"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-problem/instructions.fa.md",
+      "size_bytes": 624,
+      "sha256": "c07b7f66b3966481403f02eeb293ea569b2cae4f7175089d36df68140c413ff6"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/exercises/fk-problem/starter.sql",
+      "size_bytes": 104,
+      "sha256": "ed7f290c2e1b2d40f25d32d6f6a2c598f9c1f7b8c473b94fdbce73a69424ed7b"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/lesson.fa.md",
+      "size_bytes": 7897,
+      "sha256": "d530209d2adea73d22a507a4ad10ad5d325ab33c210ec784f24dbfeaaec50d23"
+    },
+    {
+      "path": "content-samples/foreign-key-relationships/validators/validation-plan.md",
+      "size_bytes": 2022,
+      "sha256": "d19214cce701b64b753646f877a90ba3f254bb07abf7452d4f18d4d2f25d6180"
+    },
+    {
+      "path": "curriculum/concepts.yaml",
+      "size_bytes": 4135,
+      "sha256": "f6e2d4b592f7f8852fd5e4ab3e81776b170f8564c17014352af62a351bf63767"
+    },
+    {
+      "path": "curriculum/coverage-map.csv",
+      "size_bytes": 31983,
+      "sha256": "375a08ec5830136074b71e558c6fea282a5bda405a13c5d5a9b89fcd2c21422c"
+    },
+    {
+      "path": "curriculum/curriculum-summary.json",
+      "size_bytes": 1755,
+      "sha256": "f162cce1e0b660891b635ea2c02abca059a33f891150fc0c2e467c1bce7cfe48"
+    },
+    {
+      "path": "curriculum/curriculum.yaml",
+      "size_bytes": 54794,
+      "sha256": "0aaeb836196db0e6b9957a9467b9bb81d38492ac739fbce95efc7af782e322f6"
+    },
+    {
+      "path": "docs/00_PRODUCT_CHARTER.md",
+      "size_bytes": 4525,
+      "sha256": "265469b95ba5293d0acfcd8ccf43926d5cd60d55a63dcaf5569140d8a2095a83"
+    },
+    {
+      "path": "docs/01_DECISIONS_AND_OPEN_ASSUMPTIONS.md",
+      "size_bytes": 4482,
+      "sha256": "cd2ebad895e9f96cf2898c781b01ffaa9939650c3a80b441a0e86d9804c59e87"
+    },
+    {
+      "path": "docs/02_MASTER_CURRICULUM.md",
+      "size_bytes": 12345,
+      "sha256": "c1b86543151091d55e5eee6bca56091045a37c8caff0352fd7a1568dc82a4bfc"
+    },
+    {
+      "path": "docs/03_CONTENT_SPEC.md",
+      "size_bytes": 9056,
+      "sha256": "f0a37be2ab1cc937bad685ee88fb6277eaf8bbb670b33cbe9c43c24d553de804"
+    },
+    {
+      "path": "docs/04_AUTHORING_GUIDELINES.md",
+      "size_bytes": 5794,
+      "sha256": "35be90ae50db9b1abaf7b621fa96cefde0f482561271ac1408752d7673d6b89b"
+    },
+    {
+      "path": "docs/05_ASSESSMENT_AND_PROGRESS.md",
+      "size_bytes": 4890,
+      "sha256": "eae101b0150860d5b9d05e0be63bdec72835ad9d98c6147f3a9f95d23f48b811"
+    },
+    {
+      "path": "docs/06_TECH_ARCHITECTURE.md",
+      "size_bytes": 6025,
+      "sha256": "a16ddb4d3da2fb9a084e9927682c3d5383508769cea11b6e8e3dcefb527b06d9"
+    },
+    {
+      "path": "docs/07_TEST_POLICY.md",
+      "size_bytes": 3199,
+      "sha256": "5c2fcec663783f0ef8712969209e231f6e9b9bd75ce948088e1ea890fe2129f1"
+    },
+    {
+      "path": "docs/08_CONTENT_QA_AND_SOURCES.md",
+      "size_bytes": 4165,
+      "sha256": "94a717db9803995b80a9ad5e3f2c84b95d2d360dd1cdd6e9d4d53b1b63f9c56d"
+    },
+    {
+      "path": "docs/09_DELIVERY_ROADMAP.md",
+      "size_bytes": 3102,
+      "sha256": "2c00efa930b0c274e923b1a2d14ee60a438b7798ba5907bee3a055a3537946f2"
+    },
+    {
+      "path": "docs/10_COVERAGE_AUDIT_AND_BATCHES.md",
+      "size_bytes": 3380,
+      "sha256": "d209619cd25736587ff4fd5e26cc202004dfa367f93d8977b8371fc52b780b6f"
+    },
+    {
+      "path": "docs/prds/PRD-01_HUB_FOUNDATION.md",
+      "size_bytes": 4323,
+      "sha256": "2a6e73b90c5068403936681be4bbdedc1e46873c36d93cd472c5cca8dcd01800"
+    },
+    {
+      "path": "docs/prds/PRD-02_SQL_ORM_FIRST_LAB.md",
+      "size_bytes": 4999,
+      "sha256": "8194e66840b85e091d0dac5c728f5502ebdf3232db0abf27f1d22f72c1ced9d6"
+    },
+    {
+      "path": "docs/prds/PRD-03_EXERCISE_ENGINE_PROGRESS.md",
+      "size_bytes": 4542,
+      "sha256": "185581ed0674c90dedbfde4148a3a1a520e0f3334da44135db098eeab3ef2831"
+    },
+    {
+      "path": "docs/prds/PRD-04_ERD_DESIGNER.md",
+      "size_bytes": 4290,
+      "sha256": "9ddfbd300036b2f338ea3d3ec7c5cf4662a7025404228db8b77c1bc52b59c87b"
+    },
+    {
+      "path": "docs/prds/PRD-05_PROJECTS_CHECKPOINTS.md",
+      "size_bytes": 3981,
+      "sha256": "ff75a3da364bf9e6f0ca961c6e6303b86147a2ea72868fd1a697b0c91db3a843"
+    },
+    {
+      "path": "docs/prds/PRD-06_CONTENT_PACKS_CAPSTONES.md",
+      "size_bytes": 5565,
+      "sha256": "b08f1763e57f85c44f0f9d6e6fdc8dc4e76ae4b8d14495b0e54ddb8275801e2b"
+    },
+    {
+      "path": "handoffs/00_CURRICULUM_REVIEW_PROMPT.md",
+      "size_bytes": 1901,
+      "sha256": "fe342284c9809fcdcfffdbe3fc049c0782f1a4f87645811bc38498bd6e925823"
+    },
+    {
+      "path": "handoffs/01_START_IMPLEMENTATION_PROMPT.md",
+      "size_bytes": 1251,
+      "sha256": "e3c50ed61aba665f0614eea66a382f4dea2aba7a566196bebcd75aebfc95b84d"
+    },
+    {
+      "path": "handoffs/02_PHASE_IMPLEMENTATION_TEMPLATE.md",
+      "size_bytes": 1358,
+      "sha256": "0e0e6ee5b78ec9055df07691ca6c82b52d321cc1615f11661111ac344dc45e75"
+    },
+    {
+      "path": "handoffs/03_CONTENT_AUTHOR_PROMPT.md",
+      "size_bytes": 1664,
+      "sha256": "c908a279b6b18f04198149d038bd54ff87805b5311f8cf25a87a44e1d8ae8e8c"
+    },
+    {
+      "path": "handoffs/04_CONTENT_REVIEW_PROMPT.md",
+      "size_bytes": 1655,
+      "sha256": "f93d1c07ecd1ef09a75b647176510f0d058bf383030dca15fcaf2fda25f3d40f"
+    },
+    {
+      "path": "handoffs/README.md",
+      "size_bytes": 597,
+      "sha256": "7cde9a49ba0c80ee1e6a332e4f6e929dac75dd05af829971a21f46019b315f95"
+    },
+    {
+      "path": "projects/README.md",
+      "size_bytes": 1539,
+      "sha256": "9ee4cf19ec442176a4f7d5aec42a873c104a01c313f3211077afdece6e1c46ab"
+    },
+    {
+      "path": "projects/blog.json",
+      "size_bytes": 2273,
+      "sha256": "7367487c0f197fc5163375ea8749cce3695b2be9efead7f15431bfcb13ffce98"
+    },
+    {
+      "path": "projects/booking.json",
+      "size_bytes": 3728,
+      "sha256": "5ba5c558434539641d0555d6b5be1071a7dca14873ebf8dbe8539c5567469448"
+    },
+    {
+      "path": "projects/ecommerce.json",
+      "size_bytes": 2393,
+      "sha256": "7aeb3282c09556f398369165d58ebcd438f9d46812c6679afbfa9ca49b289898"
+    },
+    {
+      "path": "projects/insurance.json",
+      "size_bytes": 4865,
+      "sha256": "8a5afa0230a59c845c65a994d16b5b99969d1382705ef8ccd09380d7d12cde71"
+    },
+    {
+      "path": "projects/inventory.json",
+      "size_bytes": 2421,
+      "sha256": "5694dfbddb454d522c8e3359ec2b7b36ec9d3efc6eb32cc25f0af7d54b88f626"
+    },
+    {
+      "path": "projects/library.json",
+      "size_bytes": 2293,
+      "sha256": "8e14e0de593cff8776edc8c0c01377306470582a422893337a945d5089644eca"
+    },
+    {
+      "path": "requirements-authoring.txt",
+      "size_bytes": 122,
+      "sha256": "b4deb23cb37fc511ca356543b32ab0423087bf9ebc0382b99b64eca36572eba0"
+    },
+    {
+      "path": "reviews/00_CURRICULUM_REVIEW_REPORT.md",
+      "size_bytes": 24666,
+      "sha256": "42651fcb46cc824c8c047a8beba55d4e8ff8f5aa9235f5d5386a89c0921d5506"
+    },
+    {
+      "path": "reviews/01_CURRICULUM_RECONCILIATION_REPORT.md",
+      "size_bytes": 8072,
+      "sha256": "01aa8828a626e08ea51aae875f0414c089c6e26128ba1f2231434196921056d1"
+    },
+    {
+      "path": "schemas/curriculum.schema.json",
+      "size_bytes": 4278,
+      "sha256": "0227011a8b31810d409db6c1dee390b74e23c8cbccfeccbb904806962e6e8f27"
+    },
+    {
+      "path": "schemas/exercise.schema.json",
+      "size_bytes": 2960,
+      "sha256": "a90f1089efdac029f9019df2c4eaea28ea0cce47a5b806b21b3105fc00221fc7"
+    },
+    {
+      "path": "schemas/lesson.schema.json",
+      "size_bytes": 1899,
+      "sha256": "90fb4c10cd528de379864347d93cab12bb9f38e95bb54e1c48e9086129fffa85"
+    },
+    {
+      "path": "schemas/project.schema.json",
+      "size_bytes": 2346,
+      "sha256": "60bee3184b409c1c62622adf3167aac6796f257d596fb8f9d0f8f5d368f7ac87"
+    },
+    {
+      "path": "scripts/validate_content.py",
+      "size_bytes": 10503,
+      "sha256": "68dbe41761db717c098b50d9e7c531bd258dabfbd7457865f648d0b18257c582"
+    }
+  ]
+}

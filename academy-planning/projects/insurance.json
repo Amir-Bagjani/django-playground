@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "id": "insurance",
+  "title_fa": "پروژه جامع بیمه‌نامه و هزینه درمان",
+  "status": "planned",
+  "detail_level": "blueprint",
+  "domain": "health-insurance-claims",
+  "description_fa": "پروژه مرحله‌ای طراحی سامانه بیمه‌نامه و هزینه درمان با تمرکز بر سقف تعهد، جریان وضعیت، دقت مالی و کنترل هم‌زمانی.",
+  "milestones": [
+    {
+      "id": "insurance-discovery",
+      "title_fa": "تحلیل دامنه، بیمه‌شده و قوانین",
+      "checkpoint_id": "insurance-discovery-cp",
+      "acceptance_criteria_fa": [
+        "بیمه‌شده، وابسته، قرارداد، سقف تعهد و هزینه تعریف شوند.",
+        "قواعد اعتبار تاریخ و پوشش روشن باشند."
+      ]
+    },
+    {
+      "id": "insurance-core-erd",
+      "title_fa": "طراحی ERD بیمه‌نامه و قرارداد",
+      "checkpoint_id": "insurance-core-erd-cp",
+      "depends_on": [
+        "insurance-discovery"
+      ],
+      "acceptance_criteria_fa": [
+        "Cardinality و کلیدهای اصلی/خارجی درست باشند.",
+        "روابط حاوی تاریخ اعتبار و چند قرارداد معتبر مدل شوند."
+      ]
+    },
+    {
+      "id": "insurance-coverage",
+      "title_fa": "سقف تعهد و پوشش",
+      "checkpoint_id": "insurance-coverage-cp",
+      "depends_on": [
+        "insurance-core-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "سقف برای پوشش/قرارداد/بازه مشخص باشد.",
+        "داده منفی یا پوشش نامعتبر جلوگیری شود."
+      ]
+    },
+    {
+      "id": "insurance-claims",
+      "title_fa": "هزینه درمان و مدارک",
+      "checkpoint_id": "insurance-claims-cp",
+      "depends_on": [
+        "insurance-coverage"
+      ],
+      "acceptance_criteria_fa": [
+        "Claim/Document/Category روابط درست داشته باشند.",
+        "مدارک اختیاری/اجباری به‌عنوان Business Rule مستند شوند."
+      ]
+    },
+    {
+      "id": "insurance-workflow",
+      "title_fa": "ارزیابی و تاریخچه وضعیت",
+      "checkpoint_id": "insurance-workflow-cp",
+      "depends_on": [
+        "insurance-claims"
+      ],
+      "acceptance_criteria_fa": [
+        "انتقال‌های غیرمجاز Status رد شوند.",
+        "تاریخچه قابل بررسی بدون ازبین‌بردن وضعیت قبلی ثبت شود."
+      ]
+    },
+    {
+      "id": "insurance-payments",
+      "title_fa": "مدل پرداخت و دقت مالی",
+      "checkpoint_id": "insurance-payments-cp",
+      "depends_on": [
+        "insurance-claims"
+      ],
+      "acceptance_criteria_fa": [
+        "Decimal و تسویه بدون Double Payment طراحی شوند.",
+        "مانده/مبلغ پرداخت قابل حسابرسی باشد."
+      ]
+    },
+    {
+      "id": "insurance-concurrency",
+      "title_fa": "کنترل هم‌زمانی و Idempotency",
+      "checkpoint_id": "insurance-concurrency-cp",
+      "depends_on": [
+        "insurance-payments"
+      ],
+      "acceptance_criteria_fa": [
+        "دو درخواست ثبت مشابه هزینه دوباره ثبت/پرداخت نشوند.",
+        "آزمون روی دو Connection واقعی انجام شود."
+      ]
+    },
+    {
+      "id": "insurance-evolution",
+      "title_fa": "تغییر تدریجی Schema",
+      "checkpoint_id": "insurance-evolution-cp",
+      "depends_on": [
+        "insurance-workflow"
+      ],
+      "acceptance_criteria_fa": [
+        "یک قانون کسب‌وکار جدید بدون حذف داده‌های قبلی اضافه شود.",
+        "Migration برگشت‌پذیر یا Forward Fix منطقی مستند شود."
+      ]
+    },
+    {
+      "id": "insurance-reporting",
+      "title_fa": "گزارش‌گیری و بهینه‌سازی",
+      "checkpoint_id": "insurance-reporting-cp",
+      "depends_on": [
+        "insurance-payments",
+        "insurance-evolution"
+      ],
+      "acceptance_criteria_fa": [
+        "گزارش سقف پوشش و هزینه در تاریخ درست محاسبه شود.",
+        "N+1 و ایندکس گزارش تحلیل شوند."
+      ]
+    },
+    {
+      "id": "insurance-final-review",
+      "title_fa": "دفاع از طراحی و تحویل",
+      "checkpoint_id": "insurance-final-review-cp",
+      "depends_on": [
+        "insurance-concurrency",
+        "insurance-reporting"
+      ],
+      "acceptance_criteria_fa": [
+        "تست‌های فنی مورد توافق پاس شوند.",
+        "Trade-offهای ERD، Index، تراکنش و امنیت در Rubric بررسی شوند."
+      ]
+    }
+  ]
+}

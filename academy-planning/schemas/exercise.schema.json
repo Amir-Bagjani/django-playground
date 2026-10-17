@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dev-playground.local/schemas/exercise.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "lesson_id",
+    "version",
+    "level",
+    "kind",
+    "required_for_completion",
+    "instructions_file",
+    "starter_files",
+    "validator",
+    "criteria",
+    "hints"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "lesson_id": {
+      "type": "string",
+      "pattern": "^DB-[0-9]{2}-[0-9]{3}$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "level": {
+      "enum": [
+        "practice",
+        "problem-solving",
+        "mastery"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "sql",
+        "django-orm",
+        "erd",
+        "combined"
+      ]
+    },
+    "required_for_completion": {
+      "type": "boolean"
+    },
+    "instructions_file": {
+      "type": "string",
+      "pattern": "^instructions\\.fa\\.md$"
+    },
+    "starter_files": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "criteria_file"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "criteria_file": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description_fa",
+          "visibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "description_fa": {
+            "type": "string",
+            "minLength": 8
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "hidden"
+            ]
+          }
+        }
+      }
+    },
+    "hints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text_fa"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "text_fa": {
+            "type": "string",
+            "minLength": 10
+          }
+        }
+      }
+    },
+    "time_limit_seconds": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 120
+    }
+  }
+}

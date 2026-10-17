@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "fk-mastery",
+  "lesson_id": "DB-03-005",
+  "version": 1,
+  "level": "mastery",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.py"
+  ],
+  "validator": {
+    "id": "fk-mastery-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "relations-correct",
+      "description_fa": "ارتباط دو FK و Cardinality درست است",
+      "visibility": "public"
+    },
+    {
+      "id": "business-rules",
+      "description_fa": "قواعد حذف و حفظ تاریخچه رعایت می‌شوند",
+      "visibility": "public"
+    },
+    {
+      "id": "migration-valid",
+      "description_fa": "Schema و Migration معتبرند",
+      "visibility": "public"
+    },
+    {
+      "id": "design-rationale",
+      "description_fa": "استدلال انتخاب‌ها با Rubric بررسی می‌شود",
+      "visibility": "public"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "کدام اطلاعات رزرو باید حتی با تغییر وضعیت اتاق محفوظ بمانند؟"
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "حذف فیزیکی و غیرفعال‌کردن یک Entity دو سیاست متفاوت هستند."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای جلوگیری از ازدست‌رفتن تاریخچه، سیاست حذف و Audit را با هم در نظر بگیر."
+    }
+  ]
+}

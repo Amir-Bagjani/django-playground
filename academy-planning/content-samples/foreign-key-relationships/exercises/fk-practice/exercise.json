@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "fk-practice",
+  "lesson_id": "DB-03-005",
+  "version": 1,
+  "level": "practice",
+  "kind": "django-orm",
+  "required_for_completion": true,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.py"
+  ],
+  "validator": {
+    "id": "fk-practice-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "model-exists",
+      "description_fa": "Model Order تعریف شده است",
+      "visibility": "public"
+    },
+    {
+      "id": "fk-required",
+      "description_fa": "ارتباط Customer الزامی است",
+      "visibility": "public"
+    },
+    {
+      "id": "delete-protection",
+      "description_fa": "حذف Customer دارای Order رد می‌شود",
+      "visibility": "public"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "کدام Field در Django رابطه چند سفارش به یک مشتری را می‌سازد؟"
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "وقتی مشتری سفارش دارد، حذف او باید مجاز باشد یا محافظت شود؟"
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "پارامتر on_delete را طوری انتخاب کن که عملیات حذف شیء مرتبط با خطای قابل‌کنترل متوقف شود."
+    }
+  ]
+}

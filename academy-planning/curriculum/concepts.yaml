@@ -1,0 +1,261 @@
+schema_version: 1
+coverage_groups:
+- id: django-field-reference
+  source: https://docs.djangoproject.com/en/6.1/ref/models/fields/
+  target_modules:
+  - DB-01
+  - DB-03
+  - DB-07
+  topics:
+  - AutoField
+  - BigAutoField
+  - SmallAutoField
+  - BigIntegerField
+  - IntegerField
+  - SmallIntegerField
+  - PositiveIntegerField
+  - PositiveSmallIntegerField
+  - PositiveBigIntegerField
+  - CharField
+  - TextField
+  - SlugField
+  - EmailField
+  - URLField
+  - GenericIPAddressField
+  - BooleanField
+  - DecimalField
+  - FloatField
+  - DateField
+  - DateTimeField
+  - TimeField
+  - DurationField
+  - UUIDField
+  - JSONField
+  - BinaryField
+  - FileField
+  - ImageField
+  - FilePathField
+  - ForeignKey
+  - OneToOneField
+  - ManyToManyField
+  - GeneratedField
+  - CompositePrimaryKey
+  - custom Field
+  - 'null'
+  - blank
+  - default
+  - db_default
+  - db_comment
+  - db_collation
+  - unique
+  - db_index
+  - db_column
+  - primary_key
+  - editable
+  - choices
+  - validators
+  - help_text
+  - verbose_name
+  - error_messages
+  - db_constraint
+  - related_name
+  - related_query_name
+  - limit_choices_to
+  - to_field
+  - on_delete
+  - DB_CASCADE
+  - DB_SET_NULL
+  - DB_SET_DEFAULT
+  - symmetrical
+  - through
+  - through_fields
+  - db_tablespace
+  - unique_for_date
+  - unique_for_month
+  - unique_for_year
+- id: django-query-reference
+  source: https://docs.djangoproject.com/en/6.1/ref/models/querysets/
+  target_modules:
+  - DB-02
+  - DB-05
+  - DB-06
+  - DB-07
+  - DB-08
+  - DB-10
+  - DB-11
+  topics:
+  - filter
+  - exclude
+  - get
+  - Q
+  - F
+  - annotate
+  - aggregate
+  - values
+  - values_list
+  - select_related
+  - prefetch_related
+  - Prefetch
+  - only
+  - defer
+  - iterator
+  - select_for_update
+  - Subquery
+  - OuterRef
+  - Exists
+  - Window
+  - union
+  - intersection
+  - difference
+  - bulk_create
+  - bulk_update
+  - update_or_create
+  - get_or_create
+  - raw
+  - explain
+  - exists
+  - count
+  - order_by
+  - distinct
+  - first
+  - last
+  - reverse
+  - latest
+  - earliest
+  - dates
+  - datetimes
+  - times
+  - fetch_mode
+  - totally_ordered
+  - Case
+  - When
+  - Coalesce
+  - Cast
+  - JSONNull
+  - UUID4
+  - UUID7
+  - in_bulk
+  - alias
+  - none
+  - using
+- id: django-schema-ops
+  source: https://docs.djangoproject.com/en/6.1/topics/migrations/
+  target_modules:
+  - DB-04
+  - DB-08
+  - DB-09
+  - DB-11
+  topics:
+  - Meta
+  - Index
+  - UniqueConstraint
+  - CheckConstraint
+  - conditional UniqueConstraint
+  - expressions
+  - abstract models
+  - proxy models
+  - multi-table inheritance
+  - custom manager
+  - custom QuerySet
+  - RunPython
+  - RunSQL
+  - sqlmigrate
+  - atomic
+  - on_commit
+  - migration dependencies
+  - historical models
+  - backfill
+- id: mysql-84
+  source: https://dev.mysql.com/doc/refman/8.4/en/
+  target_modules:
+  - DB-00
+  - DB-01
+  - DB-02
+  - DB-03
+  - DB-04
+  - DB-05
+  - DB-06
+  - DB-09
+  - DB-10
+  - DB-11
+  - DB-12
+  - DB-13
+  topics:
+  - InnoDB
+  - data types
+  - character set
+  - collation
+  - DDL
+  - DML
+  - TCL
+  - constraints
+  - foreign keys
+  - joins
+  - subqueries
+  - CTE
+  - window functions
+  - views
+  - triggers
+  - stored routines
+  - JSON
+  - fulltext
+  - generated columns
+  - indexes
+  - functional index
+  - descending index
+  - invisible index
+  - multi-valued index
+  - EXPLAIN
+  - EXPLAIN FORMAT
+  - EXPLAIN ANALYZE
+  - lateral
+  - ACID
+  - isolation
+  - read committed
+  - repeatable read
+  - MVCC
+  - locking
+  - deadlocks
+  - implicit DDL commits
+  - sql_mode
+  - AUTO_INCREMENT
+  - backups
+  - replication
+  - partitioning
+  - roles
+  - privileges
+  - SQL injection prevention
+  - performance schema
+- id: data-modeling
+  source: Database Design for Mere Mortals (4th ed.); Fundamentals of Database Systems (7th ed.)
+  target_modules:
+  - DB-00
+  - DB-03
+  - DB-04
+  - DB-13
+  - DB-14
+  - DB-15
+  topics:
+  - ER model
+  - EER
+  - crow foot
+  - cardinality
+  - optionality
+  - candidate keys
+  - functional dependencies
+  - 1NF
+  - 2NF
+  - 3NF
+  - BCNF
+  - 4NF
+  - 5NF
+  - weak entities
+  - associative entities
+  - surrogate key
+  - natural key
+  - business rules
+  - audit history
+  - temporal modeling
+  - multi tenancy
+  - design trade-offs
+  - review rubrics

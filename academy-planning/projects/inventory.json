@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "inventory",
+  "title_fa": "انبار و گردش موجودی",
+  "status": "planned",
+  "detail_level": "metadata-only",
+  "domain": "warehouse-inventory",
+  "description_fa": "قرارداد حداقلی پروژه انبار برای تمرین کالا، انبار و تراکنش‌های ورود/خروج در سطح طرح‌ریزی.",
+  "milestones": [
+    {
+      "id": "inventory-requirements",
+      "title_fa": "تحلیل نیازمندی و قواعد گردش",
+      "checkpoint_id": "inventory-requirements-cp",
+      "acceptance_criteria_fa": [
+        "قواعد ورود/خروج و نگاتیو نشدن موجودی مشخص شوند."
+      ]
+    },
+    {
+      "id": "inventory-erd",
+      "title_fa": "طراحی ERD کالا و انبار",
+      "checkpoint_id": "inventory-erd-cp",
+      "depends_on": [
+        "inventory-requirements"
+      ],
+      "acceptance_criteria_fa": [
+        "رابطه کالا/انبار/موجودی و لاگ گردش درست مدل شوند."
+      ]
+    },
+    {
+      "id": "inventory-schema",
+      "title_fa": "ساخت MySQL Schema",
+      "checkpoint_id": "inventory-schema-cp",
+      "depends_on": [
+        "inventory-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "کلیدهای اصلی/خارجی و محدودیت یکتایی موجودی موجود باشند."
+      ]
+    },
+    {
+      "id": "inventory-models",
+      "title_fa": "پیاده‌سازی Django Models",
+      "checkpoint_id": "inventory-models-cp",
+      "depends_on": [
+        "inventory-schema"
+      ],
+      "acceptance_criteria_fa": [
+        "Migration بدون خطا اجرا شود."
+      ]
+    },
+    {
+      "id": "inventory-transactions",
+      "title_fa": "تراکنش‌های گردش و هم‌زمانی",
+      "checkpoint_id": "inventory-transactions-cp",
+      "depends_on": [
+        "inventory-models"
+      ],
+      "acceptance_criteria_fa": [
+        "ورود/خروج هم‌زمان باعث ناسازگاری موجودی نشود."
+      ]
+    },
+    {
+      "id": "inventory-review",
+      "title_fa": "بازبینی و تحویل",
+      "checkpoint_id": "inventory-review-cp",
+      "depends_on": [
+        "inventory-transactions"
+      ],
+      "acceptance_criteria_fa": [
+        "Trade-offهای لاگ گردش و ایندکس طبق Rubric بررسی شوند."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "id": "booking",
+  "title_fa": "سامانه رزرو چندمرحله‌ای",
+  "status": "planned",
+  "detail_level": "blueprint",
+  "domain": "hospitality-booking",
+  "description_fa": "پروژه مرحله‌ای طراحی و پیاده‌سازی سامانه رزرو اتاق با تمرکز بر تعارض زمانی، ظرفیت، هم‌زمانی و تکامل Schema.",
+  "milestones": [
+    {
+      "id": "booking-requirements",
+      "title_fa": "تحلیل نیازمندی و تعارض‌ها",
+      "checkpoint_id": "booking-requirements-cp",
+      "acceptance_criteria_fa": [
+        "قواعد رزرو، ظرفیت، عدم تداخل و لغو در سند مستقل مشخص شوند.",
+        "حداقل سه سناریوی لبه تعریف شده باشد."
+      ]
+    },
+    {
+      "id": "booking-erd",
+      "title_fa": "مدل ERD و کلیدها",
+      "checkpoint_id": "booking-erd-cp",
+      "depends_on": [
+        "booking-requirements"
+      ],
+      "acceptance_criteria_fa": [
+        "اتاق، مهمان و رزرو با روابط درست نمایش داده شوند.",
+        "Cardinality و Nullable/Optional برای همه روابط اعلام شوند."
+      ]
+    },
+    {
+      "id": "booking-schema",
+      "title_fa": "ساخت MySQL Schema",
+      "checkpoint_id": "booking-schema-cp",
+      "depends_on": [
+        "booking-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "Primary/Foreign Key واقعی موجود باشد.",
+        "رزروهای ارجاع‌دهنده به اتاق ناموجود رد شوند."
+      ]
+    },
+    {
+      "id": "booking-models",
+      "title_fa": "پیاده‌سازی Django Models",
+      "checkpoint_id": "booking-models-cp",
+      "depends_on": [
+        "booking-schema"
+      ],
+      "acceptance_criteria_fa": [
+        "Migration بدون خطا اجرا شود.",
+        "Model و DB constraints برای ارتباط‌ها سازگار باشند."
+      ]
+    },
+    {
+      "id": "booking-rules",
+      "title_fa": "قواعد تاریخ و ظرفیت",
+      "checkpoint_id": "booking-rules-cp",
+      "depends_on": [
+        "booking-models"
+      ],
+      "acceptance_criteria_fa": [
+        "شروع رزرو قبل از پایان باشد.",
+        "قواعد جلوگیری از تداخل در محیط آزمون انجام شوند."
+      ]
+    },
+    {
+      "id": "booking-concurrency",
+      "title_fa": "هم‌زمانی و Race",
+      "checkpoint_id": "booking-concurrency-cp",
+      "depends_on": [
+        "booking-rules"
+      ],
+      "acceptance_criteria_fa": [
+        "دو درخواست هم‌زمان ظرفیت یکسان را بیش‌فروش نکنند.",
+        "خطا و Retry طبق سیاست تعریف‌شده ثبت شود."
+      ]
+    },
+    {
+      "id": "booking-evolution",
+      "title_fa": "تغییر نیازمندی",
+      "checkpoint_id": "booking-evolution-cp",
+      "depends_on": [
+        "booking-rules"
+      ],
+      "acceptance_criteria_fa": [
+        "افزودن رزرو گروهی بدون حذف داده قدیمی انجام شود.",
+        "Migration و داده قبلی هماهنگ باقی بماند."
+      ]
+    },
+    {
+      "id": "booking-performance",
+      "title_fa": "بازبینی و بهینه‌سازی",
+      "checkpoint_id": "booking-performance-cp",
+      "depends_on": [
+        "booking-concurrency",
+        "booking-evolution"
+      ],
+      "acceptance_criteria_fa": [
+        "Queryهای روزانه و شاخص‌های پرتکرار درست باشند.",
+        "انتخاب Index با EXPLAIN و دلیل فنی گزارش شود."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "library",
+  "title_fa": "کتابخانه و امانت",
+  "status": "planned",
+  "detail_level": "metadata-only",
+  "domain": "library-lending",
+  "description_fa": "قرارداد حداقلی پروژه کتابخانه برای تمرین امانت، دیرکرد و کپی فیزیکی در سطح طرح‌ریزی.",
+  "milestones": [
+    {
+      "id": "library-requirements",
+      "title_fa": "تحلیل نیازمندی و قواعد امانت",
+      "checkpoint_id": "library-requirements-cp",
+      "acceptance_criteria_fa": [
+        "قواعد امانت، دیرکرد و تعداد کپی مجاز مشخص شوند."
+      ]
+    },
+    {
+      "id": "library-erd",
+      "title_fa": "طراحی ERD کتاب و نسخه",
+      "checkpoint_id": "library-erd-cp",
+      "depends_on": [
+        "library-requirements"
+      ],
+      "acceptance_criteria_fa": [
+        "تفکیک کتاب/کپی و رابطه امانت درست مدل شود."
+      ]
+    },
+    {
+      "id": "library-schema",
+      "title_fa": "ساخت MySQL Schema",
+      "checkpoint_id": "library-schema-cp",
+      "depends_on": [
+        "library-erd"
+      ],
+      "acceptance_criteria_fa": [
+        "کلیدهای اصلی/خارجی و محدودیت‌های یکتایی موجود باشند."
+      ]
+    },
+    {
+      "id": "library-models",
+      "title_fa": "پیاده‌سازی Django Models",
+      "checkpoint_id": "library-models-cp",
+      "depends_on": [
+        "library-schema"
+      ],
+      "acceptance_criteria_fa": [
+        "Migration بدون خطا اجرا شود."
+      ]
+    },
+    {
+      "id": "library-queries",
+      "title_fa": "گزارش‌های امانت و دیرکرد",
+      "checkpoint_id": "library-queries-cp",
+      "depends_on": [
+        "library-models"
+      ],
+      "acceptance_criteria_fa": [
+        "گزارش امانت‌های فعال درست محاسبه شود."
+      ]
+    },
+    {
+      "id": "library-review",
+      "title_fa": "بازبینی و تحویل",
+      "checkpoint_id": "library-review-cp",
+      "depends_on": [
+        "library-queries"
+      ],
+      "acceptance_criteria_fa": [
+        "Trade-offهای طراحی طبق Rubric بررسی شوند."
+      ]
+    }
+  ]
+}

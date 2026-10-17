@@ -1,0 +1,70 @@
+{
+  "modules": {
+    "DB-00": {
+      "title": "از داده تا مدل رابطه‌ای",
+      "count": 10
+    },
+    "DB-01": {
+      "title": "جدول، انواع داده و اولین Model",
+      "count": 12
+    },
+    "DB-02": {
+      "title": "خواندن، فیلتر و مدیریت داده",
+      "count": 12
+    },
+    "DB-03": {
+      "title": "ERD و مدل‌سازی روابط",
+      "count": 12
+    },
+    "DB-04": {
+      "title": "قیدها، یکپارچگی و نرمال‌سازی",
+      "count": 12
+    },
+    "DB-05": {
+      "title": "JOINها و دسترسی به داده مرتبط",
+      "count": 10
+    },
+    "DB-06": {
+      "title": "گزارش‌گیری و Analytics",
+      "count": 11
+    },
+    "DB-07": {
+      "title": "مرجع عمیق Django Model Fields",
+      "count": 14
+    },
+    "DB-08": {
+      "title": "Model Meta، Managers و QuerySet API",
+      "count": 11
+    },
+    "DB-09": {
+      "title": "Migration و تغییر تدریجی Schema",
+      "count": 10
+    },
+    "DB-10": {
+      "title": "Index، EXPLAIN و بهینه‌سازی",
+      "count": 12
+    },
+    "DB-11": {
+      "title": "Transactions، قفل و Concurrency",
+      "count": 10
+    },
+    "DB-12": {
+      "title": "MySQL حرفه‌ای و عملیات دیتابیس",
+      "count": 13
+    },
+    "DB-13": {
+      "title": "طراحی پیشرفته و بازبینی معماری",
+      "count": 11
+    },
+    "DB-14": {
+      "title": "پروژه‌های تخصصی چندمرحله‌ای",
+      "count": 6
+    },
+    "DB-15": {
+      "title": "Capstone نهایی: بیمه‌نامه و هزینه درمان",
+      "count": 10
+    }
+  },
+  "total_modules": 16,
+  "total_planned_lessons": 176
+}

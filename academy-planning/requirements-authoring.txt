@@ -1,0 +1,3 @@
+# Dependencies for static *authoring* validation only; not the future Academy runtime.
+PyYAML>=6.0,<7
+jsonschema>=4.23,<5
