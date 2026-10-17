@@ -57,13 +57,17 @@ a pass.
 - `products` (practice/problem-solving): in-stock rows, descending price. The
   hidden sentinel `zz-probe` (price `1.23`) must appear last.
 - `books` (mastery): published books with price in `[10, 50]`, descending price,
-  top 3. The seed includes boundary data: `10.00` (lower bound), `50.00` (upper
-  bound included in the top 3), `60.00` (above range, excluded), and unpublished
-  in-range rows (excluded) — including `45.00` "Draft Best", which would enter
-  the top 3 if the published filter were dropped. The hidden sentinel `zz-probe`
-  (price `49.99`) must slot into descending position 2. Under `LIMIT 3` the lower
-  bound is not independently observable; it is listed as a known limitation, not
-  silently claimed as tested.
+  top 3. The only *in-range published* rows are the two boundary rows `10.00`
+  (lower bound) and `50.00` (upper bound), so the descending window can reach
+  past a missing or wrong bound: dropping `price >= 10` (or writing an exclusive
+  `price > 10`) pulls `9.00`/`5.00` into the window and fails, and dropping
+  `price <= 50` pulls `60.00` in and fails. Out-of-range rows (`5.00`, `9.00`,
+  `60.00`) and unpublished in-range rows (`45.00` "Draft Best", `25.00`) are
+  excluded, so the published filter is observable too. The hidden sentinel
+  `zz-probe` (price `49.99`) must slot into descending position 2. Because both
+  qualifying rows fit inside `LIMIT 3`, the `LIMIT` *value* is not independently
+  exercised here (a query that returns the two ordered rows passes); `LIMIT` is
+  otherwise covered by the practice/problem-solving exercises.
 - Multiple valid solutions are accepted because only the returned relation is
   compared: e.g. `in_stock = 1`, `in_stock = TRUE`, `in_stock <> 0` for SQL, and
   `filter(in_stock=True)` vs `filter(in_stock__exact=True)` for the ORM.
@@ -93,7 +97,8 @@ never as failures and never reduce earned progress.
 ## Validator QA cases required before publish
 - Reference SQL, ORM and Mastery solutions pass on real MySQL 8.4 + Django 6.1.
 - Intentionally wrong cases fail: missing `WHERE`, ascending order, wrong
-  column set, out-of-range mastery rows, and a hardcoded result.
+  column set, a missing or exclusive mastery *lower* bound as well as an omitted
+  upper bound, and a hardcoded result.
 - Alternative valid implementations pass (multi-solution).
 - A deliberate syntax error returns a real MySQL / `ProgrammingError` message
   with `status: error`; a slow query/submission returns `timeout`.

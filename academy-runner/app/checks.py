@@ -12,7 +12,7 @@ Top-level statuses (kept distinct on purpose):
   passed | failed | error | timeout | system_error
 Top-level outcomes:
   success | validation_failed | syntax_error | deadline_exceeded |
-  runner_unavailable | empty_source | too_large
+  runner_unavailable | empty_source | too_large | invalid_graph
 
 Only ``validation_failed`` (and ``success``) are treated as real learner
 attempts for progress; ``system_error``/``timeout`` never count as a failure.
@@ -271,6 +271,21 @@ def system_error_payload(spec: Spec, message: str) -> dict[str, Any]:
     """Structured payload for an infrastructure failure (never a pass/fail)."""
     dummy = {"columns": [], "rows": [], "rowCount": 0, "durationMs": 0, "truncated": False}
     return _failure_payload(spec, dummy, outcome="runner_unavailable", message=message)
+
+
+def invalid_input_payload(spec: Spec, message: str) -> dict[str, Any]:
+    """Structured payload for a malformed submission (bad graph JSON, etc.).
+
+    This is a learner-side ``error`` (fixable input), distinct from a
+    ``system_error`` (infrastructure outage).
+    """
+    dummy = {"columns": [], "rows": [], "rowCount": 0, "durationMs": 0, "truncated": False}
+    return _failure_payload(spec, dummy, outcome="invalid_graph", message=message)
+
+
+def assemble_checks(spec: Spec, outcomes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Public wrapper over the criterion assembly shared by every engine."""
+    return _assemble_checks(spec, outcomes)
 
 
 def build_payload(

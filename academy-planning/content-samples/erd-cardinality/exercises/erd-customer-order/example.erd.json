@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "caption_fa": "نمونه‌ی تشریحی: هر مشتری چند سفارش دارد؛ هر سفارش دقیقاً متعلق به یک مشتری است.",
+  "entities": [
+    {
+      "id": "e_customers",
+      "name": "customers",
+      "note_fa": "مشتری؛ کلید اصلی id و ایمیل یکتای اجباری (UNIQUE NOT NULL).",
+      "position": { "x": 40, "y": 60 },
+      "attributes": [
+        { "id": "a_cust_id", "name": "id", "type": "INT", "nullable": false, "primaryKey": true, "unique": true },
+        { "id": "a_cust_name", "name": "full_name", "type": "VARCHAR(120)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "a_cust_email", "name": "email", "type": "VARCHAR(160)", "nullable": false, "primaryKey": false, "unique": true }
+      ]
+    },
+    {
+      "id": "e_orders",
+      "name": "orders",
+      "note_fa": "سفارش؛ کلید خارجی customer_id سمت «چند» و اجباری است (هر سفارش باید مشتری داشته باشد).",
+      "position": { "x": 420, "y": 40 },
+      "attributes": [
+        { "id": "a_order_id", "name": "id", "type": "INT", "nullable": false, "primaryKey": true, "unique": true },
+        { "id": "a_order_total", "name": "total", "type": "DECIMAL(12,2)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "a_order_customer", "name": "customer_id", "type": "INT", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r_customer_orders",
+      "fromEntityId": "e_customers",
+      "toEntityId": "e_orders",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "optionality": "mandatory",
+      "foreignKeyAttributeId": "a_order_customer",
+      "note_fa": "یک‌به‌چند: یک مشتری ↔ چند سفارش. سمت orders اجباری است چون customer_id نمی‌تواند NULL باشد."
+    }
+  ],
+  "notes": "معادل SQL: CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id). معادل Django: customer = models.ForeignKey(Customer, on_delete=models.PROTECT)."
+}

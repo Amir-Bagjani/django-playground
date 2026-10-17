@@ -2310,6 +2310,30 @@
     }
   ],
   "authored_lessons": {
+    "DB-03-002": {
+      "id": "DB-03-002",
+      "slug": "cardinality",
+      "title_fa": "Cardinality و Crow’s Foot",
+      "status": "approved",
+      "objectives": [
+        "بتواند رابطه یک‌به‌یک، یک‌به‌چند و چندبه‌چند را از سناریو استخراج کند.",
+        "بتواند کارتینالیتی و Optionality هر سمت رابطه را با نشانه‌گذاری Crow’s Foot بخواند و بنویسد.",
+        "بتواند سمت درست کلید خارجی را در رابطه یک‌به‌چند تشخیص دهد و در ERD مشخص کند.",
+        "بتواند معادل SQL و Django یک رابطه را از روی دیاگرام توضیح دهد."
+      ],
+      "references": [
+        {
+          "label": "MySQL Foreign Key Constraints",
+          "url": "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html"
+        },
+        {
+          "label": "Django ForeignKey Fields",
+          "url": "https://docs.djangoproject.com/en/6.1/ref/models/fields/#foreignkey"
+        }
+      ],
+      "estimated_minutes": 35,
+      "markdown": "# Cardinality و Crow’s Foot\n\n> **هدف:** بعد از این درس می‌توانی یک سناریوی کسب‌وکار را بخوانی، برای هر رابطه سمت «یک» و «چند» را تعیین کنی، اجباری یا اختیاری‌بودن هر سمت را مشخص کنی و همان تصمیم را روی ERD، در SQL و در Django پیاده کنی. طراحی دیاگرام را **خودت** انجام می‌دهی.\n\n## ۱. چرا کارتینالیتی مهم است؟\n\nاگر یک سفارش چند مشتری داشته باشد، شناسه‌ی هر مشتری باید کجا ذخیره شود؟ پاسخ این پرسش همان **Cardinality** (تعداد) و **Optionality** (اجباری/اختیاری) است. اگر این تصمیم پیش از کدنویسی روشن نباشد، ستون کلید خارجی جای اشتباه قرار می‌گیرد و داده تناقض‌دار می‌شود.\n\n## ۲. سه نوع رابطه\n\n- **یک‌به‌یک (1:1):** هر رکورد در دو جدول حداکثر به یک رکورد دیگر وصل است؛ مثل «کاربر ↔ پروفایل». معمولاً با یک کلید خارجی **UNIQUE** پیاده می‌شود.\n- **یک‌به‌چند (1:N):** یک رکورد در سمت «یک» به چند رکورد در سمت «چند» وصل می‌شود؛ مثل «مشتری ↔ سفارش‌ها». کلید خارجی **سمت «چند»** قرار می‌گیرد.\n- **چندبه‌چند (N:M):** دو طرف هر کدام می‌توانند چند رابطه داشته باشند؛ مثل «دانشجو ↔ درس». در مدل رابطه‌ای با **جدول واسط (junction table)** پیاده می‌شود.\n\n> قاعده‌ی طلایی: کلید خارجی همیشه در سمت «چند» است، چون در آن سمت هیچ‌وقت بیش از یک مقدار لازم نداریم.\n\n## ۳. خواندن Crow’s Foot\n\nدر نشانه‌گذاری Crow’s Foot سر هر رابطه با شکل‌های ساده نمایش داده می‌شود:\n\n| نشانه | معنا |\n|---|---|\n| خط عمودی (bar) | یکی (one) |\n| شاخه‌ی سه‌پر (crow’s foot) | چند (many) |\n| دایره‌ی توخالی | اختیاری (optional / صفر-یا-بیشتر) |\n| خط دوتایی | اجباری (mandatory / دقیقاً یک) |\n\n«دقیقاً یک» یعنی سمت اجباری، و «صفر یا بیشتر» یعنی سمت اختیاری. در مثالِ درس، سمت `orders` **دقیقاً یک** مشتری دارد (اجباری)، و سمت `customers` **صفر یا چند** سفارش دارد (اختیاری).\n\n## ۴. مثال تشریحی: مشتری و سفارش\n\nدیاگرام مثال (بخش Example در تمرین) را ببین. ساختار آن چنین است:\n\n- `customers(id PK, full_name, email UNIQUE NOT NULL)`\n- `orders(id PK, total, customer_id FK → customers.id, NOT NULL)`\n- رابطه: `customers` (one) ──── `orders` (many)، سمت orders اجباری.\n\nمعادل SQL (فقط برای مطالعه؛ در این تمرین SQL نمی‌نویسی):\n\n```sql\nCREATE TABLE customers (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  full_name VARCHAR(120) NOT NULL,\n  email VARCHAR(160) NOT NULL,\n  PRIMARY KEY (id),\n  UNIQUE KEY uq_customers_email (email)\n) ENGINE=InnoDB;\n\nCREATE TABLE orders (\n  id BIGINT NOT NULL AUTO_INCREMENT,\n  total DECIMAL(12,2) NOT NULL,\n  customer_id BIGINT NOT NULL,\n  PRIMARY KEY (id),\n  CONSTRAINT fk_orders_customer\n    FOREIGN KEY (customer_id) REFERENCES customers(id)\n) ENGINE=InnoDB;\n```\n\nمعادل Django:\n\n```python\nfrom django.db import models\n\nclass Customer(models.Model):\n    full_name = models.CharField(max_length=120)\n    email = models.EmailField(unique=True)\n\nclass Order(models.Model):\n    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)\n    total = models.DecimalField(max_digits=12, decimal_places=2)\n```\n\n`ForeignKey` سمت `Order` قرار دارد؛ یعنی سمت «چند». حالا جدول سفارش یک ستون `customer_id` دارد که نمی‌تواند NULL باشد — دقیقاً همان «اجباری» در دیاگرام.\n\n## ۵. سه خطای رایج\n\n**الف) گذاشتن کلید خارجی در سمت اشتباه:** اگر `orders` را در `customers` قرار دهی، برای هر مشتری باید چند شناسه سفارش ذخیره کنی که با مدل رابطه‌ای نمی‌سازد.\n\n**ب) حمل نکردن Optionality به Schema:** اگر رابطه اجباری است ولی ستون کلید خارجی `NULL` بپذیرد، دیتابیس سفارشِ بدون مشتری را قبول می‌کند؛ در حالی که قانون دامنه آن را ممنوع کرده.\n\n**ج) فراموش‌کردن یکتایی در کلید طبیعی:** ایمیل باید `UNIQUE` باشد، وگرنه دو مشتری با یک ایمیل ثبت می‌شوند.\n\n## ۶. تمرین\n\nدر بخش پایین، تمرین **ERD** همین درس را انجام بده: دو جدول بساز، ستون‌ها را با نوع و کلیدها تعریف کن، رابطه‌ی یک‌به‌چند را با کلید خارجی اجباری رسم کن و طراحی را با Check Solution بسنج. قبولیِ این تمرین درس را **Completed** می‌کند.\n\n> هیچ‌کدام از فایل‌های Starter پاسخ کامل را ندارند؛ معیارها را بخوان، خودت دیاگرام را بساز و در صورت شکست، Hint بعدی را درخواست بده.\n\n## منابع و مطالعه بیشتر\n\n- [MySQL Foreign Key Constraints](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)\n- [Django ForeignKey Fields](https://docs.djangoproject.com/en/6.1/ref/models/fields/#foreignkey)\n"
+    },
     "DB-00-008": {
       "id": "DB-00-008",
       "slug": "first-query",
@@ -2361,6 +2385,174 @@
     }
   },
   "lab_lessons": {
+    "DB-03-002": [
+      {
+        "id": "erd-customer-order",
+        "lesson_id": "DB-03-002",
+        "level": "practice",
+        "kind": "erd",
+        "required_for_completion": true,
+        "assessment_version": 1,
+        "title_fa": "تمرین ERD: از سناریو تا دیاگرام",
+        "instructions_markdown": "# تمرین ERD: از سناریو تا دیاگرام\n\nدر این تمرین به‌جای نوشتن SQL، خودِ **دیاگرام موجودیت–رابطه (ERD)** را می‌سازی. طراحی را با ابزار Designer انجام می‌دهی و با Check Solution می‌سنجی. ارزیابی روی **معنای** دیاگرام است، نه شکل یا محل جدول‌ها.\n\n## سناریوی واقعی\n\nیک فروشگاه اینترنتی می‌خواهد مشتری‌ها و سفارش‌ها را نگه دارد:\n\n1. هر **مشتری** دارای `id`، نام کامل (`full_name`) و ایمیل است. ایمیل مشتری باید **یکتا** باشد و **خالی نباشد**.\n2. هر **سفارش** دارای `id`، مبلغ کل (`total`) و ارجاع به مشتری است.\n3. **قانون دامنه:** هر سفارش **دقیقاً** به یک مشتری تعلق دارد؛ یک مشتری می‌تواند **صفر یا چند** سفارش داشته باشد.\n\n## خواسته\n\nدیاگرامی بساز که این سناریو را دقیق مدل کند:\n\n- دو جدول `customers` و `orders` بساز.\n- برای هر جدول یک کلید اصلی مشخص کن (ستون `id`).\n- ستون‌ها را با نوع مناسب اضافه کن: در `customers` ستون‌های `email` و `full_name`؛ در `orders` ستون `total`.\n- ستون `email` را **UNIQUE** و **بدون NULL** کن.\n- یک رابطه **یک‌به‌چند** بین `customers` و `orders` بساز، به‌طوری‌که سمت `orders` **اجباری** باشد (ستون کلید خارجی `customer_id` بدون NULL).\n- کلید خارجی را روی جدول `orders` تعریف کن و به `customers` اشاره بده.\n\n### نکته‌ی مهم درباره‌ی سمت کلید خارجی\n\nکلید خارجی همیشه در سمت «چند» (اینجا `orders`) قرار می‌گیرد؛ نه در سمت «یک» (`customers`). اگر ستون `customer_id` را در جدول `customers` بگذاری، مدل اشتباه است.\n\n## یادداشت طراحی (بازبینی دستی)\n\nدر کادر **Design notes** بنویس چرا کلید خارجی را سمت `orders` گذاشتی و چرا رابطه اجباری است. این یادداشت **خودکار نمره نمی‌گیرد** و فقط برای بازبینی دستی ثبت می‌شود.\n\n## چطور از Designer استفاده کنم؟\n\n- **Example:** دیاگرام تشریحی استاد را ببین (خواندنی). با کلیک روی هر جدول یا رابطه، جزئیات و معادل SQL/Django آن نمایش داده می‌شود.\n- **Designer:** جدول بساز، ستون اضافه کن، PK/FK را علامت بزن، و با کشیدن از دستگیره‌ی کنار جدول رابطه بساز. می‌توانی جای جدول‌ها را با کشیدن تغییر دهی.\n- **Reset:** فقط همین تمرین را به حالت اولیه برمی‌گرداند؛ پیشرفت قبلی و راهنماها پاک نمی‌شود.\n\n> طراحی مرجع در دسترس تو نیست؛ Check Solution فقط معیارهای ساختاری را می‌سنجد و چند طراحی معتبر متفاوت را می‌پذیرد.\n",
+        "starter": [
+          {
+            "name": "starter.erd.json",
+            "language": "json",
+            "content": "{\n  \"schema_version\": 1,\n  \"entities\": [],\n  \"relationships\": [],\n  \"notes\": \"\"\n}\n"
+          }
+        ],
+        "example_graph": {
+          "schema_version": 1,
+          "caption_fa": "نمونه‌ی تشریحی: هر مشتری چند سفارش دارد؛ هر سفارش دقیقاً متعلق به یک مشتری است.",
+          "entities": [
+            {
+              "id": "e_customers",
+              "name": "customers",
+              "note_fa": "مشتری؛ کلید اصلی id و ایمیل یکتای اجباری (UNIQUE NOT NULL).",
+              "position": {
+                "x": 40,
+                "y": 60
+              },
+              "attributes": [
+                {
+                  "id": "a_cust_id",
+                  "name": "id",
+                  "type": "INT",
+                  "nullable": false,
+                  "primaryKey": true,
+                  "unique": true
+                },
+                {
+                  "id": "a_cust_name",
+                  "name": "full_name",
+                  "type": "VARCHAR(120)",
+                  "nullable": false,
+                  "primaryKey": false,
+                  "unique": false
+                },
+                {
+                  "id": "a_cust_email",
+                  "name": "email",
+                  "type": "VARCHAR(160)",
+                  "nullable": false,
+                  "primaryKey": false,
+                  "unique": true
+                }
+              ]
+            },
+            {
+              "id": "e_orders",
+              "name": "orders",
+              "note_fa": "سفارش؛ کلید خارجی customer_id سمت «چند» و اجباری است (هر سفارش باید مشتری داشته باشد).",
+              "position": {
+                "x": 420,
+                "y": 40
+              },
+              "attributes": [
+                {
+                  "id": "a_order_id",
+                  "name": "id",
+                  "type": "INT",
+                  "nullable": false,
+                  "primaryKey": true,
+                  "unique": true
+                },
+                {
+                  "id": "a_order_total",
+                  "name": "total",
+                  "type": "DECIMAL(12,2)",
+                  "nullable": false,
+                  "primaryKey": false,
+                  "unique": false
+                },
+                {
+                  "id": "a_order_customer",
+                  "name": "customer_id",
+                  "type": "INT",
+                  "nullable": false,
+                  "primaryKey": false,
+                  "unique": false
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "r_customer_orders",
+              "fromEntityId": "e_customers",
+              "toEntityId": "e_orders",
+              "fromCardinality": "one",
+              "toCardinality": "many",
+              "optionality": "mandatory",
+              "foreignKeyAttributeId": "a_order_customer",
+              "note_fa": "یک‌به‌چند: یک مشتری ↔ چند سفارش. سمت orders اجباری است چون customer_id نمی‌تواند NULL باشد."
+            }
+          ],
+          "notes": "معادل SQL: CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id). معادل Django: customer = models.ForeignKey(Customer, on_delete=models.PROTECT)."
+        },
+        "criteria": [
+          {
+            "id": "required-entities",
+            "description_fa": "دو جدول لازم customers و orders در طراحی وجود دارند (نام‌ها می‌توانند مفرد/جمع باشند).",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "required-attributes",
+            "description_fa": "ستون‌های لازم با نوع درست وجود دارند: customers(id, email, full_name) و orders(id, total, customer_id).",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "primary-keys",
+            "description_fa": "هر جدول دقیقاً یک کلید اصلی دارد (ستون id).",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "unique-constraint",
+            "description_fa": "ستون customers.email هم UNIQUE و هم بدون NULL تعریف شده است.",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "relationship-cardinality",
+            "description_fa": "رابطه یک‌به‌چند است و سمت سفارش اجباری است (هر سفارش باید مشتری داشته باشد).",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "foreign-key",
+            "description_fa": "کلید خارجی روی جدول orders (ستون customer_id) تعریف شده و به customers اشاره می‌کند.",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "referential-integrity",
+            "description_fa": "هیچ ارجاع نامعتبر یا کلید خارجی بدون ستون وجود ندارد.",
+            "visibility": "public",
+            "evaluation": "auto",
+            "rubric_fa": null
+          },
+          {
+            "id": "design-rationale",
+            "description_fa": "دلیل انتخاب سمت کلید خارجی و اجباری‌بودن رابطه در یادداشت طراحی توضیح داده می‌شود (بازبینی دستی).",
+            "visibility": "public",
+            "evaluation": "manual",
+            "rubric_fa": "در یادداشت طراحی کوتاه توضیح بده چرا کلید خارجی سمت orders قرار می‌گیرد و چرا این رابطه اجباری است. این معیار به‌صورت دستی بررسی می‌شود، خودکار نمره نمی‌گیرد و در قبولی نقش ندارد."
+          }
+        ],
+        "hint_count": 3,
+        "time_limit_seconds": null
+      }
+    ],
     "DB-00-008": [
       {
         "id": "first-query-sql",
@@ -2378,6 +2570,7 @@
             "content": "-- جدول products با ستون‌های id، name، price و in_stock در اختیار توست.\n-- TODO: محصولات موجود (in_stock = 1) را فقط با ستون‌های name و price،\n--       به ترتیب نزولی price برگردان. (پاسخ کامل از قبل نوشته نشده است.)\n"
           }
         ],
+        "example_graph": null,
         "criteria": [
           {
             "id": "select-executes",
@@ -2427,6 +2620,7 @@
             "content": "# مدل Product با فیلدهای name، price و in_stock از قبل در محیط بارگذاری شده است.\n# TODO: با QuerySet محصولات موجود (in_stock=True) را انتخاب کن،\n#       فقط فیلدهای name و price را بگیر، بر اساس price نزولی مرتب کن،\n#       و نتیجه را در متغیر result بگذار. (پاسخ کامل از قبل نوشته نشده است.)\n\nresult = None\n"
           }
         ],
+        "example_graph": null,
         "criteria": [
           {
             "id": "queryset-executes",
@@ -2468,7 +2662,7 @@
         "required_for_completion": false,
         "assessment_version": 1,
         "title_fa": "تمرین Mastery: سه تصمیم، یک کوئری",
-        "instructions_markdown": "# تمرین Mastery: سه تصمیم، یک کوئری\n\nاین چالش **مستقل** است: تمرین‌های قبلی روی جدول `products` بودند، ولی اینجا روی جدول `books` با ستون‌های `id`، `title`، `price` و `published` کار می‌کنی. پاسخ در تمرین‌های قبلی وجود ندارد و باید خودت کوئری را بسازی.\n\n## خواسته\n\nیک دستور `SELECT` بنویس که:\n\n1. فقط کتاب‌های **منتشرشده** (`published = 1`) را برگرداند.\n2. فقط کتاب‌هایی که قیمتشان **بین ۱۰ و ۵۰** است، **شامل خود دو سر بازه** (یعنی `price >= 10 AND price <= 50`).\n3. فقط دو ستون `title` و `price` را برگرداند.\n4. نتیجه را بر اساس `price` به‌صورت **نزولی** مرتب کند.\n5. فقط **۳ کتاب گران‌تر** را نشان دهد.\n\n## یادداشت مهندسی (بازبینی دستی)\n\nبالای کوئری، در یک کامنت کوتاه توضیح بده چرا این بازه و این `LIMIT` را انتخاب کردی و ترتیب نزولی چه اثری روی نتیجه دارد. این بخش **خودکار نمره نمی‌گیرد** و فقط برای بازبینی دستی ثبت می‌شود؛ اگر ننویسی هم قبولی خودکار تحت تأثیر قرار نمی‌گیرد، اما نوشتنش بخشی از هدف این چالش است.\n\n**قبولی:** کوئری روی همان جدول واقعی `books` اجرا می‌شود و نتیجه باید دقیقاً همان سطرها، ستون‌ها و ترتیب را بدهد. مقدار ثابت و از پیش نوشته‌شده قبول نیست.\n\n> راهنماها در این چالش عمداً **کمتر** از تمرین‌های مقدماتی است؛ این چالش برای سنجش حل مستقل طراحی شده است.\n",
+        "instructions_markdown": "# تمرین Mastery: سه تصمیم، یک کوئری\n\nاین چالش **مستقل** است: تمرین‌های قبلی روی جدول `products` بودند، ولی اینجا روی جدول `books` با ستون‌های `id`، `title`، `price` و `published` کار می‌کنی. پاسخ در تمرین‌های قبلی وجود ندارد و باید خودت کوئری را بسازی.\n\n## خواسته\n\nیک دستور `SELECT` بنویس که:\n\n1. فقط کتاب‌های **منتشرشده** (`published = 1`) را برگرداند.\n2. فقط کتاب‌هایی که قیمتشان **بین ۱۰ و ۵۰** است، **شامل خود دو سر بازه** (یعنی `price >= 10 AND price <= 50`).\n3. فقط دو ستون `title` و `price` را برگرداند.\n4. نتیجه را بر اساس `price` به‌صورت **نزولی** مرتب کند.\n5. فقط **تا ۳ کتاب گران‌تر** (top 3، یعنی حداکثر ۳ ردیف) را نشان دهد.\n\n> توجه: تعداد کتاب‌هایی که هم‌زمان منتشرشده‌اند و در بازه‌ی ۱۰ تا ۵۰ قرار می‌گیرند، ممکن است کمتر از ۳ باشد؛ در آن صورت همان تعداد کمتر درست است و باید `LIMIT 3` را هم بنویسی.\n\n## یادداشت مهندسی (بازبینی دستی)\n\nبالای کوئری، در یک کامنت کوتاه توضیح بده چرا این بازه و این `LIMIT` را انتخاب کردی و ترتیب نزولی چه اثری روی نتیجه دارد. این بخش **خودکار نمره نمی‌گیرد** و فقط برای بازبینی دستی ثبت می‌شود؛ اگر ننویسی هم قبولی خودکار تحت تأثیر قرار نمی‌گیرد، اما نوشتنش بخشی از هدف این چالش است.\n\n**قبولی:** کوئری روی همان جدول واقعی `books` اجرا می‌شود و نتیجه باید دقیقاً همان سطرها، ستون‌ها و ترتیب را بدهد. مقدار ثابت و از پیش نوشته‌شده قبول نیست.\n\n> راهنماها در این چالش عمداً **کمتر** از تمرین‌های مقدماتی است؛ این چالش برای سنجش حل مستقل طراحی شده است.\n",
         "starter": [
           {
             "name": "starter.sql",
@@ -2476,6 +2670,7 @@
             "content": "-- جدول books با ستون‌های id، title، price و published در اختیار توست.\n-- این چالش مستقل روی جدول دیگری (books) است و پاسخش در تمرین‌های قبلی نیست.\n-- TODO: کتاب‌های منتشرشده با قیمت بین ۱۰ و ۵۰ (شامل دو سر بازه) را فقط با\n--       ستون‌های title و price، به ترتیب نزولی price، حداکثر ۳ ردیف برگردان.\n--       (پاسخ کامل از قبل نوشته نشده است.)\n"
           }
         ],
+        "example_graph": null,
         "criteria": [
           {
             "id": "query-executes",
@@ -2521,6 +2716,6 @@
   "totals": {
     "modules": 16,
     "lessons": 176,
-    "authored": 2
+    "authored": 3
   }
 }

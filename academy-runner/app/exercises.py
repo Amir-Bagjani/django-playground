@@ -30,9 +30,9 @@ class Spec:
     lesson_id: str
     schema: str
     user: str
-    kind: str  # "sql" | "django-orm"
+    kind: str  # "sql" | "django-orm" | "erd"
     level: str  # "practice" | "problem-solving" | "mastery"
-    dataset: str  # "products" | "books"
+    dataset: str  # "products" | "books" | "" (ERD has no dataset)
     required_for_completion: bool
     validator_id: str
     validator_version: int
@@ -81,6 +81,20 @@ DECLARED: dict[str, Spec] = {
         # Mastery exposes fewer hints than the introductory levels.
         hint_cap=config.MASTERY_MAX_HINTS,
     ),
+    # First ERD exercise (PRD-04). ERD designs carry no MySQL dataset: the graph
+    # document itself is the submission and validation is purely structural.
+    "erd-customer-order": Spec(
+        id="erd-customer-order",
+        lesson_id="DB-03-002",
+        schema="",
+        user="",
+        kind="erd",
+        level="practice",
+        dataset="",
+        required_for_completion=True,
+        validator_id="erd-schema-validator",
+        validator_version=1,
+    ),
 }
 
 
@@ -94,6 +108,14 @@ def _first_heading(markdown: str) -> str:
         if stripped.startswith("#"):
             return stripped.lstrip("#").strip()
     return ""
+
+
+def _language(filename: str) -> str:
+    if filename.endswith(".sql"):
+        return "sql"
+    if filename.endswith(".json"):
+        return "json"
+    return "python"
 
 
 def _manifest_issue(spec: Spec, manifest: dict) -> str | None:
@@ -147,7 +169,7 @@ def _load() -> tuple[dict[str, _Authored], list[str]]:
             starters = [
                 {
                     "name": name,
-                    "language": "sql" if name.endswith(".sql") else "python",
+                    "language": _language(name),
                     "content": _read(directory / name),
                 }
                 for name in manifest.get("starter_files", [])

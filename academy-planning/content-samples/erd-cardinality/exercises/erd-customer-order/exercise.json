@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "erd-customer-order",
+  "lesson_id": "DB-03-002",
+  "version": 1,
+  "level": "practice",
+  "kind": "erd",
+  "required_for_completion": true,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.erd.json"
+  ],
+  "example_file": "example.erd.json",
+  "validator": {
+    "id": "erd-schema-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "required-entities",
+      "description_fa": "دو جدول لازم customers و orders در طراحی وجود دارند (نام‌ها می‌توانند مفرد/جمع باشند).",
+      "visibility": "public"
+    },
+    {
+      "id": "required-attributes",
+      "description_fa": "ستون‌های لازم با نوع درست وجود دارند: customers(id, email, full_name) و orders(id, total, customer_id).",
+      "visibility": "public"
+    },
+    {
+      "id": "primary-keys",
+      "description_fa": "هر جدول دقیقاً یک کلید اصلی دارد (ستون id).",
+      "visibility": "public"
+    },
+    {
+      "id": "unique-constraint",
+      "description_fa": "ستون customers.email هم UNIQUE و هم بدون NULL تعریف شده است.",
+      "visibility": "public"
+    },
+    {
+      "id": "relationship-cardinality",
+      "description_fa": "رابطه یک‌به‌چند است و سمت سفارش اجباری است (هر سفارش باید مشتری داشته باشد).",
+      "visibility": "public"
+    },
+    {
+      "id": "foreign-key",
+      "description_fa": "کلید خارجی روی جدول orders (ستون customer_id) تعریف شده و به customers اشاره می‌کند.",
+      "visibility": "public"
+    },
+    {
+      "id": "referential-integrity",
+      "description_fa": "هیچ ارجاع نامعتبر یا کلید خارجی بدون ستون وجود ندارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "design-rationale",
+      "description_fa": "دلیل انتخاب سمت کلید خارجی و اجباری‌بودن رابطه در یادداشت طراحی توضیح داده می‌شود (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "در یادداشت طراحی کوتاه توضیح بده چرا کلید خارجی سمت orders قرار می‌گیرد و چرا این رابطه اجباری است. این معیار به‌صورت دستی بررسی می‌شود، خودکار نمره نمی‌گیرد و در قبولی نقش ندارد."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "اول دو جدول را بساز: customers و orders. برای هرکدام یک ستون id به‌عنوان Primary Key بگذار."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "کلید خارجی همیشه سمت «چند» قرار می‌گیرد: orders.customer_id. چون هر سفارش باید مشتری داشته باشد، این ستون را NOT NULL بگذار و رابطه را «یک‌به‌چند / اجباری» تعریف کن."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای اینکه ایمیل مشتری تکراری نشود، ستون email را UNIQUE و بدون NULL تعریف کن."
+    }
+  ]
+}

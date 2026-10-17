@@ -49,6 +49,45 @@ export interface LabHint {
   text_fa: string;
 }
 
+export type ErdCardinality = "one" | "many";
+export type ErdOptionality = "mandatory" | "optional";
+
+export interface ErdAttribute {
+  id: string;
+  name: string;
+  type: string;
+  nullable: boolean;
+  primaryKey: boolean;
+  unique: boolean;
+}
+
+export interface ErdEntity {
+  id: string;
+  name: string;
+  attributes: ErdAttribute[];
+  position?: { x: number; y: number };
+  note_fa?: string;
+}
+
+export interface ErdRelationship {
+  id: string;
+  fromEntityId: string;
+  toEntityId: string;
+  fromCardinality: ErdCardinality;
+  toCardinality: ErdCardinality;
+  optionality: ErdOptionality;
+  foreignKeyAttributeId?: string | null;
+  note_fa?: string;
+}
+
+export interface ErdGraph {
+  schema_version: 1;
+  entities: ErdEntity[];
+  relationships: ErdRelationship[];
+  notes?: string;
+  caption_fa?: string;
+}
+
 export interface LabExercise {
   id: string;
   lesson_id: string;
@@ -59,6 +98,7 @@ export interface LabExercise {
   title_fa: string;
   instructions_markdown: string;
   starter: LabStarterFile[];
+  example_graph?: ErdGraph | null;
   criteria: LabCriterion[];
   hint_count: number;
   time_limit_seconds?: number | null;

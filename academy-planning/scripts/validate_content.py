@@ -218,7 +218,10 @@ def main():
             if obj.get("lesson_id") != lid:
                 fail(f"{manifest}: wrong lesson_id")
             edir = manifest.parent
-            for fname in [obj.get("instructions_file", ""), *obj.get("starter_files", [])]:
+            relative_files = [obj.get("instructions_file", ""), *obj.get("starter_files", [])]
+            if obj.get("example_file"):
+                relative_files.append(obj["example_file"])
+            for fname in relative_files:
                 target = safe_relative(edir, fname)
                 if target is None or not target.is_file():
                     fail(f"{manifest}: unsafe or missing file {fname}")

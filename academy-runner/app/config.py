@@ -56,4 +56,8 @@ ORM_MAX_ROWS = _int("ACADEMY_ORM_MAX_ROWS", 500)
 # the introductory levels, regardless of how many are authored.
 MASTERY_MAX_HINTS = _int("ACADEMY_MASTERY_MAX_HINTS", 1)
 
+# Upper bound for a persisted ERD draft (graph JSON) so a malformed client can
+# not grow the progress store without limit.
+DRAFT_MAX_BYTES = _int("ACADEMY_DRAFT_MAX_BYTES", 64_000)
+
 CONTROL_PORT = _int("ACADEMY_CONTROL_PORT", 8200)

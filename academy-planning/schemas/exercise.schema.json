@@ -64,6 +64,11 @@
         "minLength": 1
       }
     },
+    "example_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional instructor-authored, learner-visible example (e.g. an ERD graph for the read/inspect viewer). Never a reference solution."
+    },
     "validator": {
       "type": "object",
       "additionalProperties": false,

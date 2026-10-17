@@ -11,6 +11,7 @@ import {
   type AcademyLesson,
 } from "@/lib/academy";
 
+import { ErdLab } from "../../erd/erd-lab";
 import { LessonLab } from "../../lab/lesson-lab";
 import { StatusBadge } from "../../badge";
 import { LessonProgressPanel, ProgressProvider } from "../../progress";
@@ -47,7 +48,9 @@ export default async function LessonPage({ params }: PageProps) {
   const { lesson, module, authored } = location;
   const authoredContent = isAuthored(location) ? authored : undefined;
   const status = authoredContent?.status ?? lesson.status;
-  const labExercises = getLabExercises(lesson.id);
+  const allLabExercises = getLabExercises(lesson.id) ?? [];
+  const labExercises = allLabExercises.filter((item) => item.kind !== "erd");
+  const erdExercises = allLabExercises.filter((item) => item.kind === "erd");
 
   const index = flatIndex.get(lesson.id) ?? 0;
   const prev = index > 0 ? flatLessons[index - 1] : undefined;
@@ -140,10 +143,13 @@ export default async function LessonPage({ params }: PageProps) {
           </div>
         )}
 
-        {labExercises && labExercises.length > 0 ? (
+        {labExercises.length > 0 || erdExercises.length > 0 ? (
           <ProgressProvider>
             <LessonProgressPanel lessonId={lesson.id} />
-            <LessonLab exercises={labExercises} />
+            {labExercises.length > 0 ? <LessonLab exercises={labExercises} /> : null}
+            {erdExercises.map((exercise) => (
+              <ErdLab key={exercise.id} exercise={exercise} />
+            ))}
           </ProgressProvider>
         ) : null}
       </div>

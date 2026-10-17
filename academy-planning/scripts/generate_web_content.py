@@ -99,6 +99,14 @@ def _first_heading(markdown: str) -> str:
     return ""
 
 
+def _language(filename: str) -> str:
+    if filename.endswith(".sql"):
+        return "sql"
+    if filename.endswith(".json"):
+        return "json"
+    return "python"
+
+
 def load_lab_exercises(authored: dict) -> dict[str, list]:
     """Embed public metadata for exercises of approved, authored lessons.
 
@@ -132,9 +140,16 @@ def load_lab_exercises(authored: dict) -> dict[str, list]:
                 continue
             starters.append({
                 "name": fname,
-                "language": "sql" if fname.endswith(".sql") else "python",
+                "language": _language(fname),
                 "content": content,
             })
+        example_graph = None
+        example_file = obj.get("example_file")
+        if example_file:
+            try:
+                example_graph = json.loads((edir / example_file).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                fail(f"{manifest}: cannot read example_file {example_file}: {exc}")
         labs.setdefault(lid, []).append({
             "id": obj.get("id"),
             "lesson_id": lid,
@@ -145,6 +160,7 @@ def load_lab_exercises(authored: dict) -> dict[str, list]:
             "title_fa": _first_heading(instructions),
             "instructions_markdown": instructions,
             "starter": starters,
+            "example_graph": example_graph,
             "criteria": [
                 {
                     "id": c.get("id"),

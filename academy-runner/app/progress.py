@@ -61,6 +61,13 @@ _DDL = (
         PRIMARY KEY (exercise_id, assessment_version)
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS drafts (
+        exercise_id TEXT PRIMARY KEY,
+        graph TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
 )
 
 
@@ -149,6 +156,45 @@ def record_pass(
             "assessment_version, passed_at) VALUES (?, ?, ?, ?, ?)",
             (exercise_id, lesson_id, level, assessment_version, _now()),
         )
+        connection.commit()
+
+
+def save_draft(*, exercise_id: str, graph: str) -> None:
+    """Persist the learner's in-progress ERD draft (best-effort auto-save).
+
+    Drafts live in the same app-owned store as progress but are *separate* from
+    passes: Reset clears a draft and never touches earned progress.
+    """
+    with _LOCK, _connect() as connection:
+        _ensure_schema(connection)
+        connection.execute(
+            "INSERT INTO drafts (exercise_id, graph, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(exercise_id) DO UPDATE SET graph = excluded.graph, "
+            "updated_at = excluded.updated_at",
+            (exercise_id, graph, _now()),
+        )
+        connection.commit()
+
+
+def get_draft(*, exercise_id: str) -> dict[str, Any] | None:
+    with _LOCK, _connect() as connection:
+        _ensure_schema(connection)
+        row = connection.execute(
+            "SELECT graph, updated_at FROM drafts WHERE exercise_id = ?", (exercise_id,)
+        ).fetchone()
+    if row is None:
+        return None
+    try:
+        graph = json.loads(row["graph"])
+    except json.JSONDecodeError:
+        graph = None
+    return {"graph": graph, "updatedAt": row["updated_at"]}
+
+
+def clear_draft(*, exercise_id: str) -> None:
+    with _LOCK, _connect() as connection:
+        _ensure_schema(connection)
+        connection.execute("DELETE FROM drafts WHERE exercise_id = ?", (exercise_id,))
         connection.commit()
 
 

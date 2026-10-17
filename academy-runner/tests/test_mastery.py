@@ -34,6 +34,27 @@ def test_mastery_missing_published_filter_is_rejected(mastery_spec):
     assert statuses(result)["in-range-ordered-top3"] == "failed"
 
 
+def test_mastery_missing_lower_bound_is_rejected(mastery_spec):
+    # In-range published rows are only the two boundary rows, so dropping the
+    # lower bound pulls the below-range "Sale Copy" (9.00) into the window.
+    result = sql_engine.check(
+        mastery_spec,
+        "SELECT title, price FROM books WHERE published = 1 AND price <= 50 ORDER BY price DESC LIMIT 3",
+    )
+    assert result["passed"] is False
+    assert statuses(result)["in-range-ordered-top3"] == "failed"
+
+
+def test_mastery_exclusive_lower_bound_is_rejected(mastery_spec):
+    # An exclusive lower bound drops the boundary row "Cheap Notes" (10.00).
+    result = sql_engine.check(
+        mastery_spec,
+        "SELECT title, price FROM books WHERE published = 1 AND price > 10 AND price <= 50 ORDER BY price DESC LIMIT 3",
+    )
+    assert result["passed"] is False
+    assert statuses(result)["in-range-ordered-top3"] == "failed"
+
+
 def test_mastery_wrong_range_is_rejected(mastery_spec):
     # Dropping the upper bound lets the out-of-range 60.00 row in.
     result = sql_engine.check(
@@ -47,8 +68,7 @@ def test_mastery_wrong_range_is_rejected(mastery_spec):
 def test_mastery_hardcoded_result_is_rejected(mastery_spec):
     hardcoded = (
         "SELECT 'Pinnacle' AS title, '50.00' AS price "
-        "UNION ALL SELECT 'Mid Guide', '40.00' "
-        "UNION ALL SELECT 'Extra Read', '35.00'"
+        "UNION ALL SELECT 'Cheap Notes', '10.00'"
     )
     result = sql_engine.check(mastery_spec, hardcoded)
     assert result["passed"] is False

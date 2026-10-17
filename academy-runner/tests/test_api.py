@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 SQL_SOLUTION = "SELECT name, price FROM products WHERE in_stock = 1 ORDER BY price DESC"
-EXERCISE_IDS = {"first-query-sql", "first-query-orm", "first-query-mastery"}
+EXERCISE_IDS = {"first-query-sql", "first-query-orm", "first-query-mastery", "erd-customer-order"}
 
 
 def test_health_reports_mysql_ready_and_clean_registry():
@@ -39,8 +39,14 @@ def test_exercises_expose_only_public_metadata():
             assert isinstance(exercise["hint_count"], int)
             assert exercise["assessment_version"] == 1
             for starter in exercise["starter"]:
-                # Starters are skeletons, never a completed answer.
-                assert "TODO" in starter["content"]
+                if starter["language"] == "json":
+                    # ERD starter is a skeleton graph, never a finished design.
+                    graph = json.loads(starter["content"])
+                    assert graph["entities"] == []
+                    assert graph["relationships"] == []
+                else:
+                    # Code starters are skeletons, never a completed answer.
+                    assert "TODO" in starter["content"]
 
 
 def test_sql_execute_check_and_reset_via_api():

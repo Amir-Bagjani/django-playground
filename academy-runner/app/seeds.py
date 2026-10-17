@@ -101,33 +101,41 @@ BOOKS = Dataset(
     ddl=BOOKS_DDL,
     insert_columns=("title", "price", "published"),
     rows=[
-        ("Pinnacle", Decimal("50.00"), 1),
-        ("Mid Guide", Decimal("40.00"), 1),
-        ("Extra Read", Decimal("35.00"), 1),
-        ("Learning SQL", Decimal("29.90"), 1),
-        ("Cheap Notes", Decimal("10.00"), 1),
+        # In-range published rows are deliberately only the two *boundary* rows.
+        # The mastery window is an ordered top-3, so a range bound is only
+        # observable when the window can reach past it. With fewer than three
+        # in-range rows the descending window extends below the lower bound, so
+        # dropping `price >= 10` (or writing an exclusive `price > 10`) really
+        # changes the result instead of silently returning the same rows.
+        ("Pinnacle", Decimal("50.00"), 1),        # upper boundary, in range
+        ("Cheap Notes", Decimal("10.00"), 1),     # lower boundary, in range
+        # Below the lower bound: enter the window only if the lower bound is
+        # missing or wrong, which is what makes it verifiable.
+        ("Sale Copy", Decimal("9.00"), 1),
+        ("Bargain Bin", Decimal("5.00"), 1),
+        # Above the upper bound: enter the window only if the upper bound is
+        # missing or wrong.
         ("Too Dear", Decimal("60.00"), 1),
-        # Unpublished but in range and expensive: omitting the published filter
-        # wrongly promotes this row into the descending top 3.
+        # Unpublished but in range: omitting the published filter wrongly
+        # promotes these into the ordered window.
         ("Draft Best", Decimal("45.00"), 0),
-        ("Old Draft", Decimal("9.00"), 0),
         ("Other Draft", Decimal("25.00"), 0),
+        ("Old Draft", Decimal("9.00"), 0),
     ],
-    # Hidden probe: published, in range (10..50), and expensive enough to enter
-    # the descending top-3 while preserving a deterministic position.
+    # Hidden probe: published and in range, so a hardcoded literal result cannot
+    # match once it is inserted; it also sits between the two boundaries.
     sentinel_row=("zz-probe", Decimal("49.99"), 1),
     name_column="title",
     sentinel_name="zz-probe",
     result_columns=["title", "price"],
     expected_rows=[
         ["Pinnacle", "50.00"],
-        ["Mid Guide", "40.00"],
-        ["Extra Read", "35.00"],
+        ["Cheap Notes", "10.00"],
     ],
     expected_rows_with_sentinel=[
         ["Pinnacle", "50.00"],
         ["zz-probe", "49.99"],
-        ["Mid Guide", "40.00"],
+        ["Cheap Notes", "10.00"],
     ],
 )
 
@@ -136,6 +144,9 @@ DATASETS: dict[str, Dataset] = {"products": PRODUCTS, "books": BOOKS}
 
 
 def dataset_for(spec: Spec) -> Dataset:
+    # ERD exercises submit a graph document, not SQL, so they own no dataset.
+    if spec.kind == "erd":
+        raise ValueError(f"exercise '{spec.id}' is an ERD exercise and has no SQL dataset")
     return DATASETS[spec.dataset]
 
 
