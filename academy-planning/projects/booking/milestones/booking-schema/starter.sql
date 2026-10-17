@@ -1,0 +1,12 @@
+-- مرحله‌ی ۲: ساخت Schema پروژه‌ی رزرو
+-- این کد را کامل کن. جدول اتاق‌ها را اول بساز، بعد جدول رزروها.
+--
+-- TODO: جدول rooms را با کلید اصلی و ستون‌های شماره‌ی اتاق و ظرفیت بساز.
+-- TODO: جدول bookings را با کلید اصلی، نام مهمان، تاریخ ورود/خروج و room_id بساز.
+-- TODO: روی room_id یک FOREIGN KEY واقعی به rooms(id) با NOT NULL تعریف کن.
+-- TODO: حداقل دو اتاق و دو رزرو نمونه درج کن.
+
+-- CREATE TABLE rooms ( ... );
+-- CREATE TABLE bookings ( ... );
+-- INSERT INTO rooms ...;
+-- INSERT INTO bookings ...;

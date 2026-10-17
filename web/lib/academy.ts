@@ -115,6 +115,67 @@ export interface AuthoredLesson {
   markdown: string;
 }
 
+export type ProjectStageKind = "erd" | "sql" | "orm" | "";
+
+export interface ProjectMilestone {
+  id: string;
+  title_fa: string;
+  description_fa: string;
+  objectives_fa: string[];
+  acceptance_criteria_fa: string[];
+  depends_on: string[];
+  checkpoint_id: string;
+  stage_kind: ProjectStageKind;
+  executable: boolean;
+  assessment_version: number;
+  criteria: LabCriterion[];
+  hint_count: number;
+  instructions_markdown: string;
+  title: string;
+  starter: LabStarterFile[];
+  example_graph?: ErdGraph | null;
+}
+
+export interface AcademyProject {
+  id: string;
+  title_fa: string;
+  status: LessonStatus;
+  domain: string;
+  detail_level: string;
+  description_fa: string;
+  milestones: ProjectMilestone[];
+  executable_milestones: string[];
+}
+
+export interface ProjectWorkspaceState {
+  erd?: ErdGraph | null;
+  sql?: string;
+  orm?: string;
+  notes?: string;
+}
+
+export interface ProjectMilestoneProgress {
+  milestoneId: string;
+  passed: boolean;
+  passedAssessmentVersion: number | null;
+  currentAssessmentVersion: number;
+  legacy: boolean;
+  available: boolean;
+  dependencies: string[];
+  checkpointId: string;
+  checkpointAvailable: boolean;
+}
+
+export interface ProjectProgress {
+  projectId: string;
+  milestones: Record<string, ProjectMilestoneProgress>;
+  totals: {
+    executableMilestones: number;
+    passedMilestones: number;
+    checkpoints: number;
+  };
+}
+
 interface AcademyContent {
   source: string;
   course: {
@@ -130,13 +191,26 @@ interface AcademyContent {
   modules: AcademyModule[];
   authored_lessons: Record<string, AuthoredLesson>;
   lab_lessons: Record<string, LabExercise[]>;
-  totals: { modules: number; lessons: number; authored: number };
+  projects?: AcademyProject[];
+  totals: { modules: number; lessons: number; authored: number; projects?: number };
 }
 
 export const academy = content as AcademyContent;
 export const academyModules = academy.modules;
 export const authoredLessons = academy.authored_lessons;
 export const labLessons = academy.lab_lessons;
+export const academyProjects: AcademyProject[] = academy.projects ?? [];
+
+export function getProject(projectId: string): AcademyProject | undefined {
+  return academyProjects.find((project) => project.id === projectId);
+}
+
+export function getMilestone(
+  project: AcademyProject,
+  milestoneId: string
+): ProjectMilestone | undefined {
+  return project.milestones.find((milestone) => milestone.id === milestoneId);
+}
 
 export function getLabExercises(lessonId: string): LabExercise[] | undefined {
   return labLessons[lessonId];

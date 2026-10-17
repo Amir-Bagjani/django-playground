@@ -19,6 +19,10 @@ def _int(name: str, default: int) -> int:
 # Mounted read-only authored content (content-samples) with exercise manifests.
 CONTENT_DIR = Path(os.environ.get("ACADEMY_CONTENT_DIR", "/content"))
 
+# Mounted read-only project content (project manifests + authored milestone
+# files). Content-driven: adding a project only adds files here, not new routes.
+PROJECTS_DIR = Path(os.environ.get("ACADEMY_PROJECTS_DIR", "/projects"))
+
 # Durable, app-owned progress store. Deliberately a separate SQLite file on its
 # own volume: learner progress must survive exercise Reset/Restart and must not
 # depend on the disposable MySQL exercise schemas.
@@ -59,5 +63,16 @@ MASTERY_MAX_HINTS = _int("ACADEMY_MASTERY_MAX_HINTS", 1)
 # Upper bound for a persisted ERD draft (graph JSON) so a malformed client can
 # not grow the progress store without limit.
 DRAFT_MAX_BYTES = _int("ACADEMY_DRAFT_MAX_BYTES", 64_000)
+
+# --- progressive projects (PRD-05) ------------------------------------------
+# Learner project SQL (DDL + sample inserts) and ORM model submissions are
+# capped like exercises but allowed to be larger (multi-statement scripts).
+PROJECT_SQL_MAX_SOURCE_BYTES = _int("ACADEMY_PROJECT_SQL_MAX_BYTES", 40_000)
+PROJECT_SQL_TIMEOUT_SECONDS = _int("ACADEMY_PROJECT_SQL_TIMEOUT_SECONDS", 12)
+PROJECT_ORM_MAX_SOURCE_BYTES = _int("ACADEMY_PROJECT_ORM_MAX_BYTES", 60_000)
+PROJECT_ORM_TIMEOUT_SECONDS = _int("ACADEMY_PROJECT_ORM_TIMEOUT_SECONDS", 30)
+# Upper bound for a serialized project workspace / checkpoint snapshot so a
+# malformed client can not grow the store without limit.
+WORKSPACE_MAX_BYTES = _int("ACADEMY_WORKSPACE_MAX_BYTES", 512_000)
 
 CONTROL_PORT = _int("ACADEMY_CONTROL_PORT", 8200)

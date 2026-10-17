@@ -2713,9 +2713,378 @@
       }
     ]
   },
+  "projects": [
+    {
+      "id": "booking",
+      "title_fa": "سامانه رزرو چندمرحله‌ای",
+      "status": "approved",
+      "domain": "hospitality-booking",
+      "detail_level": "blueprint",
+      "description_fa": "پروژه مرحله‌ای طراحی و پیاده‌سازی سامانه رزرو اتاق با تمرکز بر تعارض زمانی، ظرفیت، هم‌زمانی و تکامل Schema.",
+      "milestones": [
+        {
+          "id": "booking-requirements",
+          "title_fa": "تحلیل نیازمندی و تعارض‌ها",
+          "description_fa": "",
+          "objectives_fa": [],
+          "acceptance_criteria_fa": [
+            "قواعد رزرو، ظرفیت، عدم تداخل و لغو در سند مستقل مشخص شوند.",
+            "حداقل سه سناریوی لبه تعریف شده باشد."
+          ],
+          "depends_on": [],
+          "checkpoint_id": "booking-requirements-cp",
+          "stage_kind": "",
+          "executable": false,
+          "assessment_version": 1,
+          "criteria": [],
+          "hint_count": 0,
+          "instructions_markdown": "",
+          "title": "تحلیل نیازمندی و تعارض‌ها",
+          "starter": [],
+          "example_graph": null
+        },
+        {
+          "id": "booking-erd",
+          "title_fa": "مدل ERD و کلیدها",
+          "description_fa": "پیش از نوشتن هر کوئری یا کدی، مدل داده‌ی رزرو را طراحی کن: اتاق و رزرو، با کلید اصلی، کلید خارجی و کارتینالیتی درست.",
+          "objectives_fa": [
+            "تشخیص موجودیت‌های اصلی (اتاق و رزرو).",
+            "انتخاب کلید اصلی و نوع هر ستون.",
+            "تعریف رابطه‌ی یک‌به‌چند بین اتاق و رزرو."
+          ],
+          "acceptance_criteria_fa": [
+            "هر دو جدول اتاق و رزرو با کلید اصلی طراحی شده باشند.",
+            "رابطه‌ی یک‌به‌چند اجباری با کلید خارجی در سمت رزرو مشخص باشد."
+          ],
+          "depends_on": [
+            "booking-requirements"
+          ],
+          "checkpoint_id": "booking-erd-cp",
+          "stage_kind": "erd",
+          "executable": true,
+          "assessment_version": 1,
+          "criteria": [
+            {
+              "id": "required-entities",
+              "description_fa": "هر دو جدول اتاق و رزرو در طراحی وجود دارند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "required-attributes",
+              "description_fa": "ستون‌های لازم هر جدول با نوع مناسب طراحی شده‌اند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "primary-keys",
+              "description_fa": "هر جدول دقیقاً یک کلید اصلی دارد.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "relationship-cardinality",
+              "description_fa": "رابطه‌ی یک‌به‌چند (اتاق → رزرو) و اجباری‌بودن آن درست است.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "foreign-key",
+              "description_fa": "کلید خارجی در جدول رزرو به اتاق اشاره می‌کند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "referential-integrity",
+              "description_fa": "هیچ ارجاع شکسته/آویزانی وجود ندارد.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "design-rationale",
+              "description_fa": "دلیل انتخاب کارتینالیتی و کلید خارجی در یادداشت طراحی توضیح داده می‌شود (بازبینی دستی).",
+              "visibility": "public",
+              "evaluation": "manual",
+              "rubric_fa": "در یادداشت طراحی کوتاه توضیح بده چرا رزروها باید کلید خارجی به اتاق داشته باشند و چرا این رابطه یک‌به‌چند و اجباری است. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+            }
+          ],
+          "hint_count": 1,
+          "instructions_markdown": "# مرحله‌ی ۱ — طراحی مدل داده‌ی رزرو (ERD)\n\nدر این مرحله هنوز کدی نمی‌نویسی؛ فقط **مدل داده** را با ERD Designer طراحی می‌کنی. این طراحی، پایه‌ی مرحله‌های بعدی است.\n\n## داستان پروژه\n\nمی‌خواهیم یک سامانه‌ی ساده‌ی رزرو اتاق بسازیم. صاحب هتل چند **اتاق** دارد و مهمان‌ها برای بازه‌های زمانی مشخص **رزرو** می‌کنند. هر رزرو متعلق به یک اتاق است.\n\n## خواسته‌ها\n\n1. جدولی برای **اتاق‌ها** با کلید اصلی بساز که حداقل شماره/نام اتاق و ظرفیت را نگه دارد.\n2. جدولی برای **رزروها** با کلید اصلی بساز که نام مهمان، تاریخ ورود و تاریخ خروج را نگه دارد.\n3. رابطه را **یک‌به‌چند** مدل کن: هر اتاق می‌تواند چند رزرو داشته باشد، اما هر رزرو فقط به یک اتاق تعلق دارد.\n4. سمت «چند» (رزرو) باید یک **کلید خارجی** به کلید اصلی اتاق داشته باشد و این کلید **اجباری** (بدون NULL) باشد.\n\n> نکته: این مدل عمداً ساده است. تمرکز این مرحله روی «موجودیت‌ها، کلیدها و کارتینالیتی» است، نه روی قواعد پیچیده‌ی تداخل زمانی (آن‌ها در مرحله‌های بعدی می‌آیند).\n\n## یادداشت طراحی (بازبینی دستی)\n\nدر کادر «Design notes» توضیح بده چرا رزروها کلید خارجی به اتاق دارند و چرا رابطه یک‌به‌چند و اجباری است. این یادداشت خودکار نمره نمی‌گیرد، اما بخشی از هدف این مرحله است.\n\n**قبولی خودکار:** طراحی با معیارهای ساختاری (وجود جدول‌ها، ستون‌ها، کلید اصلی، کلید خارجی و کارتینالیتی) سنجیده می‌شود؛ شکل یا جای گره‌ها مهم نیست.\n",
+          "title": "مرحله‌ی ۱ — طراحی مدل داده‌ی رزرو (ERD)",
+          "starter": [
+            {
+              "name": "starter.erd.json",
+              "language": "json",
+              "content": "{\n  \"schema_version\": 1,\n  \"entities\": [],\n  \"relationships\": [],\n  \"notes\": \"\",\n  \"caption_fa\": \"طراحی خودت را اینجا بساز: دو جدول و یک رابطه‌ی یک‌به‌چند.\"\n}\n"
+            }
+          ],
+          "example_graph": null
+        },
+        {
+          "id": "booking-schema",
+          "title_fa": "ساخت MySQL Schema",
+          "description_fa": "طراحی ERD را به DDL واقعی MySQL تبدیل کن: جداول، کلید اصلی، کلید خارجی و قیدهای لازم، سپس چند ردیف نمونه اضافه کن.",
+          "objectives_fa": [
+            "نوشتن CREATE TABLE برای اتاق و رزرو.",
+            "اعمال PRIMARY KEY و FOREIGN KEY واقعی.",
+            "درج چند ردیف نمونه برای آزمودن رابطه."
+          ],
+          "acceptance_criteria_fa": [
+            "جداول اتاق و رزرو با کلید اصلی ساخته شوند.",
+            "کلید خارجی واقعی روی رزرو به اتاق تعریف و NOT NULL باشد.",
+            "داده‌ی نمونه‌ی کافی درج شده باشد."
+          ],
+          "depends_on": [
+            "booking-erd"
+          ],
+          "checkpoint_id": "booking-schema-cp",
+          "stage_kind": "sql",
+          "executable": true,
+          "assessment_version": 1,
+          "criteria": [
+            {
+              "id": "schema-tables",
+              "description_fa": "جداول اتاق و رزرو با نام درست ساخته می‌شوند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "schema-primary-key",
+              "description_fa": "هر جدول کلید اصلی دارد.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "schema-foreign-key",
+              "description_fa": "کلید خارجی رزرو به اتاق با قید FOREIGN KEY واقعی تعریف شده است.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "schema-not-null",
+              "description_fa": "ستون‌های کلیدی رابطه و تاریخ‌ها بدون NULL هستند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "schema-sample-data",
+              "description_fa": "حداقل دو اتاق و دو رزرو درج شده است.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "schema-rationale",
+              "description_fa": "انتخاب قیدها و نوع‌ها کوتاه توضیح داده می‌شود (بازبینی دستی).",
+              "visibility": "public",
+              "evaluation": "manual",
+              "rubric_fa": "در یک کامنت بالای کد توضیح بده چرا این قیدها و این نوع‌های ستون را انتخاب کردی. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+            }
+          ],
+          "hint_count": 1,
+          "instructions_markdown": "# مرحله‌ی ۲ — ساخت MySQL Schema (DDL)\n\nطراحی مرحله‌ی قبل را حالا به **DDL واقعی MySQL** تبدیل کن. این کد روی یک دیتابیس آزمایشی واقعی اجرا می‌شود.\n\n## خواسته‌ها\n\nیک اسکریپت SQL بنویس که:\n\n1. جدول `rooms` را با کلید اصلی بسازد و شماره/نام اتاق و ظرفیت را نگه دارد.\n2. جدول `bookings` را با کلید اصلی بسازد و نام مهمان، تاریخ ورود، تاریخ خروج و `room_id` را نگه دارد.\n3. در جدول `bookings` یک **کلید خارجی واقعی** (`FOREIGN KEY`) روی `room_id` به `rooms(id)` تعریف کند و این ستون `NOT NULL` باشد.\n4. حداقل **دو اتاق** و **دو رزرو** با `INSERT` درج کند.\n\n## نکته‌های فنی\n\n- می‌توانی چند دستور را پشت سر هم بنویسی و هر کدام را با `;` تمام کنی.\n- برای تاریخ‌ها از نوع `DATE` استفاده کن.\n- برای ظرفیت از نوع عددی بدون علامت (مثلاً `INT UNSIGNED`) یا `INT` استفاده کن.\n- ترتیب مهم است: اول `rooms` ساخته شود، بعد `bookings`.\n\n## یادداشت مهندسی (بازبینی دستی)\n\nدر یک کامنت بالای کد توضیح بده چرا این قیدها و این نوع‌های ستون را انتخاب کردی. این بخش دستی بررسی می‌شود و در قبولی خودکار اثری ندارد.\n\n**قبولی خودکار:** اسکریپت روی MySQL واقعی اجرا می‌شود، سپس ساختار Schema (جدول‌ها، کلید اصلی، کلید خارجی، NOT NULL) و تعداد ردیف‌های درج‌شده بررسی می‌شوند — نه متن کد.\n",
+          "title": "مرحله‌ی ۲ — ساخت MySQL Schema (DDL)",
+          "starter": [
+            {
+              "name": "starter.sql",
+              "language": "sql",
+              "content": "-- مرحله‌ی ۲: ساخت Schema پروژه‌ی رزرو\n-- این کد را کامل کن. جدول اتاق‌ها را اول بساز، بعد جدول رزروها.\n--\n-- TODO: جدول rooms را با کلید اصلی و ستون‌های شماره‌ی اتاق و ظرفیت بساز.\n-- TODO: جدول bookings را با کلید اصلی، نام مهمان، تاریخ ورود/خروج و room_id بساز.\n-- TODO: روی room_id یک FOREIGN KEY واقعی به rooms(id) با NOT NULL تعریف کن.\n-- TODO: حداقل دو اتاق و دو رزرو نمونه درج کن.\n\n-- CREATE TABLE rooms ( ... );\n-- CREATE TABLE bookings ( ... );\n-- INSERT INTO rooms ...;\n-- INSERT INTO bookings ...;\n"
+            }
+          ],
+          "example_graph": null
+        },
+        {
+          "id": "booking-models",
+          "title_fa": "پیاده‌سازی Django Models",
+          "description_fa": "همان مدل را با Django Models بنویس و با Migration روی MySQL بساز؛ Model و قیدهای دیتابیس باید سازگار باشند.",
+          "objectives_fa": [
+            "تعریف Model برای اتاق و رزرو.",
+            "تعریف ForeignKey با رفتار درست.",
+            "اجرای Migration بدون خطا و ساخت جدول‌ها."
+          ],
+          "acceptance_criteria_fa": [
+            "دو Model اتاق و رزرو تعریف شده باشند.",
+            "ForeignKey رزرو به اتاق به‌صورت قید دیتابیس ساخته شود.",
+            "Migration بدون خطا اجرا و جدول‌ها ساخته شوند."
+          ],
+          "depends_on": [
+            "booking-schema"
+          ],
+          "checkpoint_id": "booking-models-cp",
+          "stage_kind": "orm",
+          "executable": true,
+          "assessment_version": 1,
+          "criteria": [
+            {
+              "id": "models-define",
+              "description_fa": "دو Model برای اتاق و رزرو تعریف شده‌اند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "models-migrate",
+              "description_fa": "Migration بدون خطا اجرا و جدول‌ها ساخته می‌شوند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "models-primary-key",
+              "description_fa": "هر Model کلید اصلی دارد.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "models-foreign-key",
+              "description_fa": "ForeignKey رزرو به اتاق با قید دیتابیس واقعی ساخته می‌شود.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "models-nullable",
+              "description_fa": "ستون‌های کلیدی رابطه و تاریخ‌ها NOT NULL هستند.",
+              "visibility": "public",
+              "evaluation": "auto",
+              "rubric_fa": null
+            },
+            {
+              "id": "models-rationale",
+              "description_fa": "انتخاب نوع فیلدها و on_delete کوتاه توضیح داده می‌شود (بازبینی دستی).",
+              "visibility": "public",
+              "evaluation": "manual",
+              "rubric_fa": "در یک کامنت کوتاه توضیح بده چرا این نوع فیلدها و این on_delete را انتخاب کردی. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+            }
+          ],
+          "hint_count": 1,
+          "instructions_markdown": "# مرحله‌ی ۳ — پیاده‌سازی Django Models\n\nحالا همان مدل را با **Django ORM** بنویس. کد تو با `makemigrations` و `migrate` روی یک دیتابیس MySQL واقعی اجرا می‌شود و جدول‌ها ساخته می‌شوند.\n\n## خواسته‌ها\n\nدو Model در فایل تعریف کن:\n\n1. `Room` — شماره/نام اتاق و ظرفیت. Django خودش کلید اصلی خودکار می‌سازد (لازم نیست صریح تعریف کنی).\n2. `Booking` — نام مهمان، تاریخ ورود، تاریخ خروج و یک `ForeignKey` به `Room`.\n\n## نکته‌های فنی\n\n- برای رابطه از `models.ForeignKey(Room, on_delete=..., related_name=...)` استفاده کن.\n- `on_delete` را از روی معنای کسب‌وکار انتخاب کن (مثلاً وقتی اتاق حذف می‌شود، رزروهای آن چه شوند؟).\n- برای تاریخ‌ها `DateField` و برای ظرفیت `PositiveIntegerField` مناسب است.\n- برای فیلدهای اجباری `null=False` (پیش‌فرض) بگذار؛ برای ستون کلید خارجی نباید NULL مجاز باشد.\n- نام‌ها را طوری بگذار که با مرحله‌ی SQL هم‌خوان باشند (اتاق و رزرو).\n\n## یادداشت مهندسی (بازبینی دستی)\n\nدر یک کامنت کوتاه توضیح بده چرا این نوع فیلدها و این `on_delete` را انتخاب کردی. این بخش دستی بررسی می‌شود و در قبولی خودکار اثری ندارد.\n\n**قبولی خودکار:** کد با Migration روی MySQL واقعی اجرا می‌شود، سپس ساختار جدول‌های ساخته‌شده (کلید اصلی، کلید خارجی، NOT NULL) و اعمال Migration بررسی می‌شوند — نه متن کد.\n",
+          "title": "مرحله‌ی ۳ — پیاده‌سازی Django Models",
+          "starter": [
+            {
+              "name": "starter.py",
+              "language": "python",
+              "content": "from django.db import models\n\n# مرحله‌ی ۳: Modelهای پروژه‌ی رزرو را اینجا کامل کن.\n#\n# TODO: Model «اتاق» را بساز: شماره/نام اتاق و ظرفیت.\n#       class Room(models.Model):\n#           ...\n#\n# TODO: Model «رزرو» را بساز: نام مهمان، تاریخ ورود، تاریخ خروج و\n#       یک ForeignKey به Room (با on_delete و related_name مناسب).\n#       class Booking(models.Model):\n#           ...\n"
+            }
+          ],
+          "example_graph": null
+        },
+        {
+          "id": "booking-rules",
+          "title_fa": "قواعد تاریخ و ظرفیت",
+          "description_fa": "",
+          "objectives_fa": [],
+          "acceptance_criteria_fa": [
+            "شروع رزرو قبل از پایان باشد.",
+            "قواعد جلوگیری از تداخل در محیط آزمون انجام شوند."
+          ],
+          "depends_on": [
+            "booking-models"
+          ],
+          "checkpoint_id": "booking-rules-cp",
+          "stage_kind": "",
+          "executable": false,
+          "assessment_version": 1,
+          "criteria": [],
+          "hint_count": 0,
+          "instructions_markdown": "",
+          "title": "قواعد تاریخ و ظرفیت",
+          "starter": [],
+          "example_graph": null
+        },
+        {
+          "id": "booking-concurrency",
+          "title_fa": "هم‌زمانی و Race",
+          "description_fa": "",
+          "objectives_fa": [],
+          "acceptance_criteria_fa": [
+            "دو درخواست هم‌زمان ظرفیت یکسان را بیش‌فروش نکنند.",
+            "خطا و Retry طبق سیاست تعریف‌شده ثبت شود."
+          ],
+          "depends_on": [
+            "booking-rules"
+          ],
+          "checkpoint_id": "booking-concurrency-cp",
+          "stage_kind": "",
+          "executable": false,
+          "assessment_version": 1,
+          "criteria": [],
+          "hint_count": 0,
+          "instructions_markdown": "",
+          "title": "هم‌زمانی و Race",
+          "starter": [],
+          "example_graph": null
+        },
+        {
+          "id": "booking-evolution",
+          "title_fa": "تغییر نیازمندی",
+          "description_fa": "",
+          "objectives_fa": [],
+          "acceptance_criteria_fa": [
+            "افزودن رزرو گروهی بدون حذف داده قدیمی انجام شود.",
+            "Migration و داده قبلی هماهنگ باقی بماند."
+          ],
+          "depends_on": [
+            "booking-rules"
+          ],
+          "checkpoint_id": "booking-evolution-cp",
+          "stage_kind": "",
+          "executable": false,
+          "assessment_version": 1,
+          "criteria": [],
+          "hint_count": 0,
+          "instructions_markdown": "",
+          "title": "تغییر نیازمندی",
+          "starter": [],
+          "example_graph": null
+        },
+        {
+          "id": "booking-performance",
+          "title_fa": "بازبینی و بهینه‌سازی",
+          "description_fa": "",
+          "objectives_fa": [],
+          "acceptance_criteria_fa": [
+            "Queryهای روزانه و شاخص‌های پرتکرار درست باشند.",
+            "انتخاب Index با EXPLAIN و دلیل فنی گزارش شود."
+          ],
+          "depends_on": [
+            "booking-concurrency",
+            "booking-evolution"
+          ],
+          "checkpoint_id": "booking-performance-cp",
+          "stage_kind": "",
+          "executable": false,
+          "assessment_version": 1,
+          "criteria": [],
+          "hint_count": 0,
+          "instructions_markdown": "",
+          "title": "بازبینی و بهینه‌سازی",
+          "starter": [],
+          "example_graph": null
+        }
+      ],
+      "executable_milestones": [
+        "booking-erd",
+        "booking-schema",
+        "booking-models"
+      ]
+    }
+  ],
   "totals": {
     "modules": 16,
     "lessons": 176,
-    "authored": 3
+    "authored": 3,
+    "projects": 1
   }
 }

@@ -189,6 +189,27 @@ def main():
                         fail(f"{p}: milestone {m.get('id')} depends_on unknown milestone {dep}")
                     elif order.get(dep, 0) >= order.get(m.get('id'), 0):
                         fail(f"{p}: milestone {m.get('id')} depends_on non-earlier milestone {dep}")
+                if not m.get('stage_kind'):
+                    continue
+                # Executable milestone (PRD-05): authored instructions + starter
+                # must exist, mirroring the exercise content checks.
+                mdir = p.parent / obj['id'] / 'milestones' / m['id']
+                instructions = m.get('instructions_file')
+                starters = m.get('starter_files', [])
+                if not instructions or not starters:
+                    fail(f"{p}: executable milestone {m['id']} needs instructions_file and starter_files")
+                for fname in [instructions, *starters, *( [m['example_file']] if m.get('example_file') else [] )]:
+                    target = safe_relative(mdir, fname) if fname else None
+                    if target is None or not target.is_file():
+                        fail(f"{p}: milestone {m['id']} missing or unsafe file {fname!r}")
+                validator = m.get('validator', {})
+                criteria_file = validator.get('criteria_file', '')
+                f = safe_relative(mdir, criteria_file, allow_parent=True)
+                if f is None or not f.is_file():
+                    fail(f"{p}: milestone {m['id']} missing instructor criteria file {criteria_file!r}")
+                criterion_ids = [c.get('id') for c in m.get('criteria', []) if isinstance(c, dict)]
+                if len(criterion_ids) != len(set(criterion_ids)):
+                    fail(f"{p}: milestone {m['id']} duplicate criterion IDs")
 
     paths = sorted(ROOT.rglob("lesson.fa.md"))
     checked = 0

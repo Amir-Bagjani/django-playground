@@ -68,6 +68,44 @@ _DDL = (
         updated_at TEXT NOT NULL
     )
     """,
+    # --- progressive projects (PRD-05) --------------------------------------
+    # Workspace = the learner's live, auto-saved working state (a *draft*).
+    """
+    CREATE TABLE IF NOT EXISTS project_workspaces (
+        project_id TEXT PRIMARY KEY,
+        state TEXT NOT NULL,
+        current_milestone TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    # Milestone passes are learning progress: keyed by assessment version and
+    # never deleted by Reset/Restore, like exercise passes.
+    """
+    CREATE TABLE IF NOT EXISTS project_milestone_passes (
+        project_id TEXT NOT NULL,
+        milestone_id TEXT NOT NULL,
+        checkpoint_id TEXT NOT NULL,
+        assessment_version INTEGER NOT NULL,
+        passed_at TEXT NOT NULL,
+        PRIMARY KEY (project_id, milestone_id, assessment_version)
+    )
+    """,
+    # A checkpoint is a *validated* snapshot captured only when a milestone
+    # passes. Keyed by assessment version so an older valid checkpoint is never
+    # overwritten by a newer one.
+    """
+    CREATE TABLE IF NOT EXISTS project_checkpoints (
+        project_id TEXT NOT NULL,
+        checkpoint_id TEXT NOT NULL,
+        milestone_id TEXT NOT NULL,
+        assessment_version INTEGER NOT NULL,
+        content_version TEXT NOT NULL,
+        workspace TEXT NOT NULL,
+        db_snapshot TEXT,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (project_id, checkpoint_id, assessment_version)
+    )
+    """,
 )
 
 

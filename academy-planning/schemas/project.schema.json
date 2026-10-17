@@ -83,6 +83,122 @@
             "items": {
               "type": "string"
             }
+          },
+          "description_fa": {
+            "description": "Authored Persian prose framing this stage of the project.",
+            "type": "string"
+          },
+          "objectives_fa": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stage_kind": {
+            "description": "Executable deliverable kind for this milestone. Absent on planning-only milestones, which cannot be run.",
+            "enum": [
+              "erd",
+              "sql",
+              "orm"
+            ]
+          },
+          "instructions_file": {
+            "type": "string",
+            "pattern": "^instructions\\.fa\\.md$"
+          },
+          "starter_files": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "example_file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "validator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "version"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "criteria_file": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "description_fa",
+                "visibility"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "description_fa": {
+                  "type": "string",
+                  "minLength": 8
+                },
+                "visibility": {
+                  "enum": [
+                    "public",
+                    "hidden"
+                  ]
+                },
+                "evaluation": {
+                  "enum": [
+                    "auto",
+                    "manual"
+                  ],
+                  "default": "auto"
+                },
+                "rubric_fa": {
+                  "type": "string",
+                  "minLength": 8
+                }
+              }
+            }
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "text_fa"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "text_fa": {
+                  "type": "string",
+                  "minLength": 10
+                }
+              }
+            }
           }
         }
       }

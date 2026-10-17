@@ -65,11 +65,13 @@ services:
       ACADEMY_CONTROL_SCHEMA: academy_control
       ACADEMY_EXERCISE_PASSWORD: academy-local-lab
       ACADEMY_CONTENT_DIR: /content
+      ACADEMY_PROJECTS_DIR: /projects
       ACADEMY_CONTROL_PORT: "8200"
       ACADEMY_PROGRESS_DB: /data/academy_progress.sqlite3
       PYTHONUNBUFFERED: "1"
     volumes:
       - ./academy-planning/content-samples:/content:ro
+      - ./academy-planning/projects:/projects:ro
       - academy_progress_data:/data
     expose:
       - "8200"

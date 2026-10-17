@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "booking",
   "title_fa": "سامانه رزرو چندمرحله‌ای",
-  "status": "planned",
+  "status": "approved",
   "detail_level": "blueprint",
   "domain": "hospitality-booking",
   "description_fa": "پروژه مرحله‌ای طراحی و پیاده‌سازی سامانه رزرو اتاق با تمرکز بر تعارض زمانی، ظرفیت، هم‌زمانی و تکامل Schema.",
@@ -20,36 +20,211 @@
       "id": "booking-erd",
       "title_fa": "مدل ERD و کلیدها",
       "checkpoint_id": "booking-erd-cp",
+      "stage_kind": "erd",
       "depends_on": [
         "booking-requirements"
       ],
+      "description_fa": "پیش از نوشتن هر کوئری یا کدی، مدل داده‌ی رزرو را طراحی کن: اتاق و رزرو، با کلید اصلی، کلید خارجی و کارتینالیتی درست.",
       "acceptance_criteria_fa": [
-        "اتاق، مهمان و رزرو با روابط درست نمایش داده شوند.",
-        "Cardinality و Nullable/Optional برای همه روابط اعلام شوند."
+        "هر دو جدول اتاق و رزرو با کلید اصلی طراحی شده باشند.",
+        "رابطه‌ی یک‌به‌چند اجباری با کلید خارجی در سمت رزرو مشخص باشد."
+      ],
+      "objectives_fa": [
+        "تشخیص موجودیت‌های اصلی (اتاق و رزرو).",
+        "انتخاب کلید اصلی و نوع هر ستون.",
+        "تعریف رابطه‌ی یک‌به‌چند بین اتاق و رزرو."
+      ],
+      "instructions_file": "instructions.fa.md",
+      "starter_files": [
+        "starter.erd.json"
+      ],
+      "validator": {
+        "id": "booking-erd-validator",
+        "version": 1,
+        "criteria_file": "../../validators/validation-plan.md"
+      },
+      "criteria": [
+        {
+          "id": "required-entities",
+          "description_fa": "هر دو جدول اتاق و رزرو در طراحی وجود دارند.",
+          "visibility": "public"
+        },
+        {
+          "id": "required-attributes",
+          "description_fa": "ستون‌های لازم هر جدول با نوع مناسب طراحی شده‌اند.",
+          "visibility": "public"
+        },
+        {
+          "id": "primary-keys",
+          "description_fa": "هر جدول دقیقاً یک کلید اصلی دارد.",
+          "visibility": "public"
+        },
+        {
+          "id": "relationship-cardinality",
+          "description_fa": "رابطه‌ی یک‌به‌چند (اتاق → رزرو) و اجباری‌بودن آن درست است.",
+          "visibility": "public"
+        },
+        {
+          "id": "foreign-key",
+          "description_fa": "کلید خارجی در جدول رزرو به اتاق اشاره می‌کند.",
+          "visibility": "public"
+        },
+        {
+          "id": "referential-integrity",
+          "description_fa": "هیچ ارجاع شکسته/آویزانی وجود ندارد.",
+          "visibility": "public"
+        },
+        {
+          "id": "design-rationale",
+          "description_fa": "دلیل انتخاب کارتینالیتی و کلید خارجی در یادداشت طراحی توضیح داده می‌شود (بازبینی دستی).",
+          "visibility": "public",
+          "evaluation": "manual",
+          "rubric_fa": "در یادداشت طراحی کوتاه توضیح بده چرا رزروها باید کلید خارجی به اتاق داشته باشند و چرا این رابطه یک‌به‌چند و اجباری است. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+        }
+      ],
+      "hints": [
+        {
+          "id": "hint-1",
+          "text_fa": "دو جدول لازم داری: یکی برای اتاق‌ها و یکی برای رزروها. رابطه باید سمت «چند» (رزرو) یک ستون کلید خارجی داشته باشد که به کلید اصلی اتاق اشاره می‌کند."
+        }
       ]
     },
     {
       "id": "booking-schema",
       "title_fa": "ساخت MySQL Schema",
       "checkpoint_id": "booking-schema-cp",
+      "stage_kind": "sql",
       "depends_on": [
         "booking-erd"
       ],
+      "description_fa": "طراحی ERD را به DDL واقعی MySQL تبدیل کن: جداول، کلید اصلی، کلید خارجی و قیدهای لازم، سپس چند ردیف نمونه اضافه کن.",
       "acceptance_criteria_fa": [
-        "Primary/Foreign Key واقعی موجود باشد.",
-        "رزروهای ارجاع‌دهنده به اتاق ناموجود رد شوند."
+        "جداول اتاق و رزرو با کلید اصلی ساخته شوند.",
+        "کلید خارجی واقعی روی رزرو به اتاق تعریف و NOT NULL باشد.",
+        "داده‌ی نمونه‌ی کافی درج شده باشد."
+      ],
+      "objectives_fa": [
+        "نوشتن CREATE TABLE برای اتاق و رزرو.",
+        "اعمال PRIMARY KEY و FOREIGN KEY واقعی.",
+        "درج چند ردیف نمونه برای آزمودن رابطه."
+      ],
+      "instructions_file": "instructions.fa.md",
+      "starter_files": [
+        "starter.sql"
+      ],
+      "validator": {
+        "id": "booking-schema-validator",
+        "version": 1,
+        "criteria_file": "../../validators/validation-plan.md"
+      },
+      "criteria": [
+        {
+          "id": "schema-tables",
+          "description_fa": "جداول اتاق و رزرو با نام درست ساخته می‌شوند.",
+          "visibility": "public"
+        },
+        {
+          "id": "schema-primary-key",
+          "description_fa": "هر جدول کلید اصلی دارد.",
+          "visibility": "public"
+        },
+        {
+          "id": "schema-foreign-key",
+          "description_fa": "کلید خارجی رزرو به اتاق با قید FOREIGN KEY واقعی تعریف شده است.",
+          "visibility": "public"
+        },
+        {
+          "id": "schema-not-null",
+          "description_fa": "ستون‌های کلیدی رابطه و تاریخ‌ها بدون NULL هستند.",
+          "visibility": "public"
+        },
+        {
+          "id": "schema-sample-data",
+          "description_fa": "حداقل دو اتاق و دو رزرو درج شده است.",
+          "visibility": "public"
+        },
+        {
+          "id": "schema-rationale",
+          "description_fa": "انتخاب قیدها و نوع‌ها کوتاه توضیح داده می‌شود (بازبینی دستی).",
+          "visibility": "public",
+          "evaluation": "manual",
+          "rubric_fa": "در یک کامنت بالای کد توضیح بده چرا این قیدها و این نوع‌های ستون را انتخاب کردی. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+        }
+      ],
+      "hints": [
+        {
+          "id": "hint-1",
+          "text_fa": "اول جدول اتاق‌ها و بعد جدول رزروها را بساز؛ ستون کلید خارجی سمت رزرو با FOREIGN KEY (...) REFERENCES rooms(id) تعریف می‌شود و باید NOT NULL باشد."
+        }
       ]
     },
     {
       "id": "booking-models",
       "title_fa": "پیاده‌سازی Django Models",
       "checkpoint_id": "booking-models-cp",
+      "stage_kind": "orm",
       "depends_on": [
         "booking-schema"
       ],
+      "description_fa": "همان مدل را با Django Models بنویس و با Migration روی MySQL بساز؛ Model و قیدهای دیتابیس باید سازگار باشند.",
       "acceptance_criteria_fa": [
-        "Migration بدون خطا اجرا شود.",
-        "Model و DB constraints برای ارتباط‌ها سازگار باشند."
+        "دو Model اتاق و رزرو تعریف شده باشند.",
+        "ForeignKey رزرو به اتاق به‌صورت قید دیتابیس ساخته شود.",
+        "Migration بدون خطا اجرا و جدول‌ها ساخته شوند."
+      ],
+      "objectives_fa": [
+        "تعریف Model برای اتاق و رزرو.",
+        "تعریف ForeignKey با رفتار درست.",
+        "اجرای Migration بدون خطا و ساخت جدول‌ها."
+      ],
+      "instructions_file": "instructions.fa.md",
+      "starter_files": [
+        "starter.py"
+      ],
+      "validator": {
+        "id": "booking-models-validator",
+        "version": 1,
+        "criteria_file": "../../validators/validation-plan.md"
+      },
+      "criteria": [
+        {
+          "id": "models-define",
+          "description_fa": "دو Model برای اتاق و رزرو تعریف شده‌اند.",
+          "visibility": "public"
+        },
+        {
+          "id": "models-migrate",
+          "description_fa": "Migration بدون خطا اجرا و جدول‌ها ساخته می‌شوند.",
+          "visibility": "public"
+        },
+        {
+          "id": "models-primary-key",
+          "description_fa": "هر Model کلید اصلی دارد.",
+          "visibility": "public"
+        },
+        {
+          "id": "models-foreign-key",
+          "description_fa": "ForeignKey رزرو به اتاق با قید دیتابیس واقعی ساخته می‌شود.",
+          "visibility": "public"
+        },
+        {
+          "id": "models-nullable",
+          "description_fa": "ستون‌های کلیدی رابطه و تاریخ‌ها NOT NULL هستند.",
+          "visibility": "public"
+        },
+        {
+          "id": "models-rationale",
+          "description_fa": "انتخاب نوع فیلدها و on_delete کوتاه توضیح داده می‌شود (بازبینی دستی).",
+          "visibility": "public",
+          "evaluation": "manual",
+          "rubric_fa": "در یک کامنت کوتاه توضیح بده چرا این نوع فیلدها و این on_delete را انتخاب کردی. این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+        }
+      ],
+      "hints": [
+        {
+          "id": "hint-1",
+          "text_fa": "برای رابطه از models.ForeignKey استفاده کن و on_delete را از روی معنای کسب‌وکار انتخاب کن. برای تاریخ‌ها DateField و برای ظرفیت PositiveIntegerField مناسب است."
+        }
       ]
     },
     {

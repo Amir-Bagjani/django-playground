@@ -193,11 +193,16 @@ def _rowset_outcomes(
 
 
 def _assemble_checks(
-    spec: Spec, outcomes: dict[str, dict[str, Any]]
+    spec: Spec,
+    outcomes: dict[str, dict[str, Any]],
+    *,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
 ) -> list[dict[str, Any]]:
-    hint_available = hint_total(spec.id) > 0
+    if hint_available is None:
+        hint_available = hint_total(spec.id) > 0
     checks: list[dict[str, Any]] = []
-    for criterion in _criteria(spec):
+    for criterion in criteria if criteria is not None else _criteria(spec):
         cid = criterion["id"]
         if criterion.get("evaluation") == "manual":
             checks.append(
@@ -256,7 +261,12 @@ def _failure_payload(
     outcome: str,
     message: str,
     traceback: str | None = None,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
 ) -> dict[str, Any]:
+    if hint_available is None:
+        hint_available = hint_total(spec.id) > 0
+
     def message_for(criterion: dict) -> str:
         if criterion.get("evaluation") == "manual":
             return criterion.get("rubric_fa") or (
@@ -270,9 +280,9 @@ def _failure_payload(
             "status": MANUAL if criterion.get("evaluation") == "manual" else NOT_EVALUATED,
             "messageFa": message_for(criterion),
             "location": None,
-            "hintAvailable": hint_total(spec.id) > 0,
+            "hintAvailable": hint_available,
         }
-        for criterion in _criteria(spec)
+        for criterion in (criteria if criteria is not None else _criteria(spec))
     ]
     status = {
         "syntax_error": "error",
@@ -288,7 +298,7 @@ def _failure_payload(
             "outcome": outcome,
             "passed": False,
             "checks": checks,
-            "canRequestNextHint": bool(hint_total(spec.id)) and status != "system_error",
+            "canRequestNextHint": bool(hint_available) and status != "system_error",
             "error": message,
             "traceback": traceback or run.get("traceback"),
         }
@@ -300,25 +310,117 @@ def _failure_payload(
     return payload
 
 
-def system_error_payload(spec: Spec, message: str) -> dict[str, Any]:
+def system_error_payload(
+    spec: Spec,
+    message: str,
+    *,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
+) -> dict[str, Any]:
     """Structured payload for an infrastructure failure (never a pass/fail)."""
     dummy = {"columns": [], "rows": [], "rowCount": 0, "durationMs": 0, "truncated": False}
-    return _failure_payload(spec, dummy, outcome="runner_unavailable", message=message)
+    return _failure_payload(
+        spec,
+        dummy,
+        outcome="runner_unavailable",
+        message=message,
+        criteria=criteria,
+        hint_available=hint_available,
+    )
 
 
-def invalid_input_payload(spec: Spec, message: str) -> dict[str, Any]:
+def invalid_input_payload(
+    spec: Spec,
+    message: str,
+    *,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
+) -> dict[str, Any]:
     """Structured payload for a malformed submission (bad graph JSON, etc.).
 
     This is a learner-side ``error`` (fixable input), distinct from a
     ``system_error`` (infrastructure outage).
     """
     dummy = {"columns": [], "rows": [], "rowCount": 0, "durationMs": 0, "truncated": False}
-    return _failure_payload(spec, dummy, outcome="invalid_graph", message=message)
+    return _failure_payload(
+        spec,
+        dummy,
+        outcome="invalid_graph",
+        message=message,
+        criteria=criteria,
+        hint_available=hint_available,
+    )
 
 
-def assemble_checks(spec: Spec, outcomes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    """Public wrapper over the criterion assembly shared by every engine."""
-    return _assemble_checks(spec, outcomes)
+def assemble_checks(
+    spec: Spec,
+    outcomes: dict[str, dict[str, Any]],
+    *,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
+) -> list[dict[str, Any]]:
+    """Public wrapper over the criterion assembly shared by every engine.
+
+    ``criteria``/``hint_available`` let the project milestone engine reuse this
+    assembly with the milestone's own authored criteria instead of the exercise
+    registry.
+    """
+    return _assemble_checks(spec, outcomes, criteria=criteria, hint_available=hint_available)
+
+
+def failure_payload(
+    spec: Spec,
+    *,
+    outcome: str,
+    message: str,
+    traceback: str | None = None,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
+) -> dict[str, Any]:
+    """Public wrapper for a non-result (error/timeout/system) evaluation payload.
+
+    Used by the project milestone engine so a learner-side script error is still
+    reported with the milestone's own criteria (all ``not_evaluated``/``manual``).
+    """
+    dummy = {"columns": [], "rows": [], "rowCount": 0, "durationMs": 0, "truncated": False}
+    return _failure_payload(
+        spec,
+        dummy,
+        outcome=outcome,
+        message=message,
+        traceback=traceback,
+        criteria=criteria,
+        hint_available=hint_available,
+    )
+
+
+def build_result_payload(
+    spec: Spec,
+    run: dict[str, Any],
+    checks_list: list[dict[str, Any]],
+    *,
+    hint_available: bool,
+) -> dict[str, Any]:
+    """Assemble the passed/failed payload from an already-built checks list.
+
+    The pass rule is centralized here: every automatic criterion must pass;
+    manual criteria (and only those) are ignored for the outcome.
+    """
+    auto = [check for check in checks_list if check["status"] != MANUAL]
+    passed = bool(auto) and all(check["status"] == PASSED for check in auto)
+    payload = _header(spec, run)
+    payload.update(
+        {
+            "status": "passed" if passed else "failed",
+            "outcome": "success" if passed else "validation_failed",
+            "passed": passed,
+            "checks": checks_list,
+            "canRequestNextHint": bool(hint_available) and not passed,
+            "error": None,
+            "traceback": None,
+        }
+    )
+    return payload
 
 
 def build_payload(

@@ -154,6 +154,75 @@ TASKS: dict[str, ErdTask] = {
             ),
         ),
     ),
+    # First progressive-project milestone (PRD-05, Booking project). The learner
+    # designs the room/booking model before writing any SQL or ORM code.
+    "booking-erd": ErdTask(
+        entities=(
+            EntityReq(
+                key="rooms",
+                aliases=("room", "suites", "suite"),
+                label_fa="اتاق",
+                primary_key="id",
+                attributes=(
+                    AttributeReq("id", aliases=("identifier",), nullable=False),
+                    AttributeReq(
+                        "room_number",
+                        aliases=("number", "room_no", "code", "name"),
+                        type_family="text",
+                        nullable=False,
+                    ),
+                    AttributeReq(
+                        "capacity",
+                        aliases=("beds", "size", "seats"),
+                        type_family="integer",
+                        nullable=False,
+                    ),
+                ),
+            ),
+            EntityReq(
+                key="bookings",
+                aliases=("booking", "reservations", "reservation"),
+                label_fa="رزرو",
+                primary_key="id",
+                attributes=(
+                    AttributeReq("id", aliases=("identifier",), nullable=False),
+                    AttributeReq(
+                        "room_id",
+                        aliases=("room", "room_ref", "roomid", "room_number"),
+                        nullable=False,
+                    ),
+                    AttributeReq(
+                        "guest_name",
+                        aliases=("guest", "name", "customer_name", "guest_full_name"),
+                        type_family="text",
+                        nullable=False,
+                    ),
+                    AttributeReq(
+                        "check_in",
+                        aliases=("start_date", "from_date", "arrival", "checkin"),
+                        type_family="temporal",
+                        nullable=False,
+                    ),
+                    AttributeReq(
+                        "check_out",
+                        aliases=("end_date", "to_date", "departure", "checkout"),
+                        type_family="temporal",
+                        nullable=False,
+                    ),
+                ),
+            ),
+        ),
+        relationships=(
+            RelationshipReq(
+                one_side="rooms",
+                many_side="bookings",
+                foreign_key_entity="bookings",
+                foreign_key_attribute="room_id",
+                optionality="mandatory",
+                label_fa="هر اتاق چند رزرو؛ هر رزرو دقیقاً یک اتاق",
+            ),
+        ),
+    ),
 }
 
 
@@ -457,16 +526,35 @@ def _unique_outcome(task: ErdTask, matched: dict[str, dict | None]) -> dict:
 _HEADER_RESULT = {"columns": [], "rows": [], "rowCount": 0, "truncated": False, "durationMs": 0}
 
 
-def build_payload(spec: Spec, graph: Any) -> dict[str, Any]:
-    """Evaluate one ERD submission against the coded task for this exercise."""
-    task = TASKS.get(spec.id)
+def build_payload(
+    spec: Spec,
+    graph: Any,
+    *,
+    task_id: str | None = None,
+    criteria: list[dict] | None = None,
+    hint_available: bool | None = None,
+) -> dict[str, Any]:
+    """Evaluate one ERD submission against the coded task for this exercise.
+
+    ``task_id``/``criteria``/``hint_available`` let a project milestone reuse the
+    ERD engine with its own authored task and criteria instead of the exercise
+    registry.
+    """
+    task = TASKS.get(task_id or spec.id)
     if task is None:
-        return checks.system_error_payload(spec, "این تمرین ERD هنوز تعریف نشده است.")
+        return checks.system_error_payload(
+            spec,
+            "این تمرین ERD هنوز تعریف نشده است.",
+            criteria=criteria,
+            hint_available=hint_available,
+        )
 
     try:
         doc = parse(graph)
     except GraphError as exc:
-        return checks.invalid_input_payload(spec, str(exc))
+        return checks.invalid_input_payload(
+            spec, str(exc), criteria=criteria, hint_available=hint_available
+        )
 
     entities_outcome, matched = _entities_outcomes(task, doc)
     outcomes = {
@@ -477,9 +565,14 @@ def build_payload(spec: Spec, graph: Any) -> dict[str, Any]:
     }
     outcomes.update(_relationship_outcomes(task, doc, matched))
 
-    checks_list = checks.assemble_checks(spec, outcomes)
+    checks_list = checks.assemble_checks(
+        spec, outcomes, criteria=criteria, hint_available=hint_available
+    )
     auto = [check for check in checks_list if check["status"] != checks.MANUAL]
     passed = bool(auto) and all(check["status"] == checks.PASSED for check in auto)
+
+    if hint_available is None:
+        hint_available = bool((get_public(spec.id) or {}).get("hint_count", 0))
 
     payload: dict[str, Any] = {
         "exerciseId": spec.id,
@@ -489,7 +582,7 @@ def build_payload(spec: Spec, graph: Any) -> dict[str, Any]:
         "outcome": "success" if passed else "validation_failed",
         "passed": passed,
         "checks": checks_list,
-        "canRequestNextHint": bool((get_public(spec.id) or {}).get("hint_count", 0)) and not passed,
+        "canRequestNextHint": bool(hint_available) and not passed,
         "error": None,
         "traceback": None,
     }

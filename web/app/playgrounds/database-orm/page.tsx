@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { academy, academyModules, authoredLessons, labLessons } from "@/lib/academy";
+import { academy, academyModules, academyProjects, authoredLessons, labLessons } from "@/lib/academy";
 
 import { StatusBadge } from "./badge";
 import { LessonStatusChip, ProgressProvider, SyllabusProgressSummary } from "./progress";
@@ -57,6 +57,42 @@ export default function AcademySyllabusPage() {
 
         <ProgressProvider>
           <SyllabusProgressSummary modules={academyModules} />
+
+          {academyProjects.length > 0 ? (
+            <section className={styles.moduleList} aria-label="Progressive projects">
+              <article className={styles.moduleCard}>
+                <div className={styles.moduleHead}>
+                  <span className={styles.moduleId}>PROJECTS</span>
+                  <span className={styles.moduleTitleFa} dir="rtl" lang="fa">
+                    پروژه‌های مرحله‌ای
+                  </span>
+                  <span className={styles.moduleCount}>{academyProjects.length} project(s)</span>
+                </div>
+                <div className={styles.lessonList}>
+                  {academyProjects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/playgrounds/database-orm/projects/${project.id}`}
+                      className={styles.lessonRow}
+                    >
+                      <span className={styles.lessonId}>{project.id}</span>
+                      <span className={styles.lessonMain}>
+                        <span className={styles.lessonTitleFa} dir="rtl" lang="fa">
+                          {project.title_fa}
+                        </span>
+                        <span className={styles.lessonOutcomeFa} dir="rtl" lang="fa">
+                          {project.description_fa}
+                        </span>
+                      </span>
+                      <span className={styles.lessonAside}>
+                        <StatusBadge status={project.status} />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </article>
+            </section>
+          ) : null}
 
           <section className={styles.moduleList} aria-label="Course modules">
             {academyModules.map((module) => (
