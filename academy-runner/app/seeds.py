@@ -140,7 +140,52 @@ BOOKS = Dataset(
 )
 
 
-DATASETS: dict[str, Dataset] = {"products": PRODUCTS, "books": BOOKS}
+# --- books-wide: the LIMIT-sensitive companion fixture of DB-00-008 --------
+# The boundary fixture above has only two in-range rows, so it makes the lower
+# range bound observable but leaves ``LIMIT 3`` inert. This fixture has more
+# than three in-range rows, so ``LIMIT 3`` really drops a row. Both fixtures are
+# evaluated by the mastery validator: the *same* table (``books``) is rebuilt
+# with each fixture's rows, so neither condition can hide behind the other.
+
+BOOKS_WIDE = Dataset(
+    table="books",
+    ddl=BOOKS_DDL,
+    insert_columns=("title", "price", "published"),
+    rows=[
+        # Four published, in-range rows: the descending top-3 window really
+        # truncates the fourth (Cinder). Dropping ``LIMIT`` returns four rows.
+        ("Pinnacle", Decimal("40.00"), 1),
+        ("Alpine", Decimal("30.00"), 1),
+        ("Beacon", Decimal("20.00"), 1),
+        ("Cinder", Decimal("15.00"), 1),
+        # Below the lower bound: excluded only if ``price >= 10`` is present.
+        ("Sale Copy", Decimal("9.00"), 1),
+        # Unpublished but high enough to enter the top-3 if the published
+        # filter is omitted (35.00 would rank second).
+        ("Draft Best", Decimal("35.00"), 0),
+    ],
+    sentinel_row=("zz-probe", Decimal("36.00"), 1),
+    name_column="title",
+    sentinel_name="zz-probe",
+    result_columns=["title", "price"],
+    expected_rows=[
+        ["Pinnacle", "40.00"],
+        ["Alpine", "30.00"],
+        ["Beacon", "20.00"],
+    ],
+    expected_rows_with_sentinel=[
+        ["Pinnacle", "40.00"],
+        ["zz-probe", "36.00"],
+        ["Alpine", "30.00"],
+    ],
+)
+
+
+DATASETS: dict[str, Dataset] = {
+    "products": PRODUCTS,
+    "books": BOOKS,
+    "books_wide": BOOKS_WIDE,
+}
 
 
 def dataset_for(spec: Spec) -> Dataset:
@@ -148,6 +193,11 @@ def dataset_for(spec: Spec) -> Dataset:
     if spec.kind == "erd":
         raise ValueError(f"exercise '{spec.id}' is an ERD exercise and has no SQL dataset")
     return DATASETS[spec.dataset]
+
+
+def datasets_for(spec: Spec) -> list[Dataset]:
+    """The primary fixture plus any declared LIMIT/boundary companion fixtures."""
+    return [dataset_for(spec)] + [DATASETS[name] for name in spec.alt_datasets]
 
 
 def _insert_rows(cursor, schema: str, dataset: Dataset, rows: list[tuple]) -> None:
@@ -159,8 +209,8 @@ def _insert_rows(cursor, schema: str, dataset: Dataset, rows: list[tuple]) -> No
     )
 
 
-def reset(spec: Spec) -> None:
-    dataset = dataset_for(spec)
+def load(spec: Spec, dataset: Dataset) -> None:
+    """(Re)build the disposable schema from one fixture's DDL + rows."""
     with admin_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(f"DROP DATABASE IF EXISTS `{spec.schema}`")
@@ -172,6 +222,10 @@ def reset(spec: Spec) -> None:
             cursor.execute(dataset.ddl)
             _insert_rows(cursor, spec.schema, dataset, dataset.rows)
     ensure_exercise_identity(spec.schema, spec.user)
+
+
+def reset(spec: Spec) -> None:
+    load(spec, dataset_for(spec))
 
 
 def ensure_seeded(spec: Spec) -> None:

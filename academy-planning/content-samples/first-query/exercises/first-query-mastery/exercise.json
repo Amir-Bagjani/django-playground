@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "first-query-mastery",
   "lesson_id": "DB-00-008",
-  "version": 1,
+  "version": 2,
   "level": "mastery",
   "kind": "sql",
   "required_for_completion": false,
@@ -12,7 +12,7 @@
   ],
   "validator": {
     "id": "first-query-mastery-validator",
-    "version": 1,
+    "version": 2,
     "criteria_file": "../../validators/validation-plan.md"
   },
   "criteria": [
@@ -28,7 +28,7 @@
     },
     {
       "id": "in-range-ordered-top3",
-      "description_fa": "فقط کتاب‌های منتشرشده با قیمت بین ۱۰ و ۵۰ (شامل دو سر)، به ترتیب نزولی قیمت و حداکثر ۳ ردیف برمی‌گردند.",
+      "description_fa": "فقط کتاب‌های منتشرشده با قیمت بین ۱۰ و ۵۰ (شامل دو سر)، به ترتیب نزولی قیمت و حداکثر ۳ ردیف برمی‌گردند؛ این نتیجه روی بیش از یک مجموعه‌داده‌ی آزمون بررسی می‌شود.",
       "visibility": "public"
     },
     {

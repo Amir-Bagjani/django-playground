@@ -79,15 +79,22 @@ def _criteria(spec: Spec) -> list[dict]:
 def _columns_message(dataset, actual: list[str]) -> str:
     expected = "، ".join(f"`{name}`" for name in dataset.result_columns)
     got = "، ".join(f"`{name}`" for name in actual) if actual else "بدون ستون"
-    return f"نتیجه باید فقط ستونهای {expected} را داشته باشد؛ خروجی فعلی: {got}."
+    return f"نتیجه باید فقط ستون‌های {expected} را داشته باشد؛ خروجی فعلی: {got}."
 
 
-def _rows_message(dataset) -> str:
-    count = len(dataset.expected_rows)
+def _rows_message(datasets) -> str:
+    if len(datasets) == 1:
+        count = len(datasets[0].expected_rows)
+        return (
+            "سطرهای بازگشتی با داده‌ی واقعی همین جدول مطابقت ندارد. "
+            f"تعداد سطرها و ترتیب باید دقیقاً درست باشد (انتظار: {count} سطر). "
+            "فیلترها، شرایط مرزی و ترتیب را دوباره بررسی کن."
+        )
     return (
-        "سطرهای بازگشتی با دادهی واقعی همین جدول مطابقت ندارد. "
-        f"تعداد سطرها و ترتیب باید دقیقاً درست باشد (انتظار: {count} سطر). "
-        "فیلترها، شرایط مرزی و ترتیب را دوباره بررسی کن."
+        "سطرهای بازگشتی روی مجموعه‌داده‌های آزمون مختلف با نتیجه‌ی درست مطابقت ندارد. "
+        "کوئری باید هم روی حالتی که ردیف‌های کمتری در بازه هست، و هم روی حالتی که "
+        "ردیف‌های بیشتری در بازه هست، همان سطرها و ترتیب را بدهد. "
+        "شرط مرزی بازه، ترتیب نزولی و عدد LIMIT را دوباره بررسی کن."
     )
 
 
@@ -109,12 +116,38 @@ def _location_from_traceback(traceback: str | None) -> dict[str, Any] | None:
 def _rowset_outcomes(
     spec: Spec, source: str, run: dict[str, Any], run_fn: RunFn
 ) -> dict[str, dict[str, Any]]:
-    """Run the semantic rowset checks, including the hidden sentinel probe."""
-    dataset = seeds.dataset_for(spec)
+    """Run the semantic rowset checks, including the hidden sentinel probe.
+
+    When the spec declares companion fixtures (``alt_datasets``) the schema is
+    rebuilt with each fixture and the same submission is re-run, so the result
+    must be correct under *every* fixture. This is what lets two independent
+    conditions (a range bound and ``LIMIT``) be observed at once.
+    """
+    datasets = seeds.datasets_for(spec)
+    primary = datasets[0]
     mapping = ROWSET_VALIDATORS[spec.validator_id]
 
-    columns_ok = [column.lower() for column in run["columns"]] == dataset.result_columns
-    rows_ok = run["rows"] == dataset.expected_rows
+    results: list[tuple[seeds.Dataset, dict[str, Any]]] = [(primary, run)]
+    try:
+        for dataset in datasets[1:]:
+            seeds.load(spec, dataset)
+            results.append((dataset, run_fn(source)))
+    finally:
+        if len(datasets) > 1:
+            # Leave the primary fixture in place for later Execute/Show-schema.
+            seeds.load(spec, primary)
+
+    def ran_ok(result: dict[str, Any]) -> bool:
+        return result["status"] == "ok"
+
+    columns_ok = all(
+        ran_ok(result) and [column.lower() for column in result["columns"]] == dataset.result_columns
+        for dataset, result in results
+    )
+    rows_ok = all(
+        ran_ok(result) and result["rows"] == dataset.expected_rows
+        for dataset, result in results
+    )
 
     data_driven_ok = False
     try:
@@ -122,7 +155,7 @@ def _rowset_outcomes(
         probe = run_fn(source)
         data_driven_ok = (
             probe["status"] == "ok"
-            and probe["rows"] == dataset.expected_rows_with_sentinel
+            and probe["rows"] == primary.expected_rows_with_sentinel
         )
     finally:
         try:
@@ -135,23 +168,23 @@ def _rowset_outcomes(
         mapping.columns: {
             "status": PASSED if columns_ok else FAILED,
             "messageFa": (
-                "ستونهای نتیجه درست است."
+                "ستون‌های نتیجه درست است."
                 if columns_ok
-                else _columns_message(dataset, run["columns"])
+                else _columns_message(primary, run["columns"])
             ),
         },
         mapping.rows: {
             "status": PASSED if rows_ok else FAILED,
             "messageFa": (
-                "سطرها و ترتیب نتیجه درست است."
+                "سطرها و ترتیب نتیجه روی همه‌ی داده‌های آزمون درست است."
                 if rows_ok
-                else _rows_message(dataset)
+                else _rows_message(datasets)
             ),
         },
         mapping.data_driven: {
             "status": PASSED if data_driven_ok else FAILED,
             "messageFa": (
-                "نتیجه بهصورت دادهمحور از جدول تولید میشود."
+                "نتیجه به‌صورت داده‌محور از جدول تولید می‌شود."
                 if data_driven_ok
                 else _DATA_MESSAGE
             ),

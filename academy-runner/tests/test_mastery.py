@@ -55,6 +55,29 @@ def test_mastery_exclusive_lower_bound_is_rejected(mastery_spec):
     assert statuses(result)["in-range-ordered-top3"] == "failed"
 
 
+def test_mastery_missing_limit_is_rejected(mastery_spec):
+    # The companion fixture `books_wide` has four in-range published rows, so
+    # omitting LIMIT returns a fourth row and must fail (the boundary fixture
+    # alone could not detect this).
+    result = sql_engine.check(
+        mastery_spec,
+        "SELECT title, price FROM books WHERE published = 1 AND price BETWEEN 10 AND 50 ORDER BY price DESC",
+    )
+    assert result["passed"] is False
+    assert statuses(result)["in-range-ordered-top3"] == "failed"
+
+
+def test_mastery_wrong_limit_is_rejected(mastery_spec):
+    # LIMIT 2 is correct on the boundary fixture (only two in-range rows) but
+    # wrong on `books_wide` (four in-range rows), so it must fail.
+    result = sql_engine.check(
+        mastery_spec,
+        "SELECT title, price FROM books WHERE published = 1 AND price BETWEEN 10 AND 50 ORDER BY price DESC LIMIT 2",
+    )
+    assert result["passed"] is False
+    assert statuses(result)["in-range-ordered-top3"] == "failed"
+
+
 def test_mastery_wrong_range_is_rejected(mastery_spec):
     # Dropping the upper bound lets the out-of-range 60.00 row in.
     result = sql_engine.check(

@@ -36,6 +36,11 @@ class Spec:
     required_for_completion: bool
     validator_id: str
     validator_version: int
+    # Additional seed fixtures the validator rebuilds the schema with during a
+    # check (same table, different rows). Used where a single fixture cannot
+    # exercise two independent conditions at once (e.g. a range bound *and*
+    # LIMIT). Empty for every ordinary exercise.
+    alt_datasets: tuple[str, ...] = ()
     hint_cap: int | None = None
 
 
@@ -75,9 +80,13 @@ DECLARED: dict[str, Spec] = {
         kind="sql",
         level="mastery",
         dataset="books",
+        # The ``books`` fixture is boundary-only (two in-range rows) so the
+        # lower range bound is observable; ``books_wide`` adds a fourth
+        # in-range row so ``LIMIT 3`` is observable too.
+        alt_datasets=("books_wide",),
         required_for_completion=False,
         validator_id="first-query-mastery-validator",
-        validator_version=1,
+        validator_version=2,
         # Mastery exposes fewer hints than the introductory levels.
         hint_cap=config.MASTERY_MAX_HINTS,
     ),

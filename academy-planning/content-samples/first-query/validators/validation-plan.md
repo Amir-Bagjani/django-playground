@@ -15,12 +15,14 @@ progress.
 |---|---|---|---|---|---|---|
 | `first-query-sql` | `first-query-sql-validator` | 1 | practice | sql | `products` | yes |
 | `first-query-orm` | `first-query-orm-validator` | 1 | problem-solving | django-orm | `products` | yes |
-| `first-query-mastery` | `first-query-mastery-validator` | 1 | mastery | sql | `books` | no |
+| `first-query-mastery` | `first-query-mastery-validator` | 2 | mastery | sql | `books` + `books_wide` | no |
 
 The runner only treats an exercise as executable when the manifest's `kind`,
 `level`, `lesson_id` and `validator.id`/`validator.version` match the coded
 registry exactly. `validator.version` is the **assessment version** stored with
-a pass.
+a pass. `first-query-mastery` moved to **version 2** when a second evaluation
+fixture was added (see below); a pass recorded under version 1 stays valid and is
+flagged `legacy` rather than silently revoked.
 
 ## Shared evaluation idea (SQL and ORM)
 
@@ -56,18 +58,32 @@ a pass.
 
 - `products` (practice/problem-solving): in-stock rows, descending price. The
   hidden sentinel `zz-probe` (price `1.23`) must appear last.
-- `books` (mastery): published books with price in `[10, 50]`, descending price,
-  top 3. The only *in-range published* rows are the two boundary rows `10.00`
-  (lower bound) and `50.00` (upper bound), so the descending window can reach
-  past a missing or wrong bound: dropping `price >= 10` (or writing an exclusive
-  `price > 10`) pulls `9.00`/`5.00` into the window and fails, and dropping
-  `price <= 50` pulls `60.00` in and fails. Out-of-range rows (`5.00`, `9.00`,
-  `60.00`) and unpublished in-range rows (`45.00` "Draft Best", `25.00`) are
-  excluded, so the published filter is observable too. The hidden sentinel
-  `zz-probe` (price `49.99`) must slot into descending position 2. Because both
-  qualifying rows fit inside `LIMIT 3`, the `LIMIT` *value* is not independently
-  exercised here (a query that returns the two ordered rows passes); `LIMIT` is
-  otherwise covered by the practice/problem-solving exercises.
+- `books` (mastery, boundary fixture): published books with price in `[10, 50]`,
+  descending price, top 3. The only *in-range published* rows are the two
+  boundary rows `10.00` (lower bound) and `50.00` (upper bound), so the
+  descending window can reach past a missing or wrong bound: dropping
+  `price >= 10` (or writing an exclusive `price > 10`) pulls `9.00`/`5.00` into
+  the window and fails, and dropping `price <= 50` pulls `60.00` in and fails.
+  Out-of-range rows (`5.00`, `9.00`, `60.00`) and unpublished in-range rows
+  (`45.00` "Draft Best", `25.00`) are excluded, so the published filter is
+  observable too. The hidden sentinel `zz-probe` (price `49.99`) must slot into
+  descending position 2.
+- `books_wide` (mastery, LIMIT fixture): the same `books` table rebuilt with
+  **four** published in-range rows (`40.00`, `30.00`, `20.00`, `15.00`), so the
+  descending window really truncates the fourth row (`15.00`): dropping `LIMIT`
+  returns four rows and using `LIMIT 2` (or any value ≠ 3) returns the wrong
+  set, and both fail. The unpublished `35.00` "Draft Best" would enter the
+  top-3 if the published filter were omitted, and the below-bound `9.00` is only
+  reachable if the lower bound is wrong; the sentinel `zz-probe` (`36.00`)
+  places second.
+- **Why two fixtures:** with a single table, a range bound is only observable
+  when fewer than `LIMIT` rows are in range, while `LIMIT` is only observable
+  when more than `LIMIT` rows are in range — the two are mutually exclusive in
+  one fixture. The mastery validator therefore rebuilds the schema with both
+  fixtures and requires the *same* submitted query to be correct on **both**
+  (the boundary fixture makes `price >= 10` independent; `books_wide` makes
+  `LIMIT 3` independent). The anti-hardcode sentinel probe runs on the primary
+  (`books`) fixture.
 - Multiple valid solutions are accepted because only the returned relation is
   compared: e.g. `in_stock = 1`, `in_stock = TRUE`, `in_stock <> 0` for SQL, and
   `filter(in_stock=True)` vs `filter(in_stock__exact=True)` for the ORM.
@@ -97,8 +113,8 @@ never as failures and never reduce earned progress.
 ## Validator QA cases required before publish
 - Reference SQL, ORM and Mastery solutions pass on real MySQL 8.4 + Django 6.1.
 - Intentionally wrong cases fail: missing `WHERE`, ascending order, wrong
-  column set, a missing or exclusive mastery *lower* bound as well as an omitted
-  upper bound, and a hardcoded result.
+  column set, a missing or exclusive mastery *lower* bound, an omitted upper
+  bound, a missing/`LIMIT 2` window in the mastery task, and a hardcoded result.
 - Alternative valid implementations pass (multi-solution).
 - A deliberate syntax error returns a real MySQL / `ProgrammingError` message
   with `status: error`; a slow query/submission returns `timeout`.

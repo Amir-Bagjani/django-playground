@@ -37,7 +37,8 @@ def test_exercises_expose_only_public_metadata():
         assert '"hints"' not in serialized
         for exercise in data["exercises"]:
             assert isinstance(exercise["hint_count"], int)
-            assert exercise["assessment_version"] == 1
+            expected_version = 2 if exercise["id"] == "first-query-mastery" else 1
+            assert exercise["assessment_version"] == expected_version
             for starter in exercise["starter"]:
                 if starter["language"] == "json":
                     # ERD starter is a skeleton graph, never a finished design.
