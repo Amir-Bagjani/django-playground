@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "caption_fa": "نمونه‌ی تشریحی روی یک دامنه‌ی دیگر (کتاب): فقط برای دیدن شکل یک موجودیت و ویژگی‌هایش است، نه پاسخ تمرین.",
+  "entities": [
+    {
+      "id": "e_book",
+      "name": "book",
+      "note_fa": "موجودیت «کتاب»؛ هر ویژگی یک خاصیت قابل‌اندازه‌گیری از کتاب است.",
+      "position": { "x": 60, "y": 60 },
+      "attributes": [
+        { "id": "a_book_id", "name": "id", "type": "INT", "nullable": false, "primaryKey": true, "unique": true },
+        { "id": "a_book_title", "name": "title", "type": "VARCHAR(120)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "a_book_copies", "name": "copies", "type": "INT", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    }
+  ],
+  "relationships": [],
+  "notes": "نمونه داده برای این مثال: { id: 1, title: 'Clean Code', copies: 3 }."
+}

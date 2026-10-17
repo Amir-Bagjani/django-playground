@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "db00-001-mastery-scenario",
+  "lesson_id": "DB-00-001",
+  "version": 1,
+  "level": "mastery",
+  "kind": "erd",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.erd.json"
+  ],
+  "validator": {
+    "id": "db00-001-mastery-scenario-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "required-entities",
+      "description_fa": "موجودیت انتخاب‌شده با استدلال درست در طراحی آمده است.",
+      "visibility": "public"
+    },
+    {
+      "id": "required-attributes",
+      "description_fa": "ویژگی‌های الزامی موجودیت با نوع مناسب وجود دارند.",
+      "visibility": "public"
+    },
+    {
+      "id": "primary-keys",
+      "description_fa": "موجودیت دقیقاً یک کلید اصلی یکتاکننده دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "entity-vs-attribute-rationale",
+      "description_fa": "تصمیم موجودیت‌بودن یا ویژگی‌بودن مورد مرزی با استدلال مبتنی بر نیازمندی توضیح داده شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "توضیح بده چرا «مالک» را موجودیت یا ویژگی در نظر گرفتی و این تصمیم چه پیامدی برای طراحی بعدی دارد. بازبینی دستی؛ خودکار نمره نمی‌گیرد."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "اگر موجودیتی خودش می‌تواند ویژگی و هویت مستقل داشته باشد، موجودیت است؛ وگرنه ویژگی."
+    }
+  ],
+  "time_limit_seconds": 60
+}

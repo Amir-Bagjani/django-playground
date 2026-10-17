@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "db00-001-separate-data-info",
+  "lesson_id": "DB-00-001",
+  "version": 1,
+  "level": "problem-solving",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "answers.md"
+  ],
+  "validator": {
+    "id": "db00-001-separate-data-info-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "classify-data-vs-information",
+      "description_fa": "داده‌ی خام از اطلاعاتِ بافت‌دار درست تفکیک شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "برای هر مقدار خام توضیح بده چرا به‌تنهایی داده است و با افزودن چه بافتی به اطلاعات تبدیل می‌شود. بازبینی دستی؛ خودکار نمره نمی‌گیرد."
+    },
+    {
+      "id": "entity-attribute-sample",
+      "description_fa": "نیازمندی به موجودیت، ویژگی و یک نمونه داده تفکیک شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "از متن نیازمندی، موجودیت، فهرست ویژگی‌ها و یک سطر نمونه بساز و نشان بده هر ویژگی متناظر کدام بخش نیازمندی است. بازبینی دستی."
+    },
+    {
+      "id": "domain-rules",
+      "description_fa": "برای هر ویژگی، دامنه‌ی مجاز و یک حالت نامعتبر مشخص شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "برای هر ویژگی بنویس چه مقادیری مجازند و یک مقدار خارج از دامنه را مثال بزن. بازبینی دستی."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "داده‌ی خام بدون زمینه بی‌معناست؛ بپرس «این عدد/متن مربوط به چه چیزی و چه زمانی است؟»."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "نیازمندی را جمله‌به‌جمله بخوان؛ هر اسمی که سیستم درباره‌اش داده نگه می‌دارد، موجودیت است."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای هر ویژگی یک بازه یا مجموعه‌ی مجاز بنویس و یک مقدار نقض‌کننده را مثال بزن."
+    }
+  ],
+  "time_limit_seconds": 60
+}

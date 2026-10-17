@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "caption_fa": "نمونه‌ی تشریحی روی دامنه‌ی دیگر (امانت کتاب): فقط نگاشت «ستون ↔ دامنه» را نشان می‌دهد، نه پاسخ تمرین.",
+  "entities": [
+    {
+      "id": "e_loan",
+      "name": "loan",
+      "note_fa": "رابطه‌ی «امانت»؛ هر ستون یک دامنه دارد و id سطرها را یکتا می‌کند.",
+      "position": { "x": 60, "y": 60 },
+      "attributes": [
+        { "id": "a_loan_id", "name": "id", "type": "INT", "nullable": false, "primaryKey": true, "unique": true },
+        { "id": "a_loan_book", "name": "book_id", "type": "INT", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "a_loan_due", "name": "due_date", "type": "DATE", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "a_loan_returned", "name": "returned", "type": "BOOLEAN", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    }
+  ],
+  "relationships": [],
+  "notes": "دامنه‌ها: book_id عدد صحیح مثبت، due_date تاریخ معتبر، returned فقط 0/1. درجه = ۴ ستون؛ کاردینالیتی = تعداد امانت‌های فعال."
+}

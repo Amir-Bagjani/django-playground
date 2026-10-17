@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "db00-001-identify-entity",
+  "lesson_id": "DB-00-001",
+  "version": 1,
+  "level": "practice",
+  "kind": "erd",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.erd.json"
+  ],
+  "example_file": "example.erd.json",
+  "validator": {
+    "id": "db00-001-identify-entity-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "required-entities",
+      "description_fa": "موجودیت اصلی سناریو (زبان‌آموز / students) در طراحی وجود دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "required-attributes",
+      "description_fa": "ویژگی‌های خواسته‌شده‌ی موجودیت با نوع مناسب (متن/عدد) تعریف شده‌اند.",
+      "visibility": "public"
+    },
+    {
+      "id": "primary-keys",
+      "description_fa": "موجودیت دقیقاً یک کلید اصلی دارد که هر نمونه را یکتا می‌کند.",
+      "visibility": "public"
+    },
+    {
+      "id": "sample-data",
+      "description_fa": "برای موجودیت، یک نمونه داده‌ی درست (یک سطر) در یادداشت طراحی توصیف می‌شود (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "در یادداشت طراحی یک سطر نمونه بنویس که مقادیر آن با دامنه‌ی ویژگی‌ها سازگار باشد (مثلاً سطح داخل بازه‌ی A1..C2 باشد، نه خارج از آن). این معیار دستی بررسی می‌شود و در قبولی خودکار اثری ندارد."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "اول بپرس سیستم درباره‌ی «چه چیزی» داده نگه می‌دارد؛ همان پاسخ، موجودیت است."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "هر اسمی که یک خاصیت قابل‌اندازه‌گیری از آن چیز است، یک ویژگی (ستون) می‌شود."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "چطور می‌شود دو زبان‌آموز هم‌نام را از هم تشخیص داد؟ به همین ویژگی یکتاکننده به‌عنوان کلید فکر کن."
+    }
+  ],
+  "time_limit_seconds": 30
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "db00-003-domain-rules",
+  "lesson_id": "DB-00-003",
+  "version": 1,
+  "level": "problem-solving",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "answers.md"
+  ],
+  "validator": {
+    "id": "db00-003-domain-rules-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "domain-per-column",
+      "description_fa": "برای هر ستون جدول، دامنه‌ی مجاز درست مشخص شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "برای هر ستون بنویس چه مقادیری مجاز است و چرا. بازبینی دستی."
+    },
+    {
+      "id": "degree-cardinality",
+      "description_fa": "درجه (تعداد ستون) و کاردینالیتی (تعداد سطر) درست گزارش شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "تعداد ستون‌ها و سطرهای داده‌شده را دقیق بشمار و بنویس. بازبینی دستی."
+    },
+    {
+      "id": "invalid-rows",
+      "description_fa": "تمام سطرهای نامعتبر نسبت به دامنه علامت‌گذاری شده‌اند (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "هر مقدار خارج از دامنه را پیدا کن و بگو نقض کدام دامنه است. بازبینی دستی."
+    },
+    {
+      "id": "order-independence",
+      "description_fa": "توضیح داده شده که جابه‌جایی ترتیب سطرها معنای رابطه را تغییر نمی‌دهد (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "پاسخ باید بیان کند رابطه یک مجموعه است و ترتیب سطرها بخشی از داده نیست؛ برای ترتیب دلخواه باید ORDER BY نوشت. بازبینی دستی."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "دامنه‌ی هر ستون = نوع داده + هر قید منطقی (مثلاً نامنفی‌بودن)."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "درجه را از سرستون‌ها و کاردینالیتی را از تعداد ردیف‌های داده بشمار."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای هر سطر، مقدار هر ستون را جدا با دامنه‌اش مقایسه کن."
+    }
+  ],
+  "time_limit_seconds": 60
+}

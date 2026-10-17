@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "db00-002-map-guarantee",
+  "lesson_id": "DB-00-002",
+  "version": 1,
+  "level": "problem-solving",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "answers.md"
+  ],
+  "validator": {
+    "id": "db00-002-map-guarantee-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "map-all-failures",
+      "description_fa": "برای هر خرابی در خط زمانی، تضمین متناظر DBMS مشخص شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "هر ردیف خط زمانی را به یک تضمین DBMS (تراکنش، کنترل هم‌زمانی، قید، بازیابی) نسبت بده و کوتاه توضیح بده. بازبینی دستی."
+    },
+    {
+      "id": "correct-guarantee-reasoning",
+      "description_fa": "نسبت‌دادن هر خرابی به تضمین درست است و تضمین‌ها جابه‌جا نشده‌اند (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "مثلاً Lost Update را به کنترل هم‌زمانی/تراکنش نسبت بده، نه به قید یکتایی. بازبینی دستی."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "چهار تضمین را در ذهن فهرست کن: تراکنش، هم‌زمانی، قید، بازیابی."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "هر خرابی را به دقیقاً یک تضمین نگاشت کن و مراقب باش تضمین‌ها را جابه‌جا نکنی."
+    }
+  ],
+  "time_limit_seconds": 60
+}

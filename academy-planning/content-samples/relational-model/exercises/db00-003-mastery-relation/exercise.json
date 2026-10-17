@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "db00-003-mastery-relation",
+  "lesson_id": "DB-00-003",
+  "version": 1,
+  "level": "mastery",
+  "kind": "erd",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.erd.json"
+  ],
+  "validator": {
+    "id": "db00-003-mastery-relation-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "required-entities",
+      "description_fa": "رابطه‌ی `registration` مطابق سناریوی جدید طراحی شده است.",
+      "visibility": "public"
+    },
+    {
+      "id": "required-attributes",
+      "description_fa": "ستون‌های کد ثبت‌نام، شمار صندلی، قیمت هر صندلی و درصد تخفیف با نوع مناسب تعریف شده‌اند.",
+      "visibility": "public"
+    },
+    {
+      "id": "primary-keys",
+      "description_fa": "رابطه دقیقاً یک کلید اصلی یکتاکننده دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "design-decisions",
+      "description_fa": "سه تصمیم طراحی (کلید طبیعی/جانشین، نمایش «نداشتن مقدار» با NULL، و ذخیره‌نکردن داده‌ی مشتق) درست گرفته و توجیه شده‌اند (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "بازبینی دستی: ۱) کلید جانشین و UNIQUE روی کد ثبت‌نام با توجیه؛ ۲) تخفیف باید مقدار نداشته باشد (NULL) و باید از 0 متمایز باشد؛ ۳) مبلغ نهایی نباید ذخیره شود چون مشتق است. برای حداقل یک ستون قید صریح (مثلاً بازه‌ی 0..100 روی تخفیف) با ربط به قانون کسب‌وکار."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "هر ستون را با یک پرسش دامنه تعریف کن: چه مقادیری مجاز است و چه چیزی باید رد شود؟"
+    }
+  ],
+  "time_limit_seconds": 90
+}

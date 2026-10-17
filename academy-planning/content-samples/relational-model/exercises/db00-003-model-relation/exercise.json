@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "db00-003-model-relation",
+  "lesson_id": "DB-00-003",
+  "version": 1,
+  "level": "practice",
+  "kind": "erd",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "starter.erd.json"
+  ],
+  "example_file": "example.erd.json",
+  "validator": {
+    "id": "db00-003-model-relation-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "required-entities",
+      "description_fa": "رابطه‌ی خواسته‌شده (product) در طراحی وجود دارد.",
+      "visibility": "public"
+    },
+    {
+      "id": "required-attributes",
+      "description_fa": "ستون‌های رابطه با نوع مناسب دامنه تعریف شده‌اند (متن/عدد/بولی).",
+      "visibility": "public"
+    },
+    {
+      "id": "primary-keys",
+      "description_fa": "رابطه دقیقاً یک کلید اصلی دارد که سطرها را یکتا می‌کند.",
+      "visibility": "public"
+    },
+    {
+      "id": "domain-documented",
+      "description_fa": "برای ستون‌ها دامنه‌ی مجاز (و یک مقدار نامعتبر) در یادداشت طراحی مشخص شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "در یادداشت طراحی برای هر ستون دامنه‌ی مجاز و یک مقدار خارج از دامنه بنویس. بازبینی دستی؛ خودکار نمره نمی‌گیرد."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "برای هر ستون بپرس چه مقادیری مجاز است؛ همان دامنه است."
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "برای هر ستون بپرس «کدام مقادیر باید رد شوند؟»؛ مثلاً آیا می‌شود تعداد منفی داشت؟"
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "برای یکتاشدن هر سطر، کدام ستون می‌تواند هویت مستقل به آن بدهد؟"
+    }
+  ],
+  "time_limit_seconds": 40
+}

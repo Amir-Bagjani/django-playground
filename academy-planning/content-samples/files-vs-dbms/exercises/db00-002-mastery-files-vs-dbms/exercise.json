@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "db00-002-mastery-files-vs-dbms",
+  "lesson_id": "DB-00-002",
+  "version": 1,
+  "level": "mastery",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "answers.md"
+  ],
+  "validator": {
+    "id": "db00-002-mastery-files-vs-dbms-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "decision-per-workload",
+      "description_fa": "برای هر دو بارکاری، انتخاب فایل یا DBMS با دلیل مبتنی بر همان بارکاری توضیح داده شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "برای هر بارکاری، انتخاب را به معیارهایی مثل تعداد نویسنده، اهمیت داده و نیاز به پرس‌وجو گره بزن. بازبینی دستی."
+    },
+    {
+      "id": "tradeoff-awareness",
+      "description_fa": "هزینه و محدودیت انتخاب پیشنهادی (سرور، نگهداری، یا ریسک فایل) صریح ذکر شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "بگو انتخاب تو چه هزینه یا ریسکی دارد و چه زمانی باید بازنگری شود. بازبینی دستی."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "تعداد نویسنده‌های هم‌زمان و اهمیت از‌دست‌نرفتن داده، اصلی‌ترین معیار تصمیم‌اند."
+    }
+  ],
+  "time_limit_seconds": 90
+}

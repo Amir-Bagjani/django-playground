@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "db00-002-analyze-file",
+  "lesson_id": "DB-00-002",
+  "version": 1,
+  "level": "practice",
+  "kind": "combined",
+  "required_for_completion": false,
+  "instructions_file": "instructions.fa.md",
+  "starter_files": [
+    "answers.md"
+  ],
+  "validator": {
+    "id": "db00-002-analyze-file-validator",
+    "version": 1,
+    "criteria_file": "../../validators/validation-plan.md"
+  },
+  "criteria": [
+    {
+      "id": "identify-concurrency-risk",
+      "description_fa": "خطر هم‌زمانی سناریو (حداقل Lost Update) درست شناسایی شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "با یک خط زمانی کوتاه نشان بده چرا خواندن-تصمیم-نوشتن روی فایل، به از‌دست‌رفتن یک تغییر می‌انجامد. بازبینی دستی."
+    },
+    {
+      "id": "identify-integrity-risk",
+      "description_fa": "خطر یکپارچگی (نوشتن ناقص یا داده‌ی نامعتبر) درست شناسایی شده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "یک حالت خرابی (crash وسط نوشتن یا ورود مقدار خارج از دامنه) را توصیف کن و بگو چه پیامدی دارد. بازبینی دستی."
+    },
+    {
+      "id": "no-overgeneralization",
+      "description_fa": "تحلیل به «فایل همیشه بد است» ساده‌سازی نشده و شرط بسندگی فایل را ذکر کرده است (بازبینی دستی).",
+      "visibility": "public",
+      "evaluation": "manual",
+      "rubric_fa": "حداقل یک شرایط را بنویس که در آن فایل ساده انتخاب معقولی است. بازبینی دستی."
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint-1",
+      "text_fa": "به ترتیب «خواندن → تغییر در حافظه → نوشتن» فکر کن؛ بین این گام‌ها چه کسی می‌تواند دخالت کند؟"
+    },
+    {
+      "id": "hint-2",
+      "text_fa": "دو نوع خرابی را جدا کن: خرابی هم‌زمانی (دو نویسنده) و خرابی یکپارچگی (نوشتن ناقص یا مقدار نامعتبر)."
+    },
+    {
+      "id": "hint-3",
+      "text_fa": "سه معیار عمومی را یکی‌یکی پاسخ بده: هم‌زمانی، یکپارچگی، و شرط بسندگی فایل."
+    }
+  ],
+  "time_limit_seconds": 60
+}
