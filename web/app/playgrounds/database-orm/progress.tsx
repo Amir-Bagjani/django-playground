@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   createContext,
   useCallback,
@@ -136,6 +137,9 @@ export function SyllabusProgressSummary({ modules }: { modules: AcademyModule[] 
               ? "No runnable lessons yet"
               : `${overall.completed} of ${overall.active} runnable lessons completed`}
         </span>
+        <Link className={styles.progressLink} href="/playgrounds/database-orm/progress">
+          Dashboard →
+        </Link>
       </div>
       <div className={styles.progressBars}>
         <ProgressBar label="Completed" ratio={overall} />
@@ -154,6 +158,109 @@ export function SyllabusProgressSummary({ modules }: { modules: AcademyModule[] 
         </ul>
       ) : null}
     </section>
+  );
+}
+
+function Stat({ label, value, total, percent }: { label: string; value: number; total?: number; percent?: number | null }) {
+  return (
+    <div className={styles.stat}>
+      <div className={styles.statValue}>
+        {value}
+        {typeof total === "number" ? <span className={styles.statTotal}>/{total}</span> : null}
+      </div>
+      <div className={styles.statLabel}>{label}</div>
+      {typeof percent === "number" ? <div className={styles.statPercent}>{percent}%</div> : null}
+    </div>
+  );
+}
+
+export function ProgressDashboard({ modules }: { modules: AcademyModule[] }) {
+  const { progress, loaded } = useProgress();
+  const overall = overallRatio(progress);
+  const mastery = masteryRatio(progress);
+  const moduleRows = modules.map((module) => ({ module, ratio: moduleRatio(progress, module) }));
+  const activeModules = moduleRows.filter((row) => row.ratio.active > 0);
+  const lessonTitles = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const module of modules) {
+      for (const lesson of module.lessons) map.set(lesson.id, lesson.title_fa);
+    }
+    return map;
+  }, [modules]);
+  const trackedLessons = Object.entries(progress.lessons);
+
+  if (!loaded) {
+    return <p className={styles.progressMuted}>Loading progress…</p>;
+  }
+
+  return (
+    <div className={styles.dashboard}>
+      <div className={styles.dashStats}>
+        <Stat label="Completed" value={overall.completed} total={overall.active} percent={overall.percent} />
+        <Stat label="Mastered" value={mastery.completed} total={mastery.active} percent={mastery.percent} />
+        <Stat label="Lessons tracked" value={progress.totals.trackedLessons} />
+        <Stat label="Passes recorded" value={progress.totals.passes} />
+      </div>
+
+      <section className={styles.dashSection}>
+        <h2 className={styles.dashTitle}>Overall</h2>
+        <div className={styles.progressBars}>
+          <ProgressBar label="Completed" ratio={overall} />
+          <ProgressBar label="Mastered" ratio={mastery} />
+        </div>
+      </section>
+
+      <section className={styles.dashSection}>
+        <h2 className={styles.dashTitle}>By module</h2>
+        {activeModules.length > 0 ? (
+          <ul className={styles.dashModules}>
+            {activeModules.map(({ module, ratio }) => (
+              <li key={module.id} className={styles.dashModuleRow}>
+                <span className={styles.progressModuleCode}>{module.id}</span>
+                <span className={styles.dashModuleTitle} dir="rtl" lang="fa">
+                  {module.title_fa}
+                </span>
+                <span className={styles.progressBarTrack} aria-hidden="true">
+                  <span className={styles.progressBarFill} style={{ width: `${ratio.percent ?? 0}%` }} />
+                </span>
+                <span className={styles.progressBarValue}>
+                  {ratio.completed}/{ratio.active}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.progressMuted}>No runnable lessons yet.</p>
+        )}
+      </section>
+
+      <section className={styles.dashSection}>
+        <h2 className={styles.dashTitle}>Attempted lessons</h2>
+        {trackedLessons.length > 0 ? (
+          <ul className={styles.dashLessons}>
+            {trackedLessons.map(([lessonId, state]) => (
+              <li key={lessonId} className={styles.dashLessonRow}>
+                <Link href={`/playgrounds/database-orm/lessons/${lessonId}`} className={styles.dashLessonName}>
+                  <span className={styles.progressExerciseName}>{lessonId}</span>
+                  <span className={styles.dashLessonTitle} dir="rtl" lang="fa">
+                    {lessonTitles.get(lessonId) ?? ""}
+                  </span>
+                </Link>
+                <span className={styles.dashLessonCounts}>
+                  {state.requiredPassed}/{state.requiredTotal} required
+                  {state.masteryTotal > 0 ? ` · ${state.masteryPassed}/${state.masteryTotal} mastery` : ""}
+                </span>
+                <ProgressBadge status={state.status} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.progressMuted}>
+            No attempts yet. Pass the required exercises of a lesson to see it here.
+          </p>
+        )}
+      </section>
+    </div>
   );
 }
 

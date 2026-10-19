@@ -6,14 +6,16 @@ import Editor, { loader, type Monaco, type OnMount } from "@monaco-editor/react"
 import type * as MonacoNs from "monaco-editor";
 
 import { languageLabel } from "./language";
+import { useAppTheme } from "./use-app-theme";
 
 loader.config({ paths: { vs: "/monaco/vs" } });
 
-const THEME = "playground-dark";
+const THEME_DARK = "playground-dark";
+const THEME_LIGHT = "playground-light";
 const EDITOR_FONT = '"SF Mono", "JetBrains Mono", Menlo, Consolas, monospace';
 
-function defineTheme(monaco: Monaco) {
-  monaco.editor.defineTheme(THEME, {
+function defineThemes(monaco: Monaco) {
+  monaco.editor.defineTheme(THEME_DARK, {
     base: "vs-dark",
     inherit: true,
     rules: [
@@ -39,6 +41,35 @@ function defineTheme(monaco: Monaco) {
       "editorWidget.border": "#212838",
       "editorSuggestWidget.background": "#11151d",
       "editorSuggestWidget.selectedBackground": "#1c2534",
+    },
+  });
+
+  monaco.editor.defineTheme(THEME_LIGHT, {
+    base: "vs",
+    inherit: true,
+    rules: [
+      { token: "comment", foreground: "6b7686", fontStyle: "italic" },
+      { token: "string", foreground: "0a6b3b" },
+      { token: "keyword", foreground: "c02a72" },
+      { token: "number", foreground: "b35209" },
+      { token: "type", foreground: "0b7285" },
+    ],
+    colors: {
+      "editor.background": "#f2f4f8",
+      "editor.foreground": "#243040",
+      "editorGutter.background": "#f2f4f8",
+      "editorLineNumber.foreground": "#a2adbf",
+      "editorLineNumber.activeForeground": "#5a6b85",
+      "editor.lineHighlightBackground": "#e7ebf2",
+      "editor.selectionBackground": "#bcd3ff",
+      "editor.inactiveSelectionBackground": "#d8e3f6",
+      "editorCursor.foreground": "#2563eb",
+      "editorIndentGuide.background1": "#dde2ea",
+      "editorIndentGuide.activeBackground1": "#b9c2d0",
+      "editorWidget.background": "#ffffff",
+      "editorWidget.border": "#d6dbe4",
+      "editorSuggestWidget.background": "#ffffff",
+      "editorSuggestWidget.selectedBackground": "#e8eefa",
     },
   });
 }
@@ -75,6 +106,8 @@ export function CodeEditor({
   onSave,
   onToggleWordWrap,
 }: CodeEditorProps) {
+  const appTheme = useAppTheme();
+  const theme = appTheme === "light" ? THEME_LIGHT : THEME_DARK;
   const monacoRef = useRef<Monaco | null>(null);
   const editorRef = useRef<MonacoNs.editor.IStandaloneCodeEditor | null>(null);
   const saveRef = useRef(onSave);
@@ -127,8 +160,8 @@ export function CodeEditor({
           path={path}
           defaultValue={defaultValue}
           language={language}
-          theme={THEME}
-          beforeMount={defineTheme}
+          theme={theme}
+          beforeMount={defineThemes}
           onMount={handleMount}
           onChange={(value) => onValueChange(value ?? "")}
           saveViewState

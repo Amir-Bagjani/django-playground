@@ -7,6 +7,7 @@ import Editor, { loader } from "@monaco-editor/react";
 import type { LabExercise, LabHint } from "@/lib/academy";
 
 import { Markdown } from "../../../components/markdown";
+import { useAppTheme } from "../../../components/use-app-theme";
 import { notifyProgress } from "../progress";
 import styles from "./lab.module.css";
 
@@ -132,6 +133,7 @@ function verdictMessage(evaluation: EvaluationResult): string {
 }
 
 export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
+  const appTheme = useAppTheme();
   const [activeId, setActiveId] = useState(exercises[0]?.id ?? "");
   const active = useMemo(
     () => exercises.find((exercise) => exercise.id === activeId) ?? exercises[0],
@@ -363,7 +365,7 @@ export function LessonLab({ exercises }: { exercises: LabExercise[] }) {
               path={`academy-${active.id}.${active.kind === "sql" ? "sql" : "py"}`}
               defaultValue={source}
               language={editorLanguage(active)}
-              theme="vs-dark"
+              theme={appTheme === "light" ? "vs" : "vs-dark"}
               onChange={(value) => updateSource(value ?? "")}
               options={{
                 fontSize: 13,

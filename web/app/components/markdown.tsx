@@ -1,14 +1,16 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
+import { CodeBlock } from "./code-block";
 import styles from "./markdown.module.css";
 
 /**
  * Minimal, safe Markdown renderer for Academy lesson bodies.
  *
  * It intentionally supports only a small, whitelisted subset (headings,
- * paragraphs, ordered/unordered lists, blockquotes, fenced code, and inline
- * bold / code / links). It never uses `dangerouslySetInnerHTML`, so raw HTML or
- * scripts embedded in content are rendered as literal text and cannot execute.
+ * paragraphs, ordered/unordered lists, blockquotes, fenced code, GFM tables,
+ * and inline bold / code / links). It never uses `dangerouslySetInnerHTML`, so
+ * raw HTML or scripts embedded in content are rendered as literal text and
+ * cannot execute.
  */
 
 const INLINE = /(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\))/g;
@@ -47,13 +49,43 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
   return nodes;
 }
 
+type Align = "left" | "right" | "center" | null;
+
 type Block =
   | { type: "heading"; level: number; text: string }
   | { type: "code"; lang: string; lines: string[] }
   | { type: "quote"; lines: string[] }
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
+  | { type: "table"; header: string[]; align: Align[]; rows: string[][] }
   | { type: "paragraph"; lines: string[] };
+
+/** A GFM table row: starts and ends with a pipe. */
+function isTableRow(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.startsWith("|") && trimmed.endsWith("|") && trimmed.length > 1;
+}
+
+function splitRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split("|").map((cell) => cell.trim());
+}
+
+function alignOf(cell: string): Align {
+  const left = cell.startsWith(":");
+  const right = cell.endsWith(":");
+  if (left && right) return "center";
+  if (right) return "right";
+  if (left) return "left";
+  return null;
+}
+
+/** The `|---|:--:|` line that turns the preceding row into a header. */
+function isTableSeparator(line: string): boolean {
+  if (!isTableRow(line)) return false;
+  const cells = splitRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
+}
 
 function parseBlocks(markdown: string): Block[] {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
@@ -121,6 +153,19 @@ function parseBlocks(markdown: string): Block[] {
       continue;
     }
 
+    if (isTableRow(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      const header = splitRow(line);
+      const align = splitRow(lines[i + 1]).map(alignOf);
+      i += 2;
+      const rows: string[][] = [];
+      while (i < lines.length && isTableRow(lines[i])) {
+        rows.push(splitRow(lines[i]));
+        i += 1;
+      }
+      blocks.push({ type: "table", header, align, rows });
+      continue;
+    }
+
     const paragraph: string[] = [];
     while (
       i < lines.length &&
@@ -129,7 +174,8 @@ function parseBlocks(markdown: string): Block[] {
       !/^(#{1,6})\s+/.test(lines[i]) &&
       !/^>\s?/.test(lines[i]) &&
       !/^\s*-\s+/.test(lines[i]) &&
-      !/^\s*\d+\.\s+/.test(lines[i])
+      !/^\s*\d+\.\s+/.test(lines[i]) &&
+      !(isTableRow(lines[i]) && i + 1 < lines.length && isTableSeparator(lines[i + 1]))
     ) {
       paragraph.push(lines[i]);
       i += 1;
@@ -140,8 +186,26 @@ function parseBlocks(markdown: string): Block[] {
   return blocks;
 }
 
+/** URL/id slug that keeps Unicode letters (so Persian headings work). */
+function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function Markdown({ markdown }: { markdown: string }) {
   const blocks = parseBlocks(markdown);
+  const usedSlugs = new Map<string, number>();
+  const headingIds = blocks.map((block) => {
+    if (block.type !== "heading") return "";
+    const base = slugify(block.text) || "section";
+    const seen = usedSlugs.get(base) ?? 0;
+    usedSlugs.set(base, seen + 1);
+    return seen === 0 ? base : `${base}-${seen + 1}`;
+  });
+
   return (
     <div className={styles.root}>
       {blocks.map((block, index) => {
@@ -149,18 +213,22 @@ export function Markdown({ markdown }: { markdown: string }) {
         switch (block.type) {
           case "heading": {
             const Tag = (`h${Math.min(block.level + 1, 6)}`) as "h2" | "h3" | "h4" | "h5" | "h6";
+            const id = headingIds[index];
             return (
-              <Tag key={key} className={styles.heading}>
+              <Tag key={key} id={id} className={styles.heading}>
+                <a
+                  href={`#${id}`}
+                  className={styles.anchor}
+                  aria-label="Link to this section"
+                >
+                  #
+                </a>
                 {renderInline(block.text, key)}
               </Tag>
             );
           }
           case "code":
-            return (
-              <pre key={key} className={styles.codeBlock} dir="ltr">
-                <code>{block.lines.join("\n")}</code>
-              </pre>
-            );
+            return <CodeBlock key={key} code={block.lines.join("\n")} />;
           case "quote":
             return (
               <blockquote key={key} className={styles.quote}>
@@ -183,6 +251,38 @@ export function Markdown({ markdown }: { markdown: string }) {
                 ))}
               </ol>
             );
+          case "table": {
+            const cellStyle = (column: number): CSSProperties | undefined =>
+              block.align[column]
+                ? { textAlign: block.align[column] as CSSProperties["textAlign"] }
+                : undefined;
+            return (
+              <div key={key} className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      {block.header.map((cell, c) => (
+                        <th key={c} style={cellStyle(c)}>
+                          {renderInline(cell, `${key}-h${c}`)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.map((row, r) => (
+                      <tr key={r}>
+                        {block.header.map((_, c) => (
+                          <td key={c} style={cellStyle(c)}>
+                            {renderInline(row[c] ?? "", `${key}-r${r}c${c}`)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
           case "paragraph":
             return (
               <p key={key} className={styles.paragraph}>

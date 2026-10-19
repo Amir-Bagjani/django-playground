@@ -14,6 +14,7 @@ import type {
 } from "@/lib/academy";
 
 import { Markdown } from "../../../../components/markdown";
+import { useAppTheme } from "../../../../components/use-app-theme";
 import { ErdDesigner } from "../../erd/erd-designer";
 import { emptyGraph, parseGraph } from "../../erd/graph";
 import { WorkspaceShell } from "../../workspace-shell";
@@ -78,6 +79,7 @@ function initialWorkspace(project: AcademyProject, stored: ProjectWorkspaceState
 }
 
 export function ProjectWorkspace({ project }: { project: AcademyProject }) {
+  const appTheme = useAppTheme();
   const executable = useMemo(
     () => project.milestones.filter((milestone) => milestone.executable),
     [project.milestones],
@@ -422,7 +424,7 @@ export function ProjectWorkspace({ project }: { project: AcademyProject }) {
                 path={`project-${project.id}-${active.id}.${active.stage_kind === "sql" ? "sql" : "py"}`}
                 value={active.stage_kind === "sql" ? state.sql ?? "" : state.orm ?? ""}
                 language={active.stage_kind === "sql" ? "sql" : "python"}
-                theme="vs-dark"
+                theme={appTheme === "light" ? "vs" : "vs-dark"}
                 onChange={(value) =>
                   setState((prev) =>
                     active.stage_kind === "sql" ? { ...prev, sql: value ?? "" } : { ...prev, orm: value ?? "" },

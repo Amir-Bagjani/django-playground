@@ -12,6 +12,10 @@
 }
 
 .header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 28px;
 }
 
@@ -105,6 +109,29 @@
   color: var(--green);
   border-color: rgba(63, 185, 80, 0.35);
   background: rgba(63, 185, 80, 0.1);
+}
+
+.pillSoon {
+  color: var(--muted);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.cardSoon {
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+}
+
+.cardSoon:hover {
+  border-color: var(--border);
+  background: transparent;
+  transform: none;
+}
+
+.iconSoon {
+  background: var(--surface-2);
+  color: var(--faint);
 }
 
 .cta {

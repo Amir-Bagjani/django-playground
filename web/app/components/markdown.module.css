@@ -5,10 +5,33 @@
 }
 
 .heading {
+  position: relative;
   color: var(--text-strong);
   line-height: 1.5;
   margin: 30px 0 12px;
   font-weight: 650;
+  scroll-margin-top: 96px;
+}
+
+.anchor {
+  position: absolute;
+  inset-inline-start: -1.15em;
+  width: 1.15em;
+  text-align: center;
+  color: var(--faint);
+  text-decoration: none;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.14s ease, color 0.14s ease;
+}
+
+.heading:hover .anchor,
+.anchor:focus-visible {
+  opacity: 1;
+}
+
+.anchor:hover {
+  color: var(--accent);
 }
 
 .heading:first-child {
@@ -33,6 +56,42 @@
   border-inline-start: 3px solid var(--accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background: var(--surface-2);
+  color: var(--text);
+}
+
+.codeWrap {
+  position: relative;
+  margin: 0 0 18px;
+}
+
+.codeWrap .codeBlock {
+  margin: 0;
+}
+
+.copyBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+
+.codeWrap:hover .copyBtn,
+.copyBtn:focus-visible {
+  opacity: 1;
+}
+
+.copyBtn:hover:not(:disabled) {
+  background: var(--surface-3);
   color: var(--text);
 }
 
@@ -65,4 +124,49 @@
   direction: ltr;
   unicode-bidi: embed;
   display: inline-block;
+}
+
+.tableWrap {
+  margin: 0 0 18px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: start;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-soft);
+  border-inline-start: 1px solid var(--border-soft);
+}
+
+.table th:first-child,
+.table td:first-child {
+  border-inline-start: none;
+}
+
+.table thead th {
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font-weight: 650;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--surface);
 }

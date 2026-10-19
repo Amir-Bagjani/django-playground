@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Markdown } from "../../../../components/markdown";
+import { ThemeToggle } from "../../../../components/theme-toggle";
 import {
   academyModules,
   getLabExercises,
@@ -13,6 +14,7 @@ import {
 
 import { ErdLab } from "../../erd/erd-lab";
 import { LessonLab } from "../../lab/lesson-lab";
+import { SearchButton } from "../../command-palette";
 import { StatusBadge } from "../../badge";
 import { LessonProgressPanel, ProgressProvider } from "../../progress";
 import styles from "../../academy.module.css";
@@ -68,6 +70,10 @@ export default async function LessonPage({ params }: PageProps) {
           <Link href="/playgrounds/database-orm">Database &amp; ORM Academy</Link>
           <span className={styles.breadcrumbSep}>/</span>
           <span>{lesson.id}</span>
+          <span className={styles.topActions}>
+            <SearchButton />
+            <ThemeToggle />
+          </span>
         </nav>
 
         <div className={styles.lessonNav}>
